@@ -41,14 +41,13 @@ firebase deploy --only hosting
 # Firestore Rules/Indexes 배포
 firebase deploy --only firestore
 
-# Cloud Run 배포 (영상 분석)
+# Cloud Run 배포 (영상 분석) - Cloud Build 사용
 cd cloud-run && ./deploy.sh all              # 전체 배포
 cd cloud-run && ./deploy.sh orchestrator     # Orchestrator만
 cd cloud-run && ./deploy.sh segment-analyzer # Segment Analyzer만
 
-# ⚠️ 중요: Cloud Run 배포 시 반드시 docker buildx 사용
-# deploy.sh는 docker buildx로 자동 처리됨. 수동 빌드할 경우 아래 명령 사용:
-docker buildx build --platform linux/amd64 --provenance=false --sbom=false --push -t <image> .
+# ℹ️ Cloud Run 배포는 gcloud run deploy --source 사용
+# 로컬 Docker 빌드 없이 Cloud Build에서 서버 빌드 → 플랫폼 문제 없음
 
 # 운영 스크립트
 npm run admin                             # 관리자 CLI
@@ -249,14 +248,13 @@ UPSTASH_REDIS_REST_URL=your-url      # Rate Limiting
 - Firebase Security Rules: 역할 기반 접근 제어
 - Zod 검증: API 입력
 - TypeScript Strict Mode
-- **Cloud Run 배포**: 반드시 docker buildx 사용
+- **Cloud Run 배포**: `gcloud run deploy --source` 사용 (Cloud Build)
   ```bash
-  docker buildx build --platform linux/amd64 --provenance=false --sbom=false --push -t <image> .
+  gcloud run deploy SERVICE_NAME --source=. --region=asia-northeast3 ...
   ```
-  - `--platform linux/amd64`: Cloud Run은 linux/amd64만 지원 (arm64 불가)
-  - `--provenance=false --sbom=false`: OCI attestation 비활성화
-  - `--push`: 직접 레지스트리에 푸시 (deploy.sh 자동 처리)
-  - `docker build --load`는 OCI 인덱스 형식 문제 발생 가능 → 반드시 `docker buildx`로 `--push` 사용
+  - 로컬 Docker 빌드 없이 Cloud Build에서 서버 빌드
+  - Apple Silicon Mac에서도 플랫폼 문제 없음
+  - [공식 문서](https://cloud.google.com/run/docs/deploying-source-code) 참고
 
 ### Firebase Security Rules 역할
 
@@ -417,4 +415,4 @@ created_at, stream_id, video_url, pot_size
 ---
 
 **마지막 업데이트**: 2025-11-30
-**문서 버전**: 6.4 (docker buildx로 OCI 매니페스트 문제 영구 해결)
+**문서 버전**: 7.0 (Cloud Run 배포를 Cloud Build --source로 전환)

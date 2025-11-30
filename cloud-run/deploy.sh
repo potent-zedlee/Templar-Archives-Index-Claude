@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Cloud Run 서비스 배포 스크립트
+# Cloud Run 서비스 배포 스크립트 (Cloud Build 사용)
 #
 # 사용법:
 #   ./deploy.sh orchestrator     # Orchestrator만 배포
@@ -10,13 +10,15 @@
 # 필수 환경 변수:
 #   GCP_PROJECT_ID - Google Cloud 프로젝트 ID
 #   GCP_REGION - 배포 리전 (기본: asia-northeast3)
+#
+# 참고: gcloud run deploy --source를 사용하여 Cloud Build로 서버에서 빌드합니다.
+#       로컬 Docker 빌드가 필요 없으며 플랫폼 문제가 발생하지 않습니다.
 
 set -e
 
 # 설정
 PROJECT_ID="${GCP_PROJECT_ID:-templar-archives-index}"
 REGION="${GCP_REGION:-asia-northeast3}"
-ARTIFACT_REGISTRY="${PROJECT_ID}-docker"
 
 # 색상
 RED='\033[0;31m'
@@ -52,18 +54,6 @@ set_project() {
   gcloud config set project "$PROJECT_ID"
 }
 
-# Artifact Registry 저장소 생성 (없으면)
-create_artifact_registry() {
-  echo_info "Checking Artifact Registry..."
-  if ! gcloud artifacts repositories describe "$ARTIFACT_REGISTRY" --location="$REGION" &>/dev/null; then
-    echo_info "Creating Artifact Registry repository..."
-    gcloud artifacts repositories create "$ARTIFACT_REGISTRY" \
-      --repository-format=docker \
-      --location="$REGION" \
-      --description="Docker images for Templar Archives"
-  fi
-}
-
 # Cloud Tasks 큐 생성 (없으면)
 create_cloud_tasks_queue() {
   echo_info "Checking Cloud Tasks queue..."
@@ -83,7 +73,6 @@ create_cloud_tasks_queue() {
 # Firestore 데이터베이스 확인
 check_firestore() {
   echo_info "Checking Firestore..."
-  # Firestore가 이미 설정되어 있다고 가정
   echo_info "Firestore check passed (manual verification recommended)"
 }
 
@@ -92,24 +81,13 @@ deploy_orchestrator() {
   echo_info "Deploying Orchestrator service..."
 
   SERVICE_NAME="video-orchestrator"
-  IMAGE_NAME="${REGION}-docker.pkg.dev/${PROJECT_ID}/${ARTIFACT_REGISTRY}/${SERVICE_NAME}"
-
   cd "$(dirname "$0")/orchestrator"
 
-  # 빌드 및 푸시 (Cloud Run은 linux/amd64만 지원, docker buildx로 직접 레지스트리에 푸시)
-  echo_info "Building and pushing Docker image (linux/amd64) to Artifact Registry..."
-  docker buildx build \
-    --platform linux/amd64 \
-    --provenance=false \
-    --sbom=false \
-    --push \
-    -t "$IMAGE_NAME" \
-    .
-
-  # 배포
-  echo_info "Deploying to Cloud Run..."
+  # Cloud Build로 빌드 및 배포 (--source 사용)
+  # 로컬 Docker 빌드 없이 서버에서 빌드하므로 플랫폼 문제 없음
+  echo_info "Building and deploying with Cloud Build..."
   gcloud run deploy "$SERVICE_NAME" \
-    --image="$IMAGE_NAME" \
+    --source=. \
     --region="$REGION" \
     --platform=managed \
     --allow-unauthenticated \
@@ -122,8 +100,8 @@ deploy_orchestrator() {
     --set-env-vars="CLOUD_TASKS_LOCATION=${REGION}" \
     --set-env-vars="CLOUD_TASKS_QUEUE=video-analysis-queue"
 
-  # Segment Analyzer URL 설정 (나중에 업데이트 필요)
-  ORCHESTRATOR_URL=$(gcloud run services describe "$SERVICE_NAME" --region="$REGION" --format='value(status.url)')
+  ORCHESTRATOR_URL=$(gcloud run services describe "$SERVICE_NAME" \
+    --region="$REGION" --format='value(status.url)')
   echo_info "Orchestrator deployed: $ORCHESTRATOR_URL"
 
   cd ..
@@ -134,24 +112,12 @@ deploy_segment_analyzer() {
   echo_info "Deploying Segment Analyzer service..."
 
   SERVICE_NAME="segment-analyzer"
-  IMAGE_NAME="${REGION}-docker.pkg.dev/${PROJECT_ID}/${ARTIFACT_REGISTRY}/${SERVICE_NAME}"
-
   cd "$(dirname "$0")/segment-analyzer"
 
-  # 빌드 및 푸시 (Cloud Run은 linux/amd64만 지원, docker buildx로 직접 레지스트리에 푸시)
-  echo_info "Building and pushing Docker image (linux/amd64) to Artifact Registry..."
-  docker buildx build \
-    --platform linux/amd64 \
-    --provenance=false \
-    --sbom=false \
-    --push \
-    -t "$IMAGE_NAME" \
-    .
-
-  # 배포 (긴 실행 시간 허용)
-  echo_info "Deploying to Cloud Run..."
+  # Cloud Build로 빌드 및 배포 (--source 사용)
+  echo_info "Building and deploying with Cloud Build..."
   gcloud run deploy "$SERVICE_NAME" \
-    --image="$IMAGE_NAME" \
+    --source=. \
     --region="$REGION" \
     --platform=managed \
     --no-allow-unauthenticated \
@@ -164,7 +130,8 @@ deploy_segment_analyzer() {
     --set-env-vars="GCS_BUCKET_NAME=templar-archives-videos" \
     --set-env-vars="VERTEX_AI_LOCATION=global"
 
-  SEGMENT_ANALYZER_URL=$(gcloud run services describe "$SERVICE_NAME" --region="$REGION" --format='value(status.url)')
+  SEGMENT_ANALYZER_URL=$(gcloud run services describe "$SERVICE_NAME" \
+    --region="$REGION" --format='value(status.url)')
   echo_info "Segment Analyzer deployed: $SEGMENT_ANALYZER_URL"
 
   # Orchestrator에 Segment Analyzer URL 업데이트
@@ -180,7 +147,6 @@ deploy_segment_analyzer() {
 deploy_all() {
   check_auth
   set_project
-  create_artifact_registry
   create_cloud_tasks_queue
   check_firestore
   deploy_orchestrator

@@ -82,22 +82,26 @@ cd cloud-run && ./deploy.sh orchestrator      # Orchestrator만
 cd cloud-run && ./deploy.sh segment-analyzer  # Segment Analyzer만
 ```
 
-### 3.2 Docker 빌드 주의사항 (Apple Silicon Mac)
+### 3.2 Cloud Build 사용 (권장)
 
-⚠️ **중요**: Apple Silicon (M1/M2/M3/M4) Mac에서는 Docker 빌드 시 반드시 아래 옵션을 모두 사용해야 합니다:
+deploy.sh는 `gcloud run deploy --source` 명령을 사용하여 **Cloud Build**에서 서버 빌드를 수행합니다.
 
+**장점:**
+- 로컬 Docker 설치 불필요
+- Apple Silicon Mac에서도 플랫폼 문제 없음 (Cloud Build가 linux/amd64에서 빌드)
+- Dockerfile이 있으면 자동으로 사용
+
+**동작 방식:**
 ```bash
-docker build --platform linux/amd64 --provenance=false --sbom=false --load -t <image> .
+# deploy.sh 내부에서 실행되는 명령
+gcloud run deploy SERVICE_NAME \
+  --source=. \
+  --region=asia-northeast3 \
+  --platform=managed \
+  ...
 ```
 
-| 옵션 | 설명 |
-|------|------|
-| `--platform linux/amd64` | Cloud Run은 linux/amd64만 지원 (arm64 불가) |
-| `--provenance=false` | BuildKit provenance 비활성화 |
-| `--sbom=false` | SBOM 생성 비활성화 |
-| `--load` | 단일 플랫폼 이미지로 로컬에 로드 (OCI 인덱스 형식 방지) |
-
-**문제 증상**: `Container manifest type 'application/vnd.oci.image.index.v1+json' must support amd64/linux` 에러 발생 시 `--load` 옵션 누락이 원인입니다.
+> 참고: [Cloud Run 소스 배포 공식 문서](https://cloud.google.com/run/docs/deploying-source-code)
 
 ### 3.3 Cloud Tasks 큐 생성
 
