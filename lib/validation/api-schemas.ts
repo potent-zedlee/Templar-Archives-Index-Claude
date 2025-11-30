@@ -2,9 +2,87 @@
  * API 입력 검증 스키마 (Zod)
  *
  * 모든 API 엔드포인트의 입력 검증을 위한 Zod 스키마
+ *
+ * Single Source of Truth: 모든 Form 데이터 타입은 이 스키마에서 z.infer로 파생
  */
 
 import { z } from "zod"
+
+// ==================== Enum Schemas ====================
+
+/**
+ * 토너먼트 카테고리 스키마
+ */
+export const tournamentCategorySchema = z.enum([
+  "WSOP",
+  "Triton",
+  "EPT",
+  "Hustler Casino Live",
+  "APT",
+  "APL",
+  "WSOP Classic",
+  "GGPOKER",
+])
+
+/**
+ * 영상 소스 스키마
+ */
+export const videoSourceSchema = z.enum(["youtube", "upload", "nas"])
+
+/**
+ * 게임 타입 스키마
+ */
+export const gameTypeSchema = z.enum(["tournament", "cash-game"])
+
+// ==================== Form Data Schemas ====================
+
+/**
+ * Tournament Form 데이터 스키마
+ * UI 폼에서 사용하는 데이터 구조
+ */
+export const tournamentFormDataSchema = z.object({
+  name: z.string().trim().min(1, "토너먼트 이름을 입력해주세요").max(200),
+  category: tournamentCategorySchema,
+  categoryLogo: z.string().optional(),
+  gameType: gameTypeSchema,
+  location: z.string().trim().min(1, "개최 장소를 입력해주세요").max(100),
+  city: z.string().trim().max(100),
+  country: z.string().trim().max(100),
+  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "유효하지 않은 날짜 형식입니다"),
+  endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "유효하지 않은 날짜 형식입니다"),
+})
+
+/**
+ * Event Form 데이터 스키마
+ * UI 폼에서 사용하는 데이터 구조
+ */
+export const eventFormDataSchema = z.object({
+  name: z.string().trim().min(1, "이벤트 이름을 입력해주세요").max(200),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "유효하지 않은 날짜 형식입니다"),
+  eventNumber: z.string().max(20),
+  totalPrize: z.string().max(50),
+  winner: z.string().max(100),
+  buyIn: z.string().max(50),
+  entryCount: z.string().max(20),
+  blindStructure: z.string().max(200),
+  levelDuration: z.string().max(20),
+  startingStack: z.string().max(20),
+  notes: z.string().max(1000),
+})
+
+/**
+ * Stream Form 데이터 스키마
+ * UI 폼에서 사용하는 데이터 구조
+ * Note: uploadFile은 File 객체로 Zod에서 직접 검증하지 않음 (런타임 검증)
+ */
+export const streamFormDataSchema = z.object({
+  name: z.string().trim().min(1, "스트림 이름을 입력해주세요").max(200),
+  videoSource: videoSourceSchema.exclude(["nas"]), // Form에서는 youtube, upload만
+  videoUrl: z.string().url("유효한 URL을 입력해주세요").or(z.literal("")),
+  publishedAt: z.string(),
+})
+
+// ==================== API Input Schemas ====================
 
 /**
  * 자연어 검색 API 스키마
@@ -39,20 +117,12 @@ export const importHandsSchema = z.object({
 })
 
 /**
- * Tournament 생성/수정 스키마
+ * Tournament API 스키마 (생성/수정)
+ * @deprecated tournamentFormDataSchema 사용 권장
  */
 export const tournamentSchema = z.object({
   name: z.string().trim().min(1, "토너먼트 이름을 입력해주세요").max(200),
-  category: z.enum([
-    "WSOP",
-    "Triton",
-    "EPT",
-    "Hustler Casino Live",
-    "APT",
-    "APL",
-    "WSOP Classic",
-    "GGPOKER",
-  ]),
+  category: tournamentCategorySchema,
   location: z.string().trim().min(1).max(100),
   startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "유효하지 않은 날짜 형식입니다"),
   endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "유효하지 않은 날짜 형식입니다"),
@@ -196,3 +266,50 @@ export function formatValidationErrors(errors: z.ZodError): string[] {
     return field ? `${field}: ${err.message}` : err.message
   })
 }
+
+// ==================== Inferred Types (Single Source of Truth) ====================
+
+/**
+ * Form 데이터 타입들 - Zod 스키마에서 파생 (z.infer)
+ *
+ * 이 타입들은 스키마에서 자동으로 추론되므로 수동 정의가 필요 없음
+ */
+
+/** 토너먼트 카테고리 타입 */
+export type TournamentCategoryInferred = z.infer<typeof tournamentCategorySchema>
+
+/** 영상 소스 타입 */
+export type VideoSourceInferred = z.infer<typeof videoSourceSchema>
+
+/** 게임 타입 */
+export type GameTypeInferred = z.infer<typeof gameTypeSchema>
+
+/** Tournament Form 데이터 */
+export type TournamentFormDataInferred = z.infer<typeof tournamentFormDataSchema>
+
+/** Event Form 데이터 */
+export type EventFormDataInferred = z.infer<typeof eventFormDataSchema>
+
+/** Stream Form 데이터 (uploadFile 제외 - 런타임 처리) */
+export type StreamFormDataInferred = z.infer<typeof streamFormDataSchema>
+
+/** 자연어 검색 입력 */
+export type NaturalSearchInput = z.infer<typeof naturalSearchSchema>
+
+/** 핸드 Import 입력 */
+export type ImportHandsInput = z.infer<typeof importHandsSchema>
+
+/** Player Claim 입력 */
+export type PlayerClaimInput = z.infer<typeof playerClaimSchema>
+
+/** Hand Edit Request 입력 */
+export type HandEditRequestInput = z.infer<typeof handEditRequestSchema>
+
+/** Content Report 입력 */
+export type ContentReportInput = z.infer<typeof contentReportSchema>
+
+/** 북마크 생성 입력 */
+export type CreateBookmarkInput = z.infer<typeof createBookmarkSchema>
+
+/** 프로필 업데이트 입력 */
+export type UpdateProfileInput = z.infer<typeof updateProfileSchema>

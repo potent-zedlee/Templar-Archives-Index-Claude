@@ -1,7 +1,18 @@
 /**
  * Archive 페이지 관련 타입 정의
  * 모든 any 타입을 제거하고 명확한 타입 시스템 구축
+ *
+ * Form 데이터 타입은 Zod 스키마에서 파생 (Single Source of Truth)
+ * @see lib/validation/api-schemas.ts
  */
+
+import type {
+  TournamentCategoryInferred,
+  VideoSourceInferred,
+  TournamentFormDataInferred,
+  EventFormDataInferred,
+  StreamFormDataInferred,
+} from '@/lib/validation/api-schemas'
 
 // ==================== Pipeline Status ====================
 
@@ -19,19 +30,19 @@ export type PipelineStatus =
   | 'published'      // 발행 완료
   | 'failed'         // 분석 실패
 
-// ==================== Enums & Constants ====================
+// ==================== Enums & Constants (Zod에서 파생) ====================
 
-export type TournamentCategory =
-  | "WSOP"
-  | "Triton"
-  | "EPT"
-  | "Hustler Casino Live"
-  | "APT"
-  | "APL"
-  | "WSOP Classic"
-  | "GGPOKER"
+/**
+ * 토너먼트 카테고리
+ * @see tournamentCategorySchema in api-schemas.ts
+ */
+export type TournamentCategory = TournamentCategoryInferred
 
-export type VideoSource = "youtube" | "upload" | "nas"
+/**
+ * 영상 소스
+ * @see videoSourceSchema in api-schemas.ts
+ */
+export type VideoSource = VideoSourceInferred
 
 export type ContentStatus = "draft" | "published" | "archived" | "analyzing" | "completed"
 
@@ -278,40 +289,28 @@ export interface Payout {
   prizeAmount: string
 }
 
-// ==================== Form Data Types ====================
+// ==================== Form Data Types (Zod 기반 Single Source of Truth) ====================
 
-export interface TournamentFormData {
-  name: string
-  category: TournamentCategory
-  categoryLogo?: string
-  gameType: 'tournament' | 'cash-game'
-  location: string
-  city: string
-  country: string
-  startDate: string
-  endDate: string
-}
+/**
+ * Tournament Form 데이터
+ * @see tournamentFormDataSchema in api-schemas.ts
+ */
+export type TournamentFormData = TournamentFormDataInferred
 
-export interface EventFormData {
-  name: string
-  date: string
-  eventNumber: string
-  totalPrize: string
-  winner: string
-  buyIn: string
-  entryCount: string
-  blindStructure: string
-  levelDuration: string
-  startingStack: string
-  notes: string
-}
+/**
+ * Event Form 데이터
+ * @see eventFormDataSchema in api-schemas.ts
+ */
+export type EventFormData = EventFormDataInferred
 
-export interface StreamFormData {
-  name: string
-  videoSource: VideoSource
-  videoUrl: string
+/**
+ * Stream Form 데이터
+ * Zod 스키마 기반 + uploadFile (File 객체는 Zod에서 직접 검증 불가)
+ * @see streamFormDataSchema in api-schemas.ts
+ */
+export interface StreamFormData extends StreamFormDataInferred {
+  /** 업로드 파일 (런타임에서만 사용) */
   uploadFile: File | null
-  publishedAt: string
 }
 
 // ==================== UI State Types ====================
