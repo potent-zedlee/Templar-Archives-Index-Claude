@@ -96,13 +96,15 @@ deploy_orchestrator() {
 
   cd "$(dirname "$0")/orchestrator"
 
-  # 빌드 (Cloud Run은 linux/amd64 필요 + OCI 호환성을 위해 provenance/sbom 비활성화 + --load로 단일 플랫폼 이미지 로드)
-  echo_info "Building Docker image (linux/amd64)..."
-  docker build --platform linux/amd64 --provenance=false --sbom=false --load -t "$IMAGE_NAME" .
-
-  # Push
-  echo_info "Pushing to Artifact Registry..."
-  docker push "$IMAGE_NAME"
+  # 빌드 및 푸시 (Cloud Run은 linux/amd64만 지원, docker buildx로 직접 레지스트리에 푸시)
+  echo_info "Building and pushing Docker image (linux/amd64) to Artifact Registry..."
+  docker buildx build \
+    --platform linux/amd64 \
+    --provenance=false \
+    --sbom=false \
+    --push \
+    -t "$IMAGE_NAME" \
+    .
 
   # 배포
   echo_info "Deploying to Cloud Run..."
@@ -136,13 +138,15 @@ deploy_segment_analyzer() {
 
   cd "$(dirname "$0")/segment-analyzer"
 
-  # 빌드 (Cloud Run은 linux/amd64 필요 + OCI 호환성을 위해 provenance/sbom 비활성화 + --load로 단일 플랫폼 이미지 로드)
-  echo_info "Building Docker image (linux/amd64)..."
-  docker build --platform linux/amd64 --provenance=false --sbom=false --load -t "$IMAGE_NAME" .
-
-  # Push
-  echo_info "Pushing to Artifact Registry..."
-  docker push "$IMAGE_NAME"
+  # 빌드 및 푸시 (Cloud Run은 linux/amd64만 지원, docker buildx로 직접 레지스트리에 푸시)
+  echo_info "Building and pushing Docker image (linux/amd64) to Artifact Registry..."
+  docker buildx build \
+    --platform linux/amd64 \
+    --provenance=false \
+    --sbom=false \
+    --push \
+    -t "$IMAGE_NAME" \
+    .
 
   # 배포 (긴 실행 시간 허용)
   echo_info "Deploying to Cloud Run..."

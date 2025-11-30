@@ -46,9 +46,9 @@ cd cloud-run && ./deploy.sh all              # 전체 배포
 cd cloud-run && ./deploy.sh orchestrator     # Orchestrator만
 cd cloud-run && ./deploy.sh segment-analyzer # Segment Analyzer만
 
-# ⚠️ 중요: Docker 빌드 시 반드시 아래 옵션 모두 사용
-# Apple Silicon Mac에서 BuildKit이 OCI 인덱스 형식으로 빌드하면 Cloud Run 배포 실패
-docker build --platform linux/amd64 --provenance=false --sbom=false --load -t <image> .
+# ⚠️ 중요: Cloud Run 배포 시 반드시 docker buildx 사용
+# deploy.sh는 docker buildx로 자동 처리됨. 수동 빌드할 경우 아래 명령 사용:
+docker buildx build --platform linux/amd64 --provenance=false --sbom=false --push -t <image> .
 
 # 운영 스크립트
 npm run admin                             # 관리자 CLI
@@ -249,14 +249,14 @@ UPSTASH_REDIS_REST_URL=your-url      # Rate Limiting
 - Firebase Security Rules: 역할 기반 접근 제어
 - Zod 검증: API 입력
 - TypeScript Strict Mode
-- **Cloud Run 배포**: 반드시 아래 전체 옵션 사용
+- **Cloud Run 배포**: 반드시 docker buildx 사용
   ```bash
-  docker build --platform linux/amd64 --provenance=false --sbom=false --load -t <image> .
+  docker buildx build --platform linux/amd64 --provenance=false --sbom=false --push -t <image> .
   ```
-  - `--platform linux/amd64`: Cloud Run은 linux/amd64만 지원
+  - `--platform linux/amd64`: Cloud Run은 linux/amd64만 지원 (arm64 불가)
   - `--provenance=false --sbom=false`: OCI attestation 비활성화
-  - `--load`: 단일 플랫폼 이미지를 로컬 Docker에 로드 (중요!)
-  - Apple Silicon Mac에서 `--load` 없이 빌드하면 OCI 인덱스 형식으로 생성되어 배포 실패
+  - `--push`: 직접 레지스트리에 푸시 (deploy.sh 자동 처리)
+  - `docker build --load`는 OCI 인덱스 형식 문제 발생 가능 → 반드시 `docker buildx`로 `--push` 사용
 
 ### Firebase Security Rules 역할
 
@@ -417,4 +417,4 @@ created_at, stream_id, video_url, pot_size
 ---
 
 **마지막 업데이트**: 2025-11-30
-**문서 버전**: 6.3 (Cloud Run Docker 빌드 --load 옵션 필수화)
+**문서 버전**: 6.4 (docker buildx로 OCI 매니페스트 문제 영구 해결)
