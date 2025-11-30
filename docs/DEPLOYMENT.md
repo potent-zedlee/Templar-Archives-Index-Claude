@@ -2,7 +2,7 @@
 
 이 가이드는 Templar Archives를 Firebase Hosting을 통해 배포하는 방법을 설명합니다.
 
-**마지막 업데이트**: 2025-11-27
+**마지막 업데이트**: 2025-11-30
 **프로덕션 URL**: https://templar-archives-index.web.app
 
 ---
@@ -74,16 +74,32 @@ firebase emulators:start
 ### 3.1 Cloud Run 서비스 배포
 
 ```bash
-# Orchestrator 배포
-cd cloud-run/orchestrator
-./deploy.sh
+# 전체 배포 (권장)
+cd cloud-run && ./deploy.sh all
 
-# Segment Analyzer 배포
-cd cloud-run/segment-analyzer
-./deploy.sh
+# 개별 배포
+cd cloud-run && ./deploy.sh orchestrator      # Orchestrator만
+cd cloud-run && ./deploy.sh segment-analyzer  # Segment Analyzer만
 ```
 
-### 3.2 Cloud Tasks 큐 생성
+### 3.2 Docker 빌드 주의사항 (Apple Silicon Mac)
+
+⚠️ **중요**: Apple Silicon (M1/M2/M3/M4) Mac에서는 Docker 빌드 시 반드시 아래 옵션을 모두 사용해야 합니다:
+
+```bash
+docker build --platform linux/amd64 --provenance=false --sbom=false --load -t <image> .
+```
+
+| 옵션 | 설명 |
+|------|------|
+| `--platform linux/amd64` | Cloud Run은 linux/amd64만 지원 (arm64 불가) |
+| `--provenance=false` | BuildKit provenance 비활성화 |
+| `--sbom=false` | SBOM 생성 비활성화 |
+| `--load` | 단일 플랫폼 이미지로 로컬에 로드 (OCI 인덱스 형식 방지) |
+
+**문제 증상**: `Container manifest type 'application/vnd.oci.image.index.v1+json' must support amd64/linux` 에러 발생 시 `--load` 옵션 누락이 원인입니다.
+
+### 3.3 Cloud Tasks 큐 생성
 
 ```bash
 gcloud tasks queues create video-analysis-queue --location=asia-northeast3

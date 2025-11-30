@@ -11,6 +11,73 @@
 
 ---
 
+## 2025-11-30 (세션 50) - CI/CD 수정 및 Dead Link 정리 ✅
+
+### 작업 목표
+CI 테스트 실패 수정, Cloud Run Docker 빌드 문제 영구 해결, Dead Link 정리
+
+### 작업 내용
+
+#### Task 1: Unit Test 실패 수정 ✅
+- **문제**: GitHub Actions CI에서 validation.test.ts 7개 테스트 실패
+- **원인**: 테스트 데이터가 snake_case 사용, 스키마는 camelCase 기대
+- **해결**: 모든 테스트 데이터를 camelCase로 변환
+  - `start_date` → `startDate`
+  - `end_date` → `endDate`
+  - `post_id` → `postId`
+  - `player_id` → `playerId`
+  - `parent_comment_id` → `parentCommentId`
+  - `proof_type` → `proofType`
+  - `proof_url` → `proofUrl`
+  - `proof_text` → `proofText`
+  - `edit_type` → `editType`
+  - `old_value` → `oldValue`
+  - `new_value` → `newValue`
+  - `target_type` → `targetType`
+  - `target_id` → `targetId`
+  - `hand_id` → `handId`
+  - `folder_name` → `folderName`
+  - `avatar_url` → `avatarUrl`
+  - `social_links` → `socialLinks`
+- **결과**: 217/217 테스트 통과
+
+#### Task 2: Cloud Run Docker 빌드 문제 영구 해결 ✅
+- **문제**: Cloud Run 배포 실패 - OCI 매니페스트 형식 에러
+  ```
+  Container manifest type 'application/vnd.oci.image.index.v1+json' must support amd64/linux
+  ```
+- **원인**: Apple Silicon Mac에서 Docker BuildKit이 OCI 인덱스 형식으로 빌드
+- **해결**: `docker build`에 `--load` 옵션 추가
+  ```bash
+  docker build --platform linux/amd64 --provenance=false --sbom=false --load -t <image> .
+  ```
+- **수정 파일**:
+  - `cloud-run/deploy.sh`: orchestrator, segment-analyzer 빌드 명령 수정
+  - `CLAUDE.md`: Docker 빌드 규칙 문서화 강화 (v6.3)
+
+#### Task 3: Dead Link 정리 ✅
+- **목표**: 삭제된 페이지 (/reporter/live, /news) 참조 제거
+- **수정 파일**:
+  - `app/sitemap.ts`: `/news`, `/live-reporting` 제거
+  - `app/robots.ts`: `/reporter/` disallow 규칙 제거
+- **검증**: Header.tsx navLinks에는 dead link 없음 확인
+
+#### Task 4: 문서 업데이트 ✅
+- `docs/DEPLOYMENT.md`: Cloud Run Docker 빌드 주의사항 섹션 추가
+- `work-logs/WORK_LOG_MAIN.md`: 오늘 작업 내용 기록
+
+### 커밋 이력
+1. `test: validation.test.ts 테스트 데이터 camelCase 변환`
+2. `fix: Cloud Run Docker 빌드 --load 옵션 추가`
+3. `fix: Dead Link 정리 - /news, /live-reporting 경로 제거`
+4. `docs: CI/CD 및 Docker 빌드 문서 업데이트`
+
+### 다음 세션 작업
+- 프로덕션 테스트 진행
+- 영상 분석 기능 검증
+
+---
+
 ## 2025-11-16 (세션 49) - Phase 9 (최종): 포스트모던 디자인 시스템 완료 ✅
 
 ### 작업 목표
