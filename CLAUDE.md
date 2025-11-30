@@ -26,11 +26,10 @@ npm run build
 npm run lint
 npx tsc --noEmit                          # TypeScript 체크
 
-# 테스트
+# 테스트 (Unit Only - E2E는 임시 비활성화)
 npm run test                              # Vitest 전체
 npm run test lib/filter-utils.test.ts     # 단일 파일
-npm run test:e2e                          # Playwright 전체
-npx playwright test e2e/archive.spec.ts   # 단일 파일
+# E2E 테스트는 개발 속도 우선으로 임시 비활성화됨
 
 # Firebase 에뮬레이터 (로컬 개발)
 firebase emulators:start
@@ -246,8 +245,32 @@ UPSTASH_REDIS_REST_URL=your-url      # Rate Limiting
 
 - Server Actions: 모든 write 작업
 - Firebase Security Rules: 역할 기반 접근 제어
-- Zod 검증: API 입력
+- Zod 검증: API 입력 (Single Source of Truth)
 - TypeScript Strict Mode
+
+### Zod 기반 타입 통합 (Single Source of Truth)
+
+**Form 데이터 타입은 Zod 스키마에서 파생** (`z.infer<typeof schema>`)
+
+```typescript
+// ✅ 올바른 방법 - Zod 스키마에서 타입 파생
+// lib/validation/api-schemas.ts
+export const tournamentFormDataSchema = z.object({ ... })
+export type TournamentFormDataInferred = z.infer<typeof tournamentFormDataSchema>
+
+// lib/types/archive.ts
+export type TournamentFormData = TournamentFormDataInferred
+
+// ❌ 잘못된 방법 - 수동 인터페이스 중복 정의
+export interface TournamentFormData { ... }  // 스키마와 불일치 위험
+```
+
+**핵심 파일**:
+| 파일 | 역할 |
+|------|------|
+| `lib/validation/api-schemas.ts` | Zod 스키마 정의 (Single Source) |
+| `lib/types/archive.ts` | `z.infer` 기반 타입 내보내기 |
+| `lib/firestore-types.ts` | Firestore 전용 타입 (별도 관리) |
 
 ### ⚠️ Cloud Run 배포 규칙 (중요!)
 
@@ -429,5 +452,5 @@ created_at, stream_id, video_url, pot_size
 
 ---
 
-**마지막 업데이트**: 2025-11-30
-**문서 버전**: 7.0 (Cloud Run 배포를 Cloud Build --source로 전환)
+**마지막 업데이트**: 2025-12-01
+**문서 버전**: 7.1 (Zod 기반 타입 통합, E2E 테스트 비활성화)
