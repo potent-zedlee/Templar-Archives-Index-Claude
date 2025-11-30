@@ -15,9 +15,6 @@
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
-    "test:e2e": "playwright test",
-    "test:e2e:ui": "playwright test --ui",
-    "test:e2e:headed": "playwright test --headed",
     "admin": "npx tsx scripts/admin-cli.ts",
     "ops:check-jobs": "node scripts/operations/check-analysis-status.mjs",
     "ops:cleanup-jobs": "node scripts/operations/cleanup-stuck-job.mjs",
@@ -106,7 +103,6 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.3",
     "@next/bundle-analyzer": "^15.5.6",
-    "@playwright/test": "^1.56.1",
     "@tailwindcss/postcss": "^4.1.16",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
