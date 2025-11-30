@@ -240,7 +240,7 @@ UPSTASH_REDIS_REST_URL=your-url      # Rate Limiting
 - 인증 없이 민감한 데이터 접근
 - pnpm 사용
 - Firestore 필드명에 snake_case 사용 (camelCase만 허용)
-- Cloud Run Docker 빌드 시 필수 플래그 누락
+- **⛔ Cloud Run 배포 시 로컬 Docker 빌드 사용 금지** (아래 상세 설명 참고)
 
 ### 필수 사항
 
@@ -248,13 +248,28 @@ UPSTASH_REDIS_REST_URL=your-url      # Rate Limiting
 - Firebase Security Rules: 역할 기반 접근 제어
 - Zod 검증: API 입력
 - TypeScript Strict Mode
-- **Cloud Run 배포**: `gcloud run deploy --source` 사용 (Cloud Build)
-  ```bash
-  gcloud run deploy SERVICE_NAME --source=. --region=asia-northeast3 ...
-  ```
-  - 로컬 Docker 빌드 없이 Cloud Build에서 서버 빌드
-  - Apple Silicon Mac에서도 플랫폼 문제 없음
-  - [공식 문서](https://cloud.google.com/run/docs/deploying-source-code) 참고
+
+### ⚠️ Cloud Run 배포 규칙 (중요!)
+
+**절대 로컬 Docker로 빌드하지 마세요!** 반드시 `gcloud run deploy --source` 사용
+
+```bash
+# ✅ 올바른 방법 (deploy.sh가 이 방식 사용)
+gcloud run deploy SERVICE_NAME --source=. --region=asia-northeast3 ...
+
+# ❌ 금지 - 모두 OCI 매니페스트 형식 문제 발생
+docker build --platform linux/amd64 ...
+docker buildx build --platform linux/amd64 --push ...
+docker buildx build --platform linux/amd64 --load ...
+```
+
+**왜?**
+- Apple Silicon Mac에서 Docker BuildKit v0.10.0+가 OCI 이미지 인덱스 형식 생성
+- Cloud Run은 `application/vnd.oci.image.index.v1+json` 형식 미지원
+- `--provenance=false`, `--sbom=false`, `--load`, `--push` 등 모든 옵션 시도해도 불안정
+- **유일한 해결책**: Cloud Build에서 서버 빌드 (`--source` 플래그)
+
+**참고**: [Cloud Run 소스 배포 공식 문서](https://cloud.google.com/run/docs/deploying-source-code)
 
 ### Firebase Security Rules 역할
 
