@@ -114,7 +114,6 @@ function DashboardContent() {
   const [newCountry, setNewCountry] = useState('')
   const [newStartDate, setNewStartDate] = useState('')
   const [newEndDate, setNewEndDate] = useState('')
-  const [newCategoryLogo, setNewCategoryLogo] = useState('')
 
   // URL에서 상태 필터 읽기
   const statusParam = searchParams?.get('status') as PipelineStatus | null
@@ -315,7 +314,6 @@ function DashboardContent() {
           setNewCountry('')
           setNewStartDate('')
           setNewEndDate('')
-          setNewCategoryLogo('')
         }}
         onCancel={() => {
           setTournamentDialogOpen(false)
@@ -328,7 +326,6 @@ function DashboardContent() {
           setNewCountry('')
           setNewStartDate('')
           setNewEndDate('')
-          setNewCategoryLogo('')
         }}
         newTournamentName={newTournamentName}
         setNewTournamentName={setNewTournamentName}
@@ -346,8 +343,6 @@ function DashboardContent() {
         setNewStartDate={setNewStartDate}
         newEndDate={newEndDate}
         setNewEndDate={setNewEndDate}
-        newCategoryLogo={newCategoryLogo}
-        setNewCategoryLogo={setNewCategoryLogo}
         isUserAdmin={true}
       />
     </div>

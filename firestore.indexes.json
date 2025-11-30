@@ -4,8 +4,8 @@
       "collectionGroup": "tournaments",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "game_type", "order": "ASCENDING" },
-        { "fieldPath": "start_date", "order": "DESCENDING" }
+        { "fieldPath": "gameType", "order": "ASCENDING" },
+        { "fieldPath": "startDate", "order": "DESCENDING" }
       ]
     },
     {
@@ -13,14 +13,14 @@
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "category", "order": "ASCENDING" },
-        { "fieldPath": "start_date", "order": "DESCENDING" }
+        { "fieldPath": "startDate", "order": "DESCENDING" }
       ]
     },
     {
       "collectionGroup": "hands",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "stream_id", "order": "ASCENDING" },
+        { "fieldPath": "streamId", "order": "ASCENDING" },
         { "fieldPath": "number", "order": "ASCENDING" }
       ]
     },
@@ -28,24 +28,24 @@
       "collectionGroup": "hands",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "stream_id", "order": "ASCENDING" },
-        { "fieldPath": "created_at", "order": "ASCENDING" }
+        { "fieldPath": "streamId", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "ASCENDING" }
       ]
     },
     {
       "collectionGroup": "hands",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "tournament_id", "order": "ASCENDING" },
-        { "fieldPath": "created_at", "order": "DESCENDING" }
+        { "fieldPath": "tournamentId", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
       ]
     },
     {
       "collectionGroup": "hands",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "player_ids", "arrayConfig": "CONTAINS" },
-        { "fieldPath": "created_at", "order": "DESCENDING" }
+        { "fieldPath": "playerIds", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
       ]
     },
     {
@@ -53,14 +53,14 @@
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "author.id", "order": "ASCENDING" },
-        { "fieldPath": "created_at", "order": "DESCENDING" }
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
       ]
     },
     {
       "collectionGroup": "analysisJobs",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "stream_id", "order": "ASCENDING" },
+        { "fieldPath": "streamId", "order": "ASCENDING" },
         { "fieldPath": "status", "order": "ASCENDING" }
       ]
     },
@@ -68,8 +68,8 @@
       "collectionGroup": "analysisJobs",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "user_id", "order": "ASCENDING" },
-        { "fieldPath": "created_at", "order": "DESCENDING" }
+        { "fieldPath": "userId", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
       ]
     },
     {
@@ -77,7 +77,7 @@
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "role", "order": "ASCENDING" },
-        { "fieldPath": "created_at", "order": "DESCENDING" }
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
       ]
     },
     {
@@ -85,7 +85,7 @@
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "status", "order": "ASCENDING" },
-        { "fieldPath": "published_at", "order": "DESCENDING" }
+        { "fieldPath": "publishedAt", "order": "DESCENDING" }
       ]
     },
     {
@@ -93,23 +93,23 @@
       "queryScope": "COLLECTION_GROUP",
       "fields": [
         { "fieldPath": "author.id", "order": "ASCENDING" },
-        { "fieldPath": "created_at", "order": "DESCENDING" }
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
       ]
     },
     {
       "collectionGroup": "notifications",
       "queryScope": "COLLECTION_GROUP",
       "fields": [
-        { "fieldPath": "recipient_id", "order": "ASCENDING" },
-        { "fieldPath": "created_at", "order": "DESCENDING" }
+        { "fieldPath": "recipientId", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
       ]
     },
     {
       "collectionGroup": "streams",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "pipeline_status", "order": "ASCENDING" },
-        { "fieldPath": "pipeline_updated_at", "order": "DESCENDING" }
+        { "fieldPath": "pipelineStatus", "order": "ASCENDING" },
+        { "fieldPath": "pipelineUpdatedAt", "order": "DESCENDING" }
       ]
     }
   ],

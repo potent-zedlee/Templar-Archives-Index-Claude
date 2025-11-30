@@ -152,3 +152,101 @@ export function searchLogos(logos: LogoFile[], query: string): LogoFile[] {
     logo.path.toLowerCase().includes(lowerQuery)
   )
 }
+
+/**
+ * 토너먼트 이름에서 연도 추출
+ */
+function extractYear(name: string): string | null {
+  const match = name.match(/20\d{2}/)
+  return match ? match[0] : null
+}
+
+/**
+ * 토너먼트 이름을 파일명으로 정규화
+ */
+function normalizeForFilename(text: string): string {
+  return text
+    .replace(/[^a-zA-Z0-9\s-]/g, '')  // 특수문자 제거
+    .replace(/\s+/g, '_')              // 공백 → 언더스코어
+    .toLowerCase()
+}
+
+/**
+ * 로고 자동 매칭
+ * @param tournamentName - "EPT Barcelona 2025"
+ * @param category - "EPT"
+ * @returns {simpleUrl?, fullUrl?}
+ */
+export async function findMatchingLogos(
+  tournamentName: string,
+  category: string
+): Promise<{ simpleUrl?: string; fullUrl?: string }> {
+  try {
+    const year = extractYear(tournamentName)
+    const normalizedName = normalizeForFilename(tournamentName)
+    const categorySlug = category.toLowerCase().replace(/\s+/g, '-')
+
+    // 검색 패턴 (우선순위순)
+    const patterns = [
+      // 1. 정확한 매칭 (전체 이름)
+      normalizedName,
+      // 2. 카테고리_연도
+      year ? `${categorySlug}_${year}` : null,
+      // 3. 카테고리만
+      categorySlug,
+    ].filter(Boolean) as string[]
+
+    // Firebase Storage에서 모든 로고 검색
+    const logosRef = ref(storage, LOGOS_STORAGE_PATH)
+    const result = await listAll(logosRef)
+
+    let simpleUrl: string | undefined
+    let fullUrl: string | undefined
+
+    for (const itemRef of result.items) {
+      const filename = itemRef.name.toLowerCase()
+
+      // simple 로고 찾기
+      if (!simpleUrl && filename.includes('-simple')) {
+        for (const pattern of patterns) {
+          if (filename.startsWith(pattern)) {
+            simpleUrl = await getDownloadURL(itemRef)
+            break
+          }
+        }
+      }
+
+      // full 로고 찾기
+      if (!fullUrl && filename.includes('-full')) {
+        for (const pattern of patterns) {
+          if (filename.startsWith(pattern)) {
+            fullUrl = await getDownloadURL(itemRef)
+            break
+          }
+        }
+      }
+
+      if (simpleUrl && fullUrl) break  // 둘 다 찾으면 조기 종료
+    }
+
+    return { simpleUrl, fullUrl }
+  } catch (error) {
+    console.error('[findMatchingLogos] Error:', error)
+    return {}
+  }
+}
+
+/**
+ * 카테고리 기반 fallback 로고
+ */
+export function getCategoryFallbackLogo(category: string): string {
+  const categorySlug = category.toLowerCase().replace(/\s+/g, '-')
+
+  // 정적 로고 목록에서 검색
+  const staticLogo = STATIC_LOGOS.find(
+    logo => logo.path.includes(`/${categorySlug}.`) ||
+            logo.name.toLowerCase() === categorySlug
+  )
+
+  return staticLogo?.url || '/logos/placeholder.svg'
+}

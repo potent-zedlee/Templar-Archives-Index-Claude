@@ -75,6 +75,9 @@ export interface Tournament {
   endDate: string
   totalPrize?: string
   createdAt?: string
+  // Logo fields
+  logoSimpleUrl?: string // 간단한 로고 (아이콘형)
+  logoFullUrl?: string // 전체 로고 (텍스트 포함)
   // Publication status
   status?: ContentStatus
   publishedBy?: string

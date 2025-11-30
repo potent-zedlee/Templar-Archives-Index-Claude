@@ -365,7 +365,7 @@ export function CategoryDialog({ category, trigger }: CategoryDialogProps) {
               {/* Select Mode: Logo Picker */}
               {logoUploadMode === "select" && (
                 <LogoPicker
-                  selectedLogo={logoPreview}
+                  selectedLogo={logoPreview || ''}
                   onSelect={(url) => {
                     setLogoPreview(url)
                     setLogoFile(null) // Clear file if switching from upload

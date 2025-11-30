@@ -13,6 +13,7 @@ import { cookies } from 'next/headers'
 import { Timestamp, FieldValue, FieldPath } from 'firebase-admin/firestore'
 import type { TournamentCategory } from '@/lib/types/archive'
 import { COLLECTION_PATHS } from '@/lib/firestore-types'
+import { findMatchingLogos, getCategoryFallbackLogo } from '@/lib/logo-utils'
 
 // ==================== Helper Functions ====================
 
@@ -77,7 +78,6 @@ async function verifyAdmin(): Promise<{
 export async function createTournament(data: {
   name: string
   category: TournamentCategory
-  category_logo?: string
   game_type: 'tournament' | 'cash-game'
   location: string
   city?: string
@@ -112,7 +112,11 @@ export async function createTournament(data: {
       return mapping[category] || category.toLowerCase().replace(/\s+/g, '-')
     }
 
-    // 4. Firestore에 문서 추가
+    // 4. 로고 자동 매칭
+    const { simpleUrl, fullUrl } = await findMatchingLogos(data.name, data.category)
+    const fallbackLogo = getCategoryFallbackLogo(data.category)
+
+    // 5. Firestore에 문서 추가
     const tournamentRef = adminFirestore.collection(COLLECTION_PATHS.TOURNAMENTS).doc()
 
     const tournamentData = {
@@ -121,7 +125,7 @@ export async function createTournament(data: {
       categoryInfo: {
         id: getCategoryId(data.category),
         name: data.category,
-        logo: data.category_logo || null,
+        logo: simpleUrl || fallbackLogo,  // 하위 호환성
       },
       gameType: data.game_type,
       location: data.location.trim(),
@@ -130,6 +134,9 @@ export async function createTournament(data: {
       startDate: Timestamp.fromDate(new Date(data.start_date)),
       endDate: Timestamp.fromDate(new Date(data.end_date)),
       status: 'draft' as const,
+      // NEW: 로고 자동 매칭 필드
+      logoSimpleUrl: simpleUrl || fallbackLogo,
+      logoFullUrl: fullUrl || null,
       stats: {
         eventsCount: 0,
         streamsCount: 0,
@@ -164,7 +171,6 @@ export async function createTournament(data: {
 export async function updateTournament(id: string, data: {
   name: string
   category: TournamentCategory
-  category_logo?: string
   game_type: 'tournament' | 'cash-game'
   location: string
   city?: string
@@ -199,7 +205,11 @@ export async function updateTournament(id: string, data: {
       return mapping[category] || category.toLowerCase().replace(/\s+/g, '-')
     }
 
-    // 4. Firestore 문서 업데이트
+    // 4. 로고 자동 매칭
+    const { simpleUrl, fullUrl } = await findMatchingLogos(data.name, data.category)
+    const fallbackLogo = getCategoryFallbackLogo(data.category)
+
+    // 5. Firestore 문서 업데이트
     const tournamentRef = adminFirestore.collection(COLLECTION_PATHS.TOURNAMENTS).doc(id)
 
     const updateData = {
@@ -208,7 +218,7 @@ export async function updateTournament(id: string, data: {
       categoryInfo: {
         id: getCategoryId(data.category),
         name: data.category,
-        logo: data.category_logo || null,
+        logo: simpleUrl || fallbackLogo,  // 하위 호환성
       },
       gameType: data.game_type,
       location: data.location.trim(),
@@ -216,6 +226,9 @@ export async function updateTournament(id: string, data: {
       country: data.country?.trim() || null,
       startDate: Timestamp.fromDate(new Date(data.start_date)),
       endDate: Timestamp.fromDate(new Date(data.end_date)),
+      // NEW: 로고 자동 매칭 필드
+      logoSimpleUrl: simpleUrl || fallbackLogo,
+      logoFullUrl: fullUrl || null,
       updatedAt: FieldValue.serverTimestamp(),
     }
 

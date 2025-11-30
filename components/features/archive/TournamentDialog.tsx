@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -20,7 +19,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { X } from "lucide-react"
 import { toast } from "sonner"
 import type { TournamentCategory } from "@/lib/firestore-types"
 
@@ -29,7 +27,6 @@ type Tournament = {
   category: TournamentCategory
 }
 import { createTournament, updateTournament } from "@/app/actions/archive"
-import { LogoPicker } from "@/components/common/LogoPicker"
 
 interface TournamentDialogProps {
   isOpen: boolean
@@ -53,8 +50,6 @@ interface TournamentDialogProps {
   setNewStartDate: (date: string) => void
   newEndDate: string
   setNewEndDate: (date: string) => void
-  newCategoryLogo: string
-  setNewCategoryLogo: (logo: string) => void
   isUserAdmin: boolean
 }
 
@@ -80,8 +75,6 @@ export function TournamentDialog({
   setNewStartDate,
   newEndDate,
   setNewEndDate,
-  newCategoryLogo,
-  setNewCategoryLogo,
   isUserAdmin,
 }: TournamentDialogProps) {
   const [saving, setSaving] = useState(false)
@@ -101,7 +94,6 @@ export function TournamentDialog({
     const tournamentData = {
       name: newTournamentName.trim(),
       category: newCategory,
-      category_logo: newCategoryLogo || undefined,
       game_type: newGameType,
       location: newLocation.trim(),
       city: newCity.trim() || undefined,
@@ -164,38 +156,12 @@ export function TournamentDialog({
             </Select>
           </div>
 
-          {/* Logo Selection */}
-          <div className="space-y-3 p-3 border rounded-lg">
-            <Label>Tournament Logo (Optional)</Label>
-
-            {/* Logo Preview */}
-            {newCategoryLogo && (
-              <div className="flex items-center gap-4">
-                <div className="relative w-16 h-16 border rounded-lg overflow-hidden bg-muted">
-                  <Image
-                    src={newCategoryLogo}
-                    alt="Logo preview"
-                    fill
-                    className="object-contain"
-                  />
-                </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setNewCategoryLogo("")}
-                >
-                  <X className="h-4 w-4 mr-2" />
-                  Remove
-                </Button>
-              </div>
-            )}
-
-            {/* Logo Picker */}
-            <LogoPicker
-              selectedLogo={newCategoryLogo}
-              onSelect={(url) => setNewCategoryLogo(url)}
-            />
+          {/* Logo Auto-Match Info */}
+          <div className="space-y-2 p-3 border rounded-lg bg-muted/50">
+            <Label>토너먼트 로고</Label>
+            <p className="text-sm text-muted-foreground">
+              로고는 토너먼트 이름과 카테고리를 기반으로 자동 매칭됩니다.
+            </p>
           </div>
 
           <div className="space-y-2">

@@ -218,6 +218,10 @@ export interface FirestoreTournament {
   totalPrize?: string
   /** 컨텐츠 상태 */
   status?: ContentStatus
+  /** 로고 - 간단한 버전 (아이콘형) */
+  logoSimpleUrl?: string
+  /** 로고 - 전체 버전 (텍스트 포함) */
+  logoFullUrl?: string
   /** 통계 */
   stats: Stats
   /** 생성일 */
