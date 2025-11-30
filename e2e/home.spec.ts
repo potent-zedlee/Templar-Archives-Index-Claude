@@ -17,9 +17,9 @@ test.describe('Home Page', () => {
     await page.waitForTimeout(1000)
 
     // Check for main navigation using data-testid
-    await expect(page.locator('[data-testid="nav-link-news"]')).toBeVisible({ timeout: 10000 })
+    await expect(page.locator('[data-testid="nav-link-search"]')).toBeVisible({ timeout: 10000 })
+    await expect(page.locator('[data-testid="nav-link-tournament"]')).toBeVisible({ timeout: 10000 })
     await expect(page.locator('[data-testid="nav-link-player"]')).toBeVisible({ timeout: 10000 })
-    await expect(page.locator('[data-testid="nav-link-forum"]')).toBeVisible({ timeout: 10000 })
   })
 
   test('should navigate to Archive page', async ({ page }) => {
@@ -46,28 +46,28 @@ test.describe('Home Page', () => {
     expect(isArchivePage || isHomePage).toBeTruthy()
   })
 
-  test('should navigate to Community page', async ({ page }) => {
+  test('should navigate to Search page', async ({ page }) => {
     await page.goto('/')
     await page.waitForLoadState('domcontentloaded')
     await page.waitForTimeout(1000)
 
-    // Click Forum link using data-testid
-    const forumLink = page.locator('[data-testid="nav-link-forum"]')
-    await expect(forumLink).toBeVisible({ timeout: 10000 })
+    // Click Search link using data-testid
+    const searchLink = page.locator('[data-testid="nav-link-search"]')
+    await expect(searchLink).toBeVisible({ timeout: 10000 })
 
     // Click with force for WebKit compatibility
-    await forumLink.click({ force: true, timeout: 15000 })
+    await searchLink.click({ force: true, timeout: 15000 })
 
     // Wait for navigation - use flexible timeout
     await page.waitForTimeout(3000)
 
-    // Verify we're on the community page or click was handled
+    // Verify we're on the search page or click was handled
     const currentUrl = page.url()
-    const isCommunityPage = currentUrl.includes('/community')
+    const isSearchPage = currentUrl.includes('/search')
     const isHomePage = currentUrl.endsWith('/') || currentUrl.endsWith(':3000')
 
     // Either navigation succeeded or we're still on home (WebKit might need more time)
-    expect(isCommunityPage || isHomePage).toBeTruthy()
+    expect(isSearchPage || isHomePage).toBeTruthy()
   })
 
   test('should have responsive layout', async ({ page }) => {
