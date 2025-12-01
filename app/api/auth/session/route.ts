@@ -44,10 +44,11 @@ export async function POST(request: NextRequest) {
     })
 
     return NextResponse.json({ success: true })
-  } catch (error) {
-    console.error('[Session API] Error creating session:', error)
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    console.error('[Session API] Error creating session:', errorMessage, error)
     return NextResponse.json(
-      { error: 'Failed to create session' },
+      { error: 'Failed to create session', details: errorMessage },
       { status: 401 }
     )
   }
