@@ -130,9 +130,9 @@ function DashboardContent() {
     (status: PipelineStatus | 'all') => {
       setCurrentStatusFilter(status)
       if (status === 'all') {
-        router.push('/admin/archive')
+        router.push('/admin/archive/pipeline')
       } else {
-        router.push(`/admin/archive?status=${status}`)
+        router.push(`/admin/archive/pipeline?status=${status}`)
       }
     },
     [router, setCurrentStatusFilter]
