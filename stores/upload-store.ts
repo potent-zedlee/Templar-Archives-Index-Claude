@@ -11,6 +11,7 @@
 
 import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
+import { MAX_CONCURRENT_UPLOADS } from '@/lib/upload-constants'
 
 // ==================== Types ====================
 
@@ -86,7 +87,7 @@ export const useUploadStore = create<UploadStore>()(
       // Initial State
       tasks: [],
       activeUploads: 0,
-      maxConcurrentUploads: 2, // 동시에 2개까지 업로드
+      maxConcurrentUploads: MAX_CONCURRENT_UPLOADS,
 
       // Task 관리
       addTask: (taskData) => {

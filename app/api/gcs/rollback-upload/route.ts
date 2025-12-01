@@ -3,15 +3,27 @@
  *
  * 업로드 실패 시 DB 상태를 롤백합니다.
  * - streams.uploadStatus → 'none' 또는 'uploaded' (기존 gcsUri 존재 여부에 따라)
+ *
+ * ⚠️ Admin/High Templar 권한 필요
  */
 
 import { NextRequest, NextResponse } from 'next/server'
 import { adminFirestore } from '@/lib/firebase-admin'
 import { COLLECTION_PATHS, type UploadStatus } from '@/lib/firestore-types'
 import { FieldValue } from 'firebase-admin/firestore'
+import { verifyAdminFromRequest } from '@/lib/api-auth'
 
 export async function POST(request: NextRequest) {
   try {
+    // 0. 관리자 권한 검증
+    const auth = await verifyAdminFromRequest(request)
+    if (!auth.authorized) {
+      return NextResponse.json(
+        { error: auth.error || 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
     const { uploadId, tournamentId, eventId, errorMessage } = await request.json()
 
     if (!uploadId || !tournamentId || !eventId) {

@@ -2,7 +2,7 @@
  * GCS Upload Hook
  *
  * Google Cloud Storage 재개 가능 업로드 훅
- * - 청크 단위 업로드 (8MB)
+ * - 청크 단위 업로드 (16MB)
  * - 일시정지/재개/취소
  * - 진행률 추적
  * - LocalStorage 상태 저장
@@ -11,10 +11,10 @@
 'use client'
 
 import { useState, useCallback, useRef, useEffect } from 'react'
+import { CHUNK_SIZE } from '@/lib/upload-constants'
 
 // ==================== Constants ====================
 
-const CHUNK_SIZE = 8 * 1024 * 1024 // 8MB
 const STORAGE_KEY_PREFIX = 'gcs_upload_'
 
 // ==================== Types ====================

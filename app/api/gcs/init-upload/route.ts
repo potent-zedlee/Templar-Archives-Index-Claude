@@ -3,6 +3,7 @@ import { adminFirestore } from '@/lib/firebase-admin'
 import { gcsClient } from '@/lib/gcs/client'
 import { COLLECTION_PATHS, type UploadStatus } from '@/lib/firestore-types'
 import { FieldValue, Timestamp } from 'firebase-admin/firestore'
+import { verifyAdminFromRequest } from '@/lib/api-auth'
 
 /**
  * GCS 업로드 세션 시작 API
@@ -21,9 +22,20 @@ import { FieldValue, Timestamp } from 'firebase-admin/firestore'
  * - uploadUrl: string - Resumable Upload URL
  * - uploadId: string - 스트림 ID (Firestore에서는 stream 문서 자체에 저장)
  * - gcsUri: string - GCS URI (gs://bucket/path)
+ *
+ * ⚠️ Admin/High Templar 권한 필요
  */
 export async function POST(request: NextRequest) {
   try {
+    // 0. 관리자 권한 검증
+    const auth = await verifyAdminFromRequest(request)
+    if (!auth.authorized) {
+      return NextResponse.json(
+        { error: auth.error || 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
     // 1. 요청 body 파싱
     const body = await request.json()
     const { streamId, tournamentId, eventId, filename, fileSize, contentType } = body

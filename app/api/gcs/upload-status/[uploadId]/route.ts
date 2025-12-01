@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { adminFirestore } from '@/lib/firebase-admin'
 import { COLLECTION_PATHS, type UploadStatus } from '@/lib/firestore-types'
+import { verifyAdminFromRequest } from '@/lib/api-auth'
 
 /**
  * video_uploads 상태 조회 결과 타입
@@ -24,12 +25,23 @@ interface VideoUploadStatusRow {
  * - status: 'none' | 'uploading' | 'uploaded' | 'analyzing' | 'completed' | 'failed'
  * - progress: number (0-100)
  * - errorMessage?: string
+ *
+ * ⚠️ Admin/High Templar 권한 필요
  */
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ uploadId: string }> }
 ) {
   try {
+    // 0. 관리자 권한 검증
+    const auth = await verifyAdminFromRequest(request)
+    if (!auth.authorized) {
+      return NextResponse.json(
+        { error: auth.error || 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
     const { uploadId } = await params
 
     if (!uploadId) {

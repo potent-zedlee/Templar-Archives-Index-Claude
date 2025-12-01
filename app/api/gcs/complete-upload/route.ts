@@ -3,6 +3,7 @@ import { adminFirestore } from '@/lib/firebase-admin'
 import { gcsClient } from '@/lib/gcs/client'
 import { COLLECTION_PATHS, type UploadStatus } from '@/lib/firestore-types'
 import { FieldValue } from 'firebase-admin/firestore'
+import { verifyAdminFromRequest } from '@/lib/api-auth'
 
 /**
  * GCS 업로드 완료 콜백 API
@@ -18,9 +19,20 @@ import { FieldValue } from 'firebase-admin/firestore'
  * 응답:
  * - success: boolean
  * - gcsUri: string
+ *
+ * ⚠️ Admin/High Templar 권한 필요
  */
 export async function POST(request: NextRequest) {
   try {
+    // 0. 관리자 권한 검증
+    const auth = await verifyAdminFromRequest(request)
+    if (!auth.authorized) {
+      return NextResponse.json(
+        { error: auth.error || 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
     // 1. 요청 body 파싱
     const body = await request.json()
     const { uploadId, tournamentId, eventId, duration } = body

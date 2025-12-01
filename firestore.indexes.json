@@ -119,6 +119,14 @@
         { "fieldPath": "pipelineStatus", "order": "ASCENDING" },
         { "fieldPath": "pipelineUpdatedAt", "order": "DESCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "tags",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "tagName", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []
