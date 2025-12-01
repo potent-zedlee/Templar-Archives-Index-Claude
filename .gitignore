@@ -59,3 +59,4 @@ gcs-service-account-key.json
 
 # Migration artifacts
 scripts/migration/id-mappings-*.json
+.vercel

@@ -8,10 +8,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Templar Archives는 포커 영상을 자동으로 핸드 히스토리로 변환하고 분석하는 프로덕션 플랫폼입니다.
 
-- **프로덕션**: https://templar-archives-index.web.app
+- **프로덕션 (Vercel)**: https://templar-archives.vercel.app (메인)
+- **프로덕션 (Firebase)**: https://templar-archives-index.web.app (백업)
 - **로컬**: http://localhost:3000
 - **레이아웃**: 3-Column (Desktop 전용, lg+)
-- **인프라**: GCP 완전 통합 (Firebase Hosting, Firestore, Cloud Run, Cloud Tasks)
+- **인프라**: Vercel (프론트엔드) + GCP (백엔드: Firestore, Cloud Run, GCS)
 
 ---
 
@@ -71,7 +72,7 @@ npm run analyze
 | AI | Vertex AI Gemini 3 Pro (Phase 2) / Gemini 2.5 Flash (Phase 1) |
 | Background Jobs | Cloud Run + Cloud Tasks |
 | Video | GCS 직접 업로드 |
-| Hosting | Firebase Hosting (GitHub Actions CI/CD) |
+| Hosting | Vercel (메인) + Firebase Hosting (백업) |
 
 **Node.js**: >=22.0.0
 **패키지 매니저**: npm (pnpm 사용 금지)
@@ -308,17 +309,18 @@ docker buildx build --platform linux/amd64 --load ...
 
 ## CI/CD
 
-**GitHub Actions** (`main` 브랜치 push 시 자동 배포):
+### Vercel (메인 배포)
+GitHub과 직접 연동되어 `main` 브랜치 push 시 자동 배포 (~1분)
+
 ```
-.github/workflows/firebase-deploy.yml
-.github/workflows/ci.yml
+Git Push (main) → Vercel 자동 빌드 → https://templar-archives.vercel.app
 ```
 
-**배포 흐름**:
+### Firebase Hosting (백업)
+수동 트리거 또는 매주 일요일 자동 배포
+
 ```
-Git Push (main) → GitHub Actions → npm ci → npm run build → firebase deploy
-                                                              ↓
-                               https://templar-archives-index.web.app
+.github/workflows/firebase-deploy.yml  # workflow_dispatch로 수동 실행
 ```
 
 **GitHub Secrets 필요**:
