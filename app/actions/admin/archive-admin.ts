@@ -49,16 +49,16 @@ async function verifyAdmin(): Promise<{
   userId?: string
 }> {
   try {
-    // 1. 쿠키에서 Firebase ID 토큰 가져오기
+    // 1. 세션 쿠키에서 토큰 가져오기
     const cookieStore = await cookies()
-    const token = cookieStore.get('firebase-auth-token')?.value
+    const sessionCookie = cookieStore.get('session')?.value
 
-    if (!token) {
+    if (!sessionCookie) {
       return { authorized: false, error: 'Unauthorized - Please sign in' }
     }
 
-    // 2. Firebase Auth 토큰 검증
-    const decodedToken = await adminAuth.verifyIdToken(token)
+    // 2. Firebase Auth 세션 쿠키 검증
+    const decodedToken = await adminAuth.verifySessionCookie(sessionCookie, true)
     const userId = decodedToken.uid
 
     // 3. Firestore에서 사용자 role 조회

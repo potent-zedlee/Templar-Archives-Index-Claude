@@ -35,7 +35,7 @@ async function verifyAdmin(): Promise<{
       return { isAdmin: false, error: 'Unauthorized' }
     }
 
-    const decodedToken = await adminAuth.verifyIdToken(sessionCookie.value)
+    const decodedToken = await adminAuth.verifySessionCookie(sessionCookie.value, true)
     const userId = decodedToken.uid
 
     const userDoc = await adminFirestore
