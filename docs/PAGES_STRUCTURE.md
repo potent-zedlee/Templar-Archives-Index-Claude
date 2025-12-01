@@ -35,7 +35,7 @@
 
 ### 주요 기능
 - **기본 검색**: 키워드, 토너먼트, 플레이어, 날짜 필터
-- **AI 자연어 검색**: Claude AI 기반 (예: "Daniel Negreanu가 AA를 플레이한 핸드")
+- **AI 자연어 검색**: Vertex AI (Gemini) 기반 (예: "Daniel Negreanu가 AA를 플레이한 핸드")
 - **고급 필터**: 포지션, 홀카드, 보드 카드, POT 사이즈, 액션 유형 (30+ 조건)
 - **검색 결과**: 테이블 형식, 즐겨찾기 토글
 
@@ -43,7 +43,7 @@
 - `components/filter-panel.tsx`, `lib/filter-store.ts`
 
 ### API
-- `POST /api/natural-search` - Claude AI 자연어 검색
+- `POST /api/natural-search` - Vertex AI (Gemini) 자연어 검색
 
 ---
 
@@ -298,7 +298,7 @@ WSOP, Triton, EPT, APL, Hustler Casino Live, WSOP Classic, GGPOKER
 **Endpoint**: `POST /api/natural-search`
 **파일**: `app/api/natural-search/route.ts`
 
-**기능**: Claude AI로 자연어 질문을 JSON 필터로 변환
+**기능**: Vertex AI (Gemini)로 자연어 질문을 JSON 필터로 변환
 
 **요청**:
 ```json

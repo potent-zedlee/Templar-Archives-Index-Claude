@@ -225,7 +225,6 @@ GOOGLE_APPLICATION_CREDENTIALS=path/to/service-account.json
 CLOUD_RUN_ORCHESTRATOR_URL=https://video-orchestrator-xxx.run.app
 
 # 선택
-ANTHROPIC_API_KEY=sk-ant-...         # Claude
 UPSTASH_REDIS_REST_URL=your-url      # Rate Limiting
 ```
 
