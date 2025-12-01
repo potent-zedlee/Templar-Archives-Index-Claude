@@ -1,12 +1,10 @@
 name: Deploy to Firebase Hosting (Backup)
 
-# Firebase Hosting은 백업용으로 유지
-# 메인 배포: Vercel (GitHub 연동으로 자동 배포)
-# 수동 트리거 또는 weekly 백업 배포
+# 메인 배포: Vercel (~1분)
+# 백업 배포: Firebase Hosting (~5분)
 on:
-  workflow_dispatch:  # 수동 트리거
-  schedule:
-    - cron: '0 0 * * 0'  # 매주 일요일 00:00 UTC
+  push:
+    branches: [main]
 
 env:
   FIREBASE_CLI_EXPERIMENTS: webframeworks
