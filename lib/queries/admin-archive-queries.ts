@@ -13,19 +13,16 @@ import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query'
 import { firestore } from '@/lib/firebase'
 import {
   collection,
-  collectionGroup,
   doc,
   getDoc,
   query,
   where,
   orderBy,
-  limit,
   getDocs,
   updateDoc,
   Timestamp,
   CollectionReference,
   QueryConstraint,
-  getCountFromServer,
 } from 'firebase/firestore'
 import { toast } from 'sonner'
 import { publishStream, unpublishStream, bulkPublishStreams, bulkUnpublishStreams } from '@/app/actions/admin/archive-admin'
@@ -404,111 +401,64 @@ export function useBulkUnpublishMutation() {
 }
 
 // ============================================
-// Pipeline Query Functions
+// Pipeline Query Functions (Server Actions 사용)
 // ============================================
 
+import {
+  getPipelineStatusCounts as getPipelineStatusCountsAction,
+  getStreamsByPipelineStatus as getStreamsByPipelineStatusAction,
+} from '@/app/actions/pipeline'
+
 /**
- * 파이프라인 상태별 스트림 조회
+ * 파이프라인 상태별 스트림 조회 (Server Action 호출)
  */
 async function getStreamsByPipelineStatus(
   status: PipelineStatus | 'all',
   pageLimit = 50
 ): Promise<PipelineStream[]> {
-  try {
-    // collectionGroup으로 모든 서브컬렉션의 streams 조회
-    const streamsRef = collectionGroup(firestore, 'streams')
+  const result = await getStreamsByPipelineStatusAction(status, pageLimit)
 
-    let q
-    if (status === 'all') {
-      q = query(
-        streamsRef,
-        where('pipelineStatus', 'in', ['pending', 'needs_classify', 'analyzing', 'completed', 'needs_review', 'published', 'failed']),
-        orderBy('pipelineUpdatedAt', 'desc'),
-        limit(pageLimit)
-      )
-    } else {
-      q = query(
-        streamsRef,
-        where('pipelineStatus', '==', status),
-        orderBy('pipelineUpdatedAt', 'desc'),
-        limit(pageLimit)
-      )
-    }
-
-    const snapshot = await getDocs(q)
-
-    return snapshot.docs.map((docSnapshot) => {
-      const data = docSnapshot.data()
-      return {
-        id: docSnapshot.id,
-        name: data.name || '',
-        description: data.description,
-        videoUrl: data.videoUrl,
-        gcsUri: data.gcsUri,
-        pipelineStatus: data.pipelineStatus || 'pending',
-        pipelineProgress: data.pipelineProgress || 0,
-        pipelineError: data.pipelineError,
-        pipelineUpdatedAt: data.pipelineUpdatedAt?.toDate(),
-        currentJobId: data.currentJobId,
-        lastAnalysisAt: data.lastAnalysisAt?.toDate(),
-        analysisAttempts: data.analysisAttempts || 0,
-        handCount: data.handCount || 0,
-        eventId: data.subEventId || data.eventId,
-        eventName: data.eventName,
-        tournamentId: data.tournamentId,
-        tournamentName: data.tournamentName,
-        createdAt: data.createdAt?.toDate() || new Date(),
-        updatedAt: data.updatedAt?.toDate() || new Date(),
-      }
-    })
-  } catch (error) {
-    console.error('[getStreamsByPipelineStatus] Error:', error)
-    throw error
+  if (!result.success || !result.data) {
+    console.error('[getStreamsByPipelineStatus] Error:', result.error)
+    throw new Error(result.error || 'Failed to fetch streams')
   }
+
+  // Server Action에서 반환된 데이터를 PipelineStream 형식으로 변환
+  return result.data.map((stream) => ({
+    id: stream.id,
+    name: stream.name || '',
+    description: undefined,
+    videoUrl: stream.videoUrl,
+    gcsUri: stream.gcsUri,
+    pipelineStatus: stream.pipelineStatus as PipelineStatus || 'pending',
+    pipelineProgress: stream.pipelineProgress || 0,
+    pipelineError: stream.pipelineError,
+    pipelineUpdatedAt: stream.pipelineUpdatedAt ? new Date(stream.pipelineUpdatedAt) : undefined,
+    currentJobId: undefined,
+    lastAnalysisAt: undefined,
+    analysisAttempts: 0,
+    handCount: 0,
+    eventId: stream.eventId,
+    eventName: stream.eventName,
+    tournamentId: stream.tournamentId,
+    tournamentName: stream.tournamentName,
+    createdAt: stream.createdAt ? new Date(stream.createdAt) : new Date(),
+    updatedAt: stream.updatedAt ? new Date(stream.updatedAt) : new Date(),
+  }))
 }
 
 /**
- * 파이프라인 상태별 카운트 조회
+ * 파이프라인 상태별 카운트 조회 (Server Action 호출)
  */
 async function getPipelineStatusCounts(): Promise<PipelineStatusCounts> {
-  try {
-    // collectionGroup으로 모든 서브컬렉션의 streams 조회
-    const streamsRef = collectionGroup(firestore, 'streams')
+  const result = await getPipelineStatusCountsAction()
 
-    const statuses: PipelineStatus[] = [
-      'pending', 'needs_classify', 'analyzing',
-      'completed', 'needs_review', 'published', 'failed'
-    ]
-
-    const countPromises = statuses.map(async (status) => {
-      const q = query(streamsRef, where('pipelineStatus', '==', status))
-      const snapshot = await getCountFromServer(q)
-      return { status, count: snapshot.data().count }
-    })
-
-    const results = await Promise.all(countPromises)
-
-    const counts: PipelineStatusCounts = {
-      all: 0,
-      pending: 0,
-      needs_classify: 0,
-      analyzing: 0,
-      completed: 0,
-      needs_review: 0,
-      published: 0,
-      failed: 0,
-    }
-
-    results.forEach(({ status, count }) => {
-      counts[status] = count
-      counts.all += count
-    })
-
-    return counts
-  } catch (error) {
-    console.error('[getPipelineStatusCounts] Error:', error)
-    throw error
+  if (!result.success || !result.data) {
+    console.error('[getPipelineStatusCounts] Error:', result.error)
+    throw new Error(result.error || 'Failed to fetch counts')
   }
+
+  return result.data
 }
 
 // ============================================
