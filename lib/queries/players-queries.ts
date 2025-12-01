@@ -127,12 +127,30 @@ export const playersKeys = {
 // Note: 실제 Server Actions는 app/actions/players.ts에서 정의됨
 
 async function fetchPlayersFromServer(): Promise<PlayerWithHandCount[]> {
+  console.log('[PlayersQuery] Fetching players from /api/players')
+
   const response = await fetch('/api/players', {
     method: 'GET',
     headers: { 'Content-Type': 'application/json' },
   })
-  if (!response.ok) throw new Error('Failed to fetch players')
+
+  if (!response.ok) {
+    console.error('[PlayersQuery] API error:', response.status, response.statusText)
+    throw new Error(`Failed to fetch players: ${response.status} ${response.statusText}`)
+  }
+
   const data = await response.json()
+  console.log('[PlayersQuery] Received data:', {
+    success: data.success,
+    playersCount: data.players?.length ?? 0,
+    total: data.total
+  })
+
+  if (!data.players || !Array.isArray(data.players)) {
+    console.error('[PlayersQuery] Invalid response format:', data)
+    throw new Error('Invalid response format: players array not found')
+  }
+
   return data.players
 }
 
