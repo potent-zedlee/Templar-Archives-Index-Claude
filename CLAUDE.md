@@ -71,7 +71,7 @@ npm run analyze
 | Auth | Firebase Auth (Google OAuth) |
 | AI | Vertex AI Gemini 3 Pro (Phase 2) / Gemini 2.5 Flash (Phase 1) |
 | Background Jobs | Cloud Run + Cloud Tasks |
-| Video | GCS 직접 업로드 |
+| Video | GCS Resumable Upload (청크 업로드) |
 | Hosting | Vercel (메인) + Firebase Hosting (백업) |
 
 **Node.js**: >=22.0.0
@@ -470,5 +470,65 @@ created_at, stream_id, video_url, pot_size
 
 ---
 
+## GCS 업로드 설정
+
+### CORS 설정
+
+GCS 버킷 CORS 설정 파일: `gcs-cors.json`
+
+```json
+{
+  "origin": [
+    "https://templar-archives-index.vercel.app",
+    "https://templar-archives.vercel.app",
+    "https://templar-archives-index.web.app",
+    "http://localhost:3000"
+  ],
+  "method": ["GET", "PUT", "POST", "DELETE", "HEAD", "OPTIONS"],
+  "responseHeader": ["*"],
+  "maxAgeSeconds": 3600
+}
+```
+
+**CORS 적용 명령**:
+```bash
+gsutil cors set gcs-cors.json gs://templar-archives-videos
+gsutil cors get gs://templar-archives-videos  # 확인
+```
+
+### 업로드 아키텍처
+
+```
+브라우저 (GlobalUploadManager)
+    → /api/gcs/init-upload (Signed URL 발급)
+    → GCS Resumable Upload (8MB 청크)
+    → /api/gcs/complete-upload (완료 처리)
+    → Firestore 업데이트 (pipelineStatus: pending)
+```
+
+**핵심 파일**:
+| 파일 | 역할 |
+|------|------|
+| `components/features/upload/GlobalUploadManager.tsx` | 청크 업로드 관리 |
+| `app/api/gcs/init-upload/route.ts` | Resumable Upload 초기화 |
+| `app/api/gcs/complete-upload/route.ts` | 업로드 완료 처리 |
+| `stores/upload-store.ts` | 업로드 상태 관리 (Zustand) |
+
+### 업로드 속도 최적화
+
+현재 설정:
+```typescript
+const CHUNK_SIZE = 8 * 1024 * 1024  // 8MB
+const MAX_CONCURRENT_UPLOADS = 2    // 동시 업로드 파일 수
+```
+
+속도 개선 옵션:
+- 청크 크기 증가 (16-32MB) - HTTP 오버헤드 감소
+- 동시 파일 업로드 수 증가 (여러 파일 동시 업로드 시)
+
+> ⚠️ GCS Resumable Upload는 단일 파일 내 병렬 청크 업로드 미지원
+
+---
+
 **마지막 업데이트**: 2025-12-01
-**문서 버전**: 8.1 (최신 솔루션 우선 원칙 추가)
+**문서 버전**: 8.2 (GCS 업로드 설정, Pipeline 페이지 추가)

@@ -187,6 +187,26 @@ Firebase Console → Authentication → Settings → Authorized domains에 배�
 2. Cloud Run 서비스 상태 확인
 3. IAM 권한 확인 (Cloud Run Invoker)
 
+### GCS 업로드 CORS 에러
+
+**증상**: 업로드 시 "CORS policy" 에러 또는 업로드 100% 후 실패
+
+**해결**:
+```bash
+# 1. CORS 설정 확인
+gsutil cors get gs://templar-archives-videos
+
+# 2. CORS 설정 적용
+gsutil cors set gcs-cors.json gs://templar-archives-videos
+```
+
+**필수 설정** (`gcs-cors.json`):
+- origin: 모든 배포 도메인 포함
+- responseHeader: `["*"]` (모든 응답 헤더 허용)
+- method: `OPTIONS` 포함 필수
+
+**브라우저 캐시 문제**: CORS preflight가 캐시될 수 있으므로 하드 리프레시(Cmd+Shift+R) 또는 시크릿 탭에서 테스트
+
 ---
 
 ## 참고 문서

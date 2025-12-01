@@ -2,7 +2,7 @@
 
 > **Templar Archives** Firestore NoSQL 구조
 
-**마지막 업데이트**: 2025-11-30
+**마지막 업데이트**: 2025-12-01
 **데이터베이스**: Firebase Firestore
 **필드명 규칙**: camelCase (snake_case 사용 금지)
 
@@ -142,6 +142,42 @@ type SemanticTag =
     }
   }
   handQuality: 'routine' | 'interesting' | 'highlight' | 'epic'
+}
+```
+
+### streams (서브컬렉션)
+
+```typescript
+// tournaments/{id}/events/{id}/streams/{id}
+{
+  name: string
+  videoFile?: string              // 원본 파일명
+  videoUrl?: string               // YouTube URL
+  videoSource: 'upload' | 'youtube'
+
+  // GCS 업로드 관련
+  uploadStatus: 'none' | 'uploading' | 'uploaded' | 'failed'
+  gcsUri?: string                 // gs://bucket/path/file.mp4
+  gcsPath?: string                // uploads/{streamId}/{filename}
+  gcsFileSize?: number
+  gcsUploadedAt?: Timestamp
+  uploadError?: string
+
+  // Pipeline 상태 (필수)
+  pipelineStatus: 'pending' | 'needs_classify' | 'analyzing' | 'completed' | 'needs_review' | 'published' | 'failed'
+  pipelineProgress: number        // 0-100
+  pipelineError?: string
+  pipelineUpdatedAt: Timestamp
+  analysisAttempts: number        // 분석 시도 횟수
+  currentJobId?: string           // 현재 분석 작업 ID
+
+  status: 'draft' | 'published' | 'archived'
+  isOrganized: boolean
+  organizedAt?: Timestamp
+
+  stats: { handsCount: number }
+  createdAt: Timestamp
+  updatedAt: Timestamp
 }
 ```
 
@@ -339,5 +375,6 @@ Firebase Security Rules는 `firestore.rules` 파일에서 관리됩니다.
 
 | 날짜 | 변경 내용 |
 |------|----------|
+| 2025-12-01 | streams 컬렉션 pipelineStatus 필드 필수화, GCS 업로드 필드 추가 |
 | 2025-11-28 | PostgreSQL → Firestore 완전 마이그레이션 |
 | 2025-11-27 | Supabase 레거시 정리 |
