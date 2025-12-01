@@ -32,6 +32,11 @@ import {
   assignUnsortedToEvent,
 } from '@/app/actions/archive-manage'
 import type { Tournament, Event, Stream, UnsortedVideo } from '@/lib/types/archive'
+import { Button } from '@/components/ui/button'
+import { Plus } from 'lucide-react'
+import { UploadDialog } from '@/components/features/admin/upload/UploadDialog'
+import { TournamentDialog } from '@/components/features/archive/TournamentDialog'
+import type { TournamentCategory } from '@/lib/firestore-types'
 
 // 드래그 중인 아이템 타입
 interface DragItem {
@@ -58,6 +63,23 @@ export function ArchiveManager() {
     currentParentId: string
     currentTournamentId?: string
   } | null>(null)
+
+  // TournamentDialog 상태
+  const [tournamentDialogOpen, setTournamentDialogOpen] = useState(false)
+  const [newTournamentName, setNewTournamentName] = useState('')
+  const [newCategory, setNewCategory] = useState<TournamentCategory>('EPT')
+  const [newGameType, setNewGameType] = useState<'tournament' | 'cash-game'>('tournament')
+  const [newLocation, setNewLocation] = useState('')
+  const [newCity, setNewCity] = useState('')
+  const [newCountry, setNewCountry] = useState('')
+  const [newStartDate, setNewStartDate] = useState('')
+  const [newEndDate, setNewEndDate] = useState('')
+
+  // 전체 새로고침
+  const handleRefresh = useCallback(() => {
+    refetchTournaments()
+    refetchUnsorted()
+  }, [refetchTournaments, refetchUnsorted])
 
   // 드래그 센서 설정
   const sensors = useSensors(
@@ -228,6 +250,13 @@ export function ArchiveManager() {
             Drag and drop to organize videos. Right-click for more options.
           </p>
         </div>
+        <div className="flex items-center gap-2">
+          <UploadDialog onSuccess={handleRefresh} />
+          <Button size="sm" onClick={() => setTournamentDialogOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Tournament
+          </Button>
+        </div>
       </div>
 
       {/* Main Content */}
@@ -266,6 +295,53 @@ export function ArchiveManager() {
         currentParentId={moveItem?.currentParentId || ''}
         tournaments={tournaments}
         onConfirm={handleMoveConfirm}
+      />
+
+      {/* Tournament Dialog */}
+      <TournamentDialog
+        isOpen={tournamentDialogOpen}
+        onOpenChange={setTournamentDialogOpen}
+        editingTournamentId=""
+        onSave={() => {
+          handleRefresh()
+          setTournamentDialogOpen(false)
+          setNewTournamentName('')
+          setNewCategory('EPT')
+          setNewGameType('tournament')
+          setNewLocation('')
+          setNewCity('')
+          setNewCountry('')
+          setNewStartDate('')
+          setNewEndDate('')
+        }}
+        onCancel={() => {
+          setTournamentDialogOpen(false)
+          setNewTournamentName('')
+          setNewCategory('EPT')
+          setNewGameType('tournament')
+          setNewLocation('')
+          setNewCity('')
+          setNewCountry('')
+          setNewStartDate('')
+          setNewEndDate('')
+        }}
+        newTournamentName={newTournamentName}
+        setNewTournamentName={setNewTournamentName}
+        newCategory={newCategory}
+        setNewCategory={setNewCategory}
+        newGameType={newGameType}
+        setNewGameType={setNewGameType}
+        newLocation={newLocation}
+        setNewLocation={setNewLocation}
+        newCity={newCity}
+        setNewCity={setNewCity}
+        newCountry={newCountry}
+        setNewCountry={setNewCountry}
+        newStartDate={newStartDate}
+        setNewStartDate={setNewStartDate}
+        newEndDate={newEndDate}
+        setNewEndDate={setNewEndDate}
+        isUserAdmin={true}
       />
     </div>
   )

@@ -24,7 +24,7 @@ interface UploadDialogProps {
   onSuccess?: () => void
 }
 
-export function QuickUploadDialog({ onSuccess }: UploadDialogProps) {
+export function UploadDialog({ onSuccess }: UploadDialogProps) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
 

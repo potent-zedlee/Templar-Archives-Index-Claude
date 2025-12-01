@@ -28,7 +28,7 @@ import { ReviewPanel } from './ReviewPanel'
 import { Button } from '@/components/ui/button'
 import { Plus } from 'lucide-react'
 import { useAdminArchiveStore } from '@/stores/admin-archive-store'
-import { QuickUploadDialog } from '@/components/features/admin/upload/QuickUploadDialog'
+import { UploadDialog } from '@/components/features/admin/upload/UploadDialog'
 import { TournamentDialog } from '@/components/features/archive/TournamentDialog'
 import type { TournamentCategory } from '@/lib/firestore-types'
 import {
@@ -193,7 +193,7 @@ function DashboardContent() {
       <div className="flex items-center justify-between p-4 border-b">
         <h1 className="text-2xl font-bold">Archive</h1>
         <div className="flex items-center gap-2">
-          <QuickUploadDialog onSuccess={() => refetch()} />
+          <UploadDialog onSuccess={() => refetch()} />
           <Button size="sm" onClick={() => setTournamentDialogOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
             토너먼트
