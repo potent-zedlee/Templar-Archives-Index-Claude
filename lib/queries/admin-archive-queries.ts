@@ -13,6 +13,7 @@ import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query'
 import { firestore } from '@/lib/firebase'
 import {
   collection,
+  collectionGroup,
   doc,
   getDoc,
   query,
@@ -414,12 +415,14 @@ async function getStreamsByPipelineStatus(
   pageLimit = 50
 ): Promise<PipelineStream[]> {
   try {
-    const streamsRef = collection(firestore, 'streams')
+    // collectionGroup으로 모든 서브컬렉션의 streams 조회
+    const streamsRef = collectionGroup(firestore, 'streams')
 
     let q
     if (status === 'all') {
       q = query(
         streamsRef,
+        where('pipelineStatus', 'in', ['pending', 'needs_classify', 'analyzing', 'completed', 'needs_review', 'published', 'failed']),
         orderBy('pipelineUpdatedAt', 'desc'),
         limit(pageLimit)
       )
@@ -469,7 +472,8 @@ async function getStreamsByPipelineStatus(
  */
 async function getPipelineStatusCounts(): Promise<PipelineStatusCounts> {
   try {
-    const streamsRef = collection(firestore, 'streams')
+    // collectionGroup으로 모든 서브컬렉션의 streams 조회
+    const streamsRef = collectionGroup(firestore, 'streams')
 
     const statuses: PipelineStatus[] = [
       'pending', 'needs_classify', 'analyzing',

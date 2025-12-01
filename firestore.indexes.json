@@ -114,7 +114,7 @@
     },
     {
       "collectionGroup": "streams",
-      "queryScope": "COLLECTION",
+      "queryScope": "COLLECTION_GROUP",
       "fields": [
         { "fieldPath": "pipelineStatus", "order": "ASCENDING" },
         { "fieldPath": "pipelineUpdatedAt", "order": "DESCENDING" }
