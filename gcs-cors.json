@@ -1,7 +1,9 @@
 [
   {
     "origin": [
+      "https://templar-archives-index.vercel.app",
       "https://templar-archives.vercel.app",
+      "https://templar-archives-index.web.app",
       "http://localhost:3000"
     ],
     "method": ["GET", "PUT", "POST", "DELETE", "HEAD"],
