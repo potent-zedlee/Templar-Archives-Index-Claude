@@ -227,5 +227,15 @@ service cloud.firestore {
       allow read, update, delete: if isAuthenticated() && resource.data.recipientId == request.auth.uid;
       allow create: if isAuthenticated();
     }
+
+    // ==================== Collection Group Queries ====================
+
+    /**
+     * streams collectionGroup 쿼리: Admin만 접근 가능
+     * Pipeline 대시보드에서 모든 스트림을 조회하기 위해 필요
+     */
+    match /{path=**}/streams/{streamId} {
+      allow read: if isAdmin();
+    }
   }
 }
