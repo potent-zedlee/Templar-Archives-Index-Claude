@@ -25,8 +25,8 @@ import { updateStreamUploadStatus } from '@/app/actions/archive'
 
 // ==================== Constants ====================
 
-const CHUNK_SIZE = 8 * 1024 * 1024 // 8MB
-const MAX_CONCURRENT_UPLOADS = 2
+const CHUNK_SIZE = 16 * 1024 * 1024 // 16MB - HTTP 오버헤드 감소로 속도 향상
+const MAX_CONCURRENT_UPLOADS = 3    // 동시 파일 3개 - 대역폭 활용 최적화
 
 // ==================== Types ====================
 

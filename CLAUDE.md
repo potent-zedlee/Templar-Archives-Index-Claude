@@ -516,19 +516,19 @@ gsutil cors get gs://templar-archives-videos  # 확인
 
 ### 업로드 속도 최적화
 
-현재 설정:
+현재 설정 (최적화됨):
 ```typescript
-const CHUNK_SIZE = 8 * 1024 * 1024  // 8MB
-const MAX_CONCURRENT_UPLOADS = 2    // 동시 업로드 파일 수
+const CHUNK_SIZE = 16 * 1024 * 1024  // 16MB - HTTP 오버헤드 감소
+const MAX_CONCURRENT_UPLOADS = 3     // 동시 파일 3개 - 대역폭 활용
 ```
 
-속도 개선 옵션:
-- 청크 크기 증가 (16-32MB) - HTTP 오버헤드 감소
-- 동시 파일 업로드 수 증가 (여러 파일 동시 업로드 시)
+**선택 이유**:
+- 16MB 청크: 안정성과 속도의 균형점 (8MB 대비 HTTP 요청 절반)
+- 동시 3개 파일: 단일 파일은 순차 업로드만 가능하므로 여러 파일로 대역폭 활용
 
 > ⚠️ GCS Resumable Upload는 단일 파일 내 병렬 청크 업로드 미지원
 
 ---
 
 **마지막 업데이트**: 2025-12-01
-**문서 버전**: 8.2 (GCS 업로드 설정, Pipeline 페이지 추가)
+**문서 버전**: 8.3 (업로드 속도 최적화: 16MB 청크, 동시 3파일)
