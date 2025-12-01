@@ -1,14 +1,13 @@
 'use client'
 
 /**
- * Admin Archive Page (Redesigned)
+ * Admin Archive Page
  *
- * 통합 Archive 대시보드
- * - 파이프라인 상태별 필터링
- * - Tree/Flat 뷰 전환
- * - 실시간 분석 모니터링
- *
- * @see /Users/zed/.claude/plans/sleepy-yawning-lovelace.md
+ * 파일 매니저 스타일 Archive Manager
+ * - Tournament/Event/Stream 트리 구조
+ * - 드래그앤드롭으로 항목 이동
+ * - 컨텍스트 메뉴로 편집/삭제
+ * - Unsorted Videos 정리
  */
 
 import { useEffect, useState } from 'react'
@@ -16,7 +15,7 @@ import { useRouter } from 'next/navigation'
 import { onAuthStateChanged } from 'firebase/auth'
 import { auth } from '@/lib/firebase'
 import { isAdmin } from '@/lib/auth-utils'
-import { ArchiveDashboard } from '@/components/admin/archive/ArchiveDashboard'
+import { ArchiveManager } from './manage/_components/ArchiveManager'
 import { Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -60,9 +59,5 @@ export default function AdminArchivePage() {
     return null
   }
 
-  return (
-    <div className="h-[calc(100vh-4rem)]">
-      <ArchiveDashboard />
-    </div>
-  )
+  return <ArchiveManager />
 }

@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from 'react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
@@ -11,8 +12,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Plus, X } from 'lucide-react'
+import { toast } from 'sonner'
 import type { Tournament } from '@/lib/types/archive'
+import { createTournament } from '@/app/actions/archive'
+import { createEvent } from '@/app/actions/archive-manage'
 
 interface LocalFileUploadTabProps {
   localFile: File | null
@@ -36,6 +40,7 @@ interface LocalFileUploadTabProps {
   newStreamName: string
   setNewStreamName: (name: string) => void
   onUpload: () => void
+  onTournamentCreated?: () => void
 }
 
 export function LocalFileUploadTab({
@@ -60,7 +65,17 @@ export function LocalFileUploadTab({
   newStreamName,
   setNewStreamName,
   onUpload,
+  onTournamentCreated,
 }: LocalFileUploadTabProps) {
+  // New Tournament/Event creation state
+  const [isCreatingTournament, setIsCreatingTournament] = useState(false)
+  const [newTournamentName, setNewTournamentName] = useState('')
+  const [creatingTournamentLoading, setCreatingTournamentLoading] = useState(false)
+
+  const [isCreatingEvent, setIsCreatingEvent] = useState(false)
+  const [newEventName, setNewEventName] = useState('')
+  const [creatingEventLoading, setCreatingEventLoading] = useState(false)
+
   // Filter tournaments by selected category
   const filteredTournaments = selectedCategory
     ? tournaments.filter(t => t.category === selectedCategory)
@@ -93,6 +108,66 @@ export function LocalFileUploadTab({
     setSelectedTournamentId(null)
     setSelectedEventId(null)
     setSelectedStreamId(null)
+    setIsCreatingTournament(false)
+    setIsCreatingEvent(false)
+  }
+
+  // Create new tournament
+  const handleCreateTournament = async () => {
+    if (!newTournamentName.trim() || !selectedCategory) return
+
+    setCreatingTournamentLoading(true)
+    try {
+      const today = new Date().toISOString().split('T')[0]
+      const result = await createTournament({
+        name: newTournamentName.trim(),
+        category: selectedCategory as 'Triton' | 'EPT',
+        game_type: 'tournament',
+        location: '',
+        start_date: today,
+        end_date: today,
+      })
+
+      if (result.success && result.data) {
+        toast.success('Tournament created')
+        setSelectedTournamentId(result.data.id)
+        setNewTournamentName('')
+        setIsCreatingTournament(false)
+        onTournamentCreated?.()
+      } else {
+        toast.error(result.error || 'Failed to create tournament')
+      }
+    } catch (error) {
+      console.error('Create tournament error:', error)
+      toast.error('An error occurred')
+    } finally {
+      setCreatingTournamentLoading(false)
+    }
+  }
+
+  // Create new event
+  const handleCreateEvent = async () => {
+    if (!newEventName.trim() || !selectedTournamentId) return
+
+    setCreatingEventLoading(true)
+    try {
+      const result = await createEvent(selectedTournamentId, newEventName.trim())
+
+      if (result.success && result.eventId) {
+        toast.success('Event created')
+        setSelectedEventId(result.eventId)
+        setNewEventName('')
+        setIsCreatingEvent(false)
+        onTournamentCreated?.()
+      } else {
+        toast.error(result.error || 'Failed to create event')
+      }
+    } catch (error) {
+      console.error('Create event error:', error)
+      toast.error('An error occurred')
+    } finally {
+      setCreatingEventLoading(false)
+    }
   }
 
   return (
@@ -163,17 +238,32 @@ export function LocalFileUploadTab({
           <div className="space-y-2">
             <Label htmlFor="tournament-select-local">Tournament</Label>
             <Select
-              value={selectedTournamentId || 'none'}
+              value={isCreatingTournament ? '__new__' : (selectedTournamentId || 'none')}
               onValueChange={(value) => {
-                setSelectedTournamentId(value === 'none' ? null : value)
-                setSelectedEventId(null)
-                setSelectedStreamId(null)
+                if (value === '__new__') {
+                  setIsCreatingTournament(true)
+                  setSelectedTournamentId(null)
+                  setSelectedEventId(null)
+                  setSelectedStreamId(null)
+                } else {
+                  setIsCreatingTournament(false)
+                  setSelectedTournamentId(value === 'none' ? null : value)
+                  setSelectedEventId(null)
+                  setSelectedStreamId(null)
+                }
               }}
+              disabled={!selectedCategory}
             >
               <SelectTrigger id="tournament-select-local">
                 <SelectValue placeholder="Select tournament" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="__new__" className="text-primary font-medium">
+                  <span className="flex items-center gap-1">
+                    <Plus className="h-3 w-3" />
+                    New Tournament
+                  </span>
+                </SelectItem>
                 <SelectItem value="none">Select tournament</SelectItem>
                 {filteredTournaments.map((t) => (
                   <SelectItem key={t.id} value={t.id}>
@@ -182,22 +272,70 @@ export function LocalFileUploadTab({
                 ))}
               </SelectContent>
             </Select>
+
+            {/* New Tournament Input */}
+            {isCreatingTournament && (
+              <div className="flex gap-2 mt-2">
+                <Input
+                  placeholder="Tournament name"
+                  value={newTournamentName}
+                  onChange={(e) => setNewTournamentName(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleCreateTournament()}
+                />
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={handleCreateTournament}
+                  disabled={creatingTournamentLoading || !newTournamentName.trim()}
+                >
+                  {creatingTournamentLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    'Create'
+                  )}
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => {
+                    setIsCreatingTournament(false)
+                    setNewTournamentName('')
+                  }}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="event-select-local">Event</Label>
             <Select
-              value={selectedEventId || 'none'}
+              value={isCreatingEvent ? '__new__' : (selectedEventId || 'none')}
               onValueChange={(value) => {
-                setSelectedEventId(value === 'none' ? null : value)
-                setSelectedStreamId(null)
+                if (value === '__new__') {
+                  setIsCreatingEvent(true)
+                  setSelectedEventId(null)
+                  setSelectedStreamId(null)
+                } else {
+                  setIsCreatingEvent(false)
+                  setSelectedEventId(value === 'none' ? null : value)
+                  setSelectedStreamId(null)
+                }
               }}
-              disabled={!selectedTournamentId}
+              disabled={!selectedTournamentId || isCreatingTournament}
             >
               <SelectTrigger id="event-select-local">
                 <SelectValue placeholder="Select event" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="__new__" className="text-primary font-medium">
+                  <span className="flex items-center gap-1">
+                    <Plus className="h-3 w-3" />
+                    New Event
+                  </span>
+                </SelectItem>
                 <SelectItem value="none">Select event</SelectItem>
                 {events.map((e) => (
                   <SelectItem key={e.id} value={e.id}>
@@ -206,6 +344,41 @@ export function LocalFileUploadTab({
                 ))}
               </SelectContent>
             </Select>
+
+            {/* New Event Input */}
+            {isCreatingEvent && (
+              <div className="flex gap-2 mt-2">
+                <Input
+                  placeholder="Event name (e.g., Main Event)"
+                  value={newEventName}
+                  onChange={(e) => setNewEventName(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleCreateEvent()}
+                />
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={handleCreateEvent}
+                  disabled={creatingEventLoading || !newEventName.trim()}
+                >
+                  {creatingEventLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    'Create'
+                  )}
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => {
+                    setIsCreatingEvent(false)
+                    setNewEventName('')
+                  }}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -216,7 +389,7 @@ export function LocalFileUploadTab({
                 setSelectedStreamId(value === 'none' ? null : value)
                 setCreateNewStream(false)
               }}
-              disabled={!selectedEventId || createNewStream}
+              disabled={!selectedEventId || createNewStream || isCreatingEvent}
             >
               <SelectTrigger id="stream-select-local">
                 <SelectValue placeholder="Select stream" />
@@ -240,7 +413,7 @@ export function LocalFileUploadTab({
                 setCreateNewStream(checked as boolean)
                 if (checked) setSelectedStreamId(null)
               }}
-              disabled={!selectedEventId}
+              disabled={!selectedEventId || isCreatingEvent}
             />
             <Label htmlFor="create-new-stream-local" className="cursor-pointer text-sm">
               Create new stream
