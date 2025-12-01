@@ -861,3 +861,64 @@ export async function renameItem(
     return { success: false, error: error.message || 'Unknown error' }
   }
 }
+
+// ==================== Upload Status Actions ====================
+
+/**
+ * Stream 업로드 상태 업데이트
+ * GCS 업로드 진행/완료/실패 시 호출
+ */
+export async function updateStreamUploadStatus(
+  streamId: string,
+  tournamentId: string,
+  eventId: string,
+  uploadStatus: 'none' | 'pending' | 'uploading' | 'uploaded' | 'failed',
+  gcsUri?: string,
+  gcsPath?: string,
+  gcsFileSize?: number,
+  errorMessage?: string
+) {
+  try {
+    // 1. 관리자 권한 검증
+    const authCheck = await verifyAdmin()
+    if (!authCheck.authorized) {
+      return { success: false, error: authCheck.error }
+    }
+
+    // 2. Stream 문서 업데이트
+    const streamRef = adminFirestore
+      .collection(COLLECTION_PATHS.STREAMS(tournamentId, eventId))
+      .doc(streamId)
+
+    const updateData: Record<string, unknown> = {
+      uploadStatus,
+      updatedAt: FieldValue.serverTimestamp(),
+    }
+
+    if (uploadStatus === 'uploaded' && gcsUri) {
+      updateData.gcsUri = gcsUri
+      updateData.gcsPath = gcsPath || null
+      updateData.gcsFileSize = gcsFileSize || null
+      updateData.gcsUploadedAt = FieldValue.serverTimestamp()
+      // Pipeline 상태도 업데이트 (업로드 완료 = needs_classify)
+      updateData.pipelineStatus = 'needs_classify'
+    }
+
+    if (uploadStatus === 'failed' && errorMessage) {
+      updateData.uploadError = errorMessage
+    }
+
+    await streamRef.update(updateData)
+
+    // 3. 캐시 무효화
+    revalidatePath('/archive')
+    revalidatePath('/admin/archive')
+    revalidatePath('/admin/archive/pipeline')
+
+    return { success: true }
+  } catch (error: unknown) {
+    const errorMsg = error instanceof Error ? error.message : 'Unknown error'
+    console.error('[Server Action] Update upload status exception:', errorMsg)
+    return { success: false, error: errorMsg }
+  }
+}

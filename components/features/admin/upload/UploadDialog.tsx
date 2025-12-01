@@ -19,6 +19,7 @@ import {
 import { toast } from 'sonner'
 import { useTournamentsQuery } from '@/lib/queries/archive-queries'
 import { LocalFileUploadTab } from './LocalFileUploadTab'
+import { useUploadStore } from '@/stores/upload-store'
 
 interface UploadDialogProps {
   onSuccess?: () => void
@@ -43,6 +44,9 @@ export function UploadDialog({ onSuccess }: UploadDialogProps) {
   const [createNewStream, setCreateNewStream] = useState(false)
   const [newStreamName, setNewStreamName] = useState('')
 
+  // Upload store
+  const addUploadTask = useUploadStore((state) => state.addTask)
+
   // Fetch tournaments tree
   const { data: tournaments = [] } = useTournamentsQuery()
 
@@ -56,7 +60,7 @@ export function UploadDialog({ onSuccess }: UploadDialogProps) {
 
     try {
       if (addToUnsorted) {
-        // Unsorted에 추가
+        // Unsorted에 추가 (기존 로직 유지 - 실제 업로드 없음)
         const result = await createUnsortedVideo({
           name: localName,
           video_file: localFile.name,
@@ -72,11 +76,14 @@ export function UploadDialog({ onSuccess }: UploadDialogProps) {
           toast.error(result.error || 'Failed to add video')
         }
       } else {
-        // Tournament → Event → Stream에 직접 추가
+        // Tournament → Event → Stream에 직접 추가 + GCS 업로드
         if (!selectedTournamentId || !selectedEventId) {
           toast.error('Please select a tournament and event')
           return
         }
+
+        let streamId: string
+        let streamName: string
 
         if (createNewStream) {
           // 새 Stream 생성
@@ -94,12 +101,13 @@ export function UploadDialog({ onSuccess }: UploadDialogProps) {
             }
           )
 
-          if (!result.success) {
+          if (!result.success || !result.id) {
             toast.error(result.error || 'Failed to create new stream')
             return
           }
 
-          toast.success(`Created new stream: ${newStreamName}`)
+          streamId = result.id
+          streamName = newStreamName
         } else {
           // 기존 Stream에 추가
           if (!selectedStreamId) {
@@ -118,9 +126,26 @@ export function UploadDialog({ onSuccess }: UploadDialogProps) {
             toast.error(result.error || 'Failed to add video to stream')
             return
           }
+
+          streamId = selectedStreamId
+          streamName = localName
         }
 
-        toast.success('Video added successfully')
+        // Upload Store에 작업 추가 (백그라운드 업로드 시작)
+        addUploadTask({
+          id: crypto.randomUUID(),
+          streamId,
+          tournamentId: selectedTournamentId,
+          eventId: selectedEventId,
+          fileName: localFile.name,
+          fileSize: localFile.size,
+          file: localFile,
+        })
+
+        // 다이얼로그 즉시 닫기
+        toast.success(`Upload started: ${streamName}`, {
+          description: 'Check progress in the toast area',
+        })
         resetForm()
         setOpen(false)
         onSuccess?.()

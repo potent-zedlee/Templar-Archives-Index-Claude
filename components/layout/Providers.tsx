@@ -6,6 +6,7 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools"
 import { ThemeProvider } from "@/components/layout/ThemeProvider"
 import { AuthProvider } from "@/components/layout/AuthProvider"
 import { Toaster } from "@/components/ui/sonner"
+import { GlobalUploadManager } from "@/components/features/upload/GlobalUploadManager"
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -35,6 +36,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
           <Suspense fallback={null}>
             {children}
           </Suspense>
+          <GlobalUploadManager />
           <Toaster />
         </AuthProvider>
       </ThemeProvider>
