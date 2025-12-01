@@ -120,9 +120,17 @@ export async function getPipelineStatusCounts(): Promise<{
     // collectionGroup으로 모든 streams 서브컬렉션 조회
     // count() 쿼리는 단일 필드 인덱스가 필요하므로, select()로 최소 데이터만 가져와서 길이 계산
     const countPromises = statuses.map(async (status) => {
-      const snapshot = await adminFirestore
+      let queryRef = adminFirestore
         .collectionGroup('streams')
         .where('pipelineStatus', '==', status)
+
+      // pending 상태는 uploadStatus가 'uploaded'인 스트림만 카운트
+      // (실제로 업로드가 완료된 스트림만 Pipeline에 표시)
+      if (status === 'pending') {
+        queryRef = queryRef.where('uploadStatus', '==', 'uploaded')
+      }
+
+      const snapshot = await queryRef
         .select() // 필드 없이 문서 ID만 가져옴
         .get()
       return { status, count: snapshot.size }
@@ -176,6 +184,12 @@ export async function getStreamsByPipelineStatus(
     let queryRef: FirebaseFirestore.Query
     if (status !== 'all') {
       queryRef = streamsRef.where('pipelineStatus', '==', status)
+
+      // pending 상태는 uploadStatus가 'uploaded'인 스트림만 조회
+      // (실제로 업로드가 완료된 스트림만 Pipeline에 표시)
+      if (status === 'pending') {
+        queryRef = queryRef.where('uploadStatus', '==', 'uploaded')
+      }
     } else {
       // 'all'인 경우 모든 pipelineStatus가 있는 문서만 조회
       queryRef = streamsRef.where('pipelineStatus', 'in', [

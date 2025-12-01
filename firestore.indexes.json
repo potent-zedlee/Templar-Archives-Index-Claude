@@ -121,6 +121,15 @@
       ]
     },
     {
+      "collectionGroup": "streams",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "pipelineStatus", "order": "ASCENDING" },
+        { "fieldPath": "uploadStatus", "order": "ASCENDING" },
+        { "fieldPath": "pipelineUpdatedAt", "order": "DESCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "tags",
       "queryScope": "COLLECTION_GROUP",
       "fields": [

@@ -248,28 +248,16 @@ async function fetchTournamentsTreeFirestore(
 
       // 각 이벤트의 스트림 조회
       for (const eventDoc of eventsSnapshot.docs) {
-        const eventData = eventDoc.data() as FirestoreEvent
-
-        // 상태 필터
-        if (eventData.status && eventData.status !== 'published') {
-          continue
-        }
+        // 모든 이벤트 표시 (status 필터 제거 - Admin Archive에서 전체 관리 가능)
 
         // 스트림 조회
         const streamsRef = collection(db, COLLECTION_PATHS.STREAMS(tournamentDoc.id, eventDoc.id))
         const streamsQuery = query(streamsRef, orderBy('publishedAt', 'desc'))
         const streamsSnapshot = await getDocs(streamsQuery)
 
+        // 모든 스트림 표시 (status 필터 제거 - Admin Archive에서 전체 관리 가능)
         const streams: Stream[] = streamsSnapshot.docs
-          .map((streamDoc) => {
-            const streamData = streamDoc.data() as FirestoreStream
-            // 상태 필터
-            if (streamData.status && streamData.status !== 'published') {
-              return null
-            }
-            return mapFirestoreStream(streamDoc, eventDoc.id)
-          })
-          .filter((s): s is Stream => s !== null)
+          .map((streamDoc) => mapFirestoreStream(streamDoc, eventDoc.id))
 
         events.push(mapFirestoreEvent(eventDoc, tournamentDoc.id, streams))
       }
