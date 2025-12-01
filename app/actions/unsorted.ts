@@ -557,6 +557,11 @@ export async function createStreamWithVideo(
       organizedAt: FieldValue.serverTimestamp(),
       uploadStatus: 'none' as const,
       status: 'draft' as const,
+      // Pipeline 관련 필드 (Pipeline 대시보드에서 표시되도록)
+      pipelineStatus: 'pending' as const,
+      pipelineProgress: 0,
+      pipelineUpdatedAt: FieldValue.serverTimestamp(),
+      analysisAttempts: 0,
       stats: {
         handsCount: 0,
       },

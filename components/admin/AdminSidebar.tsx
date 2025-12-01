@@ -138,14 +138,15 @@ function ArchivePipelineSubMenu() {
   const { data: counts } = usePipelineStatusCounts()
 
   const currentStatus = searchParams?.get("status")
-  const isArchivePage = pathname === "/admin/archive"
+  // Pipeline 페이지에서 활성 상태 확인
+  const isPipelinePage = pathname === "/admin/archive/pipeline"
 
   return (
     <SidebarMenuSub>
       {pipelineSubItems.map((item) => {
         const Icon = item.icon
         const count = counts?.[item.status as keyof PipelineStatusCounts] ?? 0
-        const isActive = isArchivePage && currentStatus === item.status
+        const isActive = isPipelinePage && currentStatus === item.status
         const isFailed = item.status === "failed"
 
         return (
@@ -154,7 +155,7 @@ function ArchivePipelineSubMenu() {
               asChild
               isActive={isActive}
             >
-              <Link href={`/admin/archive?status=${item.status}`}>
+              <Link href={`/admin/archive/pipeline?status=${item.status}`}>
                 <Icon className={cn("h-4 w-4", item.color)} />
                 <span>{item.title}</span>
                 <CountBadge
