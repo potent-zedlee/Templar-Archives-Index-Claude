@@ -21,10 +21,23 @@ import { Sparkles, Loader2, CheckCircle2, AlertCircle, Users, Plus, X, XCircle }
 import type { FirestoreStream } from "@/lib/firestore-types"
 
 // Extended Stream type with IDs for Firestore path
-export interface StreamWithIds extends FirestoreStream {
+// FirestoreStream의 일부 필드만 필요하고, Timestamp 대신 Date 허용
+export interface StreamWithIds {
   id: string
   tournamentId: string
   eventId: string
+  name: string
+  description?: string
+  videoUrl?: string
+  videoFile?: string
+  videoSource?: 'youtube' | 'upload' | 'nas'
+  gcsUri?: string
+  gcsPath?: string
+  uploadStatus?: 'none' | 'uploading' | 'uploaded' | 'failed'
+  // FirestoreStream 필드들 (optional)
+  stats?: { handsCount?: number }
+  createdAt?: Date | FirestoreStream['createdAt']
+  updatedAt?: Date | FirestoreStream['updatedAt']
 }
 import { InteractiveVideoTimeline } from "@/components/features/video/InteractiveVideoTimeline"
 import type { VideoSegment } from "@/lib/types/video-segments"

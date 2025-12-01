@@ -30,6 +30,7 @@ import { Plus } from 'lucide-react'
 import { useAdminArchiveStore } from '@/stores/admin-archive-store'
 import { UploadDialog } from '@/components/features/admin/upload/UploadDialog'
 import { TournamentDialog } from '@/components/features/archive/TournamentDialog'
+import { AnalyzeVideoDialog, type StreamWithIds } from '@/components/features/archive/dialogs/AnalyzeVideoDialog'
 import type { TournamentCategory } from '@/lib/firestore-types'
 import {
   useStreamsByPipelineStatus,
@@ -100,6 +101,8 @@ function DashboardContent() {
   // Dialog/Panel 상태
   const [classifyDialogOpen, setClassifyDialogOpen] = useState(false)
   const [classifyStream, setClassifyStream] = useState<PipelineStream | null>(null)
+  const [analyzeDialogOpen, setAnalyzeDialogOpen] = useState(false)
+  const [analyzeStream, setAnalyzeStream] = useState<StreamWithIds | null>(null)
   const [reviewPanelOpen, setReviewPanelOpen] = useState(false)
   const [reviewStreamId, setReviewStreamId] = useState<string | null>(null)
   const [reviewStreamName, setReviewStreamName] = useState<string>('')
@@ -152,16 +155,29 @@ function DashboardContent() {
     setClassifyDialogOpen(true)
   }, [])
 
-  // 분석 시작 핸들러
-  const handleAnalyze = useCallback(
-    (streamId: string) => {
-      updateStatusMutation.mutate({
-        streamId,
-        status: 'analyzing',
-      })
-    },
-    [updateStatusMutation]
-  )
+  // 분석 다이얼로그 열기
+  const handleAnalyze = useCallback((stream: PipelineStream) => {
+    // PipelineStream을 StreamWithIds로 변환
+    const streamWithIds: StreamWithIds = {
+      id: stream.id,
+      name: stream.name,
+      description: stream.description,
+      videoUrl: stream.videoUrl,
+      videoFile: stream.videoFile,
+      videoSource: stream.videoSource,
+      uploadStatus: stream.uploadStatus,
+      gcsUri: stream.gcsUri,
+      gcsPath: stream.gcsPath,
+      tournamentId: stream.tournamentId || '',
+      eventId: stream.eventId || '',
+      // FirestoreStream 필수 필드
+      stats: { handsCount: stream.handCount || 0 },
+      createdAt: stream.createdAt,
+      updatedAt: stream.updatedAt,
+    }
+    setAnalyzeStream(streamWithIds)
+    setAnalyzeDialogOpen(true)
+  }, [])
 
   // 리뷰 패널 열기
   const handleReview = useCallback((stream: PipelineStream) => {
@@ -267,7 +283,7 @@ function DashboardContent() {
                   stream={selectedStream}
                   onClose={() => setSelectedItem(null)}
                   onClassify={() => handleClassify(selectedStream)}
-                  onAnalyze={() => handleAnalyze(selectedStream.id)}
+                  onAnalyze={() => handleAnalyze(selectedStream)}
                   onReview={() => handleReview(selectedStream)}
                   onPublish={() => handlePublish(selectedStream.id)}
                   onRetry={() => handleRetry(selectedStream.id)}
@@ -294,6 +310,18 @@ function DashboardContent() {
           refetch()
           setClassifyDialogOpen(false)
           setClassifyStream(null)
+        }}
+      />
+
+      {/* AnalyzeVideoDialog */}
+      <AnalyzeVideoDialog
+        isOpen={analyzeDialogOpen}
+        onOpenChange={setAnalyzeDialogOpen}
+        day={analyzeStream}
+        onSuccess={() => {
+          refetch()
+          setAnalyzeDialogOpen(false)
+          setAnalyzeStream(null)
         }}
       />
 

@@ -36,14 +36,22 @@ export interface PipelineStatusCounts {
 export interface PipelineStream {
   id: string
   name: string
+  description?: string
   thumbnailUrl?: string
   videoUrl?: string
+  videoSource?: string
+  videoFile?: string
   gcsUri?: string
+  gcsPath?: string
   duration?: number
   pipelineStatus: PipelineStatus
   pipelineProgress?: number
   pipelineError?: string
   uploadStatus?: string
+  currentJobId?: string
+  lastAnalysisAt?: string
+  analysisAttempts?: number
+  handCount?: number
   createdAt: string
   updatedAt?: string
   pipelineUpdatedAt?: string
@@ -252,14 +260,22 @@ export async function getStreamsByPipelineStatus(
         return {
           id: doc.id,
           name: data.name || 'Untitled',
+          description: data.description,
           thumbnailUrl: data.thumbnailUrl,
           videoUrl: data.videoUrl,
+          videoSource: data.videoSource,
+          videoFile: data.videoFile,
           gcsUri: data.gcsUri,
+          gcsPath: data.gcsPath,
           duration: data.duration,
           pipelineStatus: data.pipelineStatus || 'pending',
           pipelineProgress: data.pipelineProgress,
           pipelineError: data.pipelineError,
           uploadStatus: data.uploadStatus,
+          currentJobId: data.currentJobId,
+          lastAnalysisAt: data.lastAnalysisAt?.toDate?.()?.toISOString(),
+          analysisAttempts: data.analysisAttempts,
+          handCount: data.handCount,
           createdAt: data.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
           updatedAt: data.updatedAt?.toDate?.()?.toISOString(),
           pipelineUpdatedAt: data.pipelineUpdatedAt?.toDate?.()?.toISOString(),

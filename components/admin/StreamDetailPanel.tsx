@@ -258,14 +258,14 @@ export function StreamDetailPanel({
 
       {/* 액션 버튼 */}
       <div className="p-4 border-t space-y-2">
-        {stream.pipelineStatus === 'pending' && onClassify && (
+        {stream.pipelineStatus === 'needs_classify' && onClassify && (
           <Button className="w-full" onClick={() => onClassify(stream.id)}>
             <FolderTree className="h-4 w-4 mr-2" />
             분류하기
           </Button>
         )}
 
-        {stream.pipelineStatus === 'needs_classify' && onAnalyze && (
+        {stream.pipelineStatus === 'pending' && onAnalyze && (
           <Button className="w-full" onClick={() => onAnalyze(stream.id)}>
             <Sparkles className="h-4 w-4 mr-2" />
             분석 시작

@@ -40,7 +40,11 @@ export interface PipelineStream {
   name: string
   description?: string
   videoUrl?: string
+  videoSource?: 'youtube' | 'upload' | 'nas'
+  videoFile?: string
   gcsUri?: string
+  gcsPath?: string
+  uploadStatus?: 'none' | 'uploading' | 'uploaded' | 'failed'
 
   // 파이프라인 상태
   pipelineStatus: PipelineStatus
@@ -427,17 +431,21 @@ async function getStreamsByPipelineStatus(
   return result.data.map((stream) => ({
     id: stream.id,
     name: stream.name || '',
-    description: undefined,
+    description: stream.description,
     videoUrl: stream.videoUrl,
+    videoSource: stream.videoSource as 'youtube' | 'upload' | 'nas' | undefined,
+    videoFile: stream.videoFile,
     gcsUri: stream.gcsUri,
+    gcsPath: stream.gcsPath,
+    uploadStatus: stream.uploadStatus as 'none' | 'uploading' | 'uploaded' | 'failed' | undefined,
     pipelineStatus: stream.pipelineStatus as PipelineStatus || 'pending',
     pipelineProgress: stream.pipelineProgress || 0,
     pipelineError: stream.pipelineError,
     pipelineUpdatedAt: stream.pipelineUpdatedAt ? new Date(stream.pipelineUpdatedAt) : undefined,
-    currentJobId: undefined,
-    lastAnalysisAt: undefined,
-    analysisAttempts: 0,
-    handCount: 0,
+    currentJobId: stream.currentJobId,
+    lastAnalysisAt: stream.lastAnalysisAt ? new Date(stream.lastAnalysisAt) : undefined,
+    analysisAttempts: stream.analysisAttempts || 0,
+    handCount: stream.handCount || 0,
     eventId: stream.eventId,
     eventName: stream.eventName,
     tournamentId: stream.tournamentId,
