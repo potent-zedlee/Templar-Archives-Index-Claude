@@ -229,6 +229,8 @@ service cloud.firestore {
     }
 
     // ==================== Collection Group Queries ====================
+    // collectionGroup 쿼리는 별도의 규칙이 필요함
+    // 일반 서브컬렉션 규칙과 별개로 와일드카드 패턴 사용
 
     /**
      * streams collectionGroup 쿼리: Admin만 접근 가능
@@ -236,6 +238,30 @@ service cloud.firestore {
      */
     match /{path=**}/streams/{streamId} {
       allow read: if isAdmin();
+    }
+
+    /**
+     * comments collectionGroup 쿼리: Admin/Templar만 접근 가능
+     * 콘텐츠 모더레이션에서 모든 댓글 조회하기 위해 필요
+     */
+    match /{path=**}/comments/{commentId} {
+      allow read: if isAuthenticated() && getUserRole() in ['admin', 'high_templar', 'templar'];
+    }
+
+    /**
+     * tags collectionGroup 쿼리: 인증된 사용자 접근 가능
+     * 전체 태그 목록 조회하기 위해 필요
+     */
+    match /{path=**}/tags/{tagId} {
+      allow read: if isAuthenticated();
+    }
+
+    /**
+     * events collectionGroup 쿼리: 모두 읽기 가능
+     * 서버 사이드에서 주로 사용하지만 클라이언트 접근 시 필요
+     */
+    match /{path=**}/events/{eventId} {
+      allow read: if true;
     }
   }
 }
