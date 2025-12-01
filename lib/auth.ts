@@ -293,8 +293,22 @@ export function onAuthStateChange(
           accessToken: token,
           user: user!,
         }
+
+        // 세션 쿠키 설정 (Server Actions 인증용)
+        await fetch('/api/auth/session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ idToken: token }),
+        })
       } catch {
         // 토큰 조회 실패 시 세션 없음
+      }
+    } else {
+      // 로그아웃 시 세션 쿠키 삭제
+      try {
+        await fetch('/api/auth/session', { method: 'DELETE' })
+      } catch {
+        // 세션 삭제 실패 무시
       }
     }
 
