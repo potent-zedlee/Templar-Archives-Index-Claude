@@ -76,6 +76,8 @@ export function LocalFileUploadTab({
   const [newEventName, setNewEventName] = useState('')
   const [creatingEventLoading, setCreatingEventLoading] = useState(false)
 
+  const [isCreatingStream, setIsCreatingStream] = useState(createNewStream)
+
   // Filter tournaments by selected category
   const filteredTournaments = selectedCategory
     ? tournaments.filter(t => t.category === selectedCategory)
@@ -384,17 +386,30 @@ export function LocalFileUploadTab({
           <div className="space-y-2">
             <Label htmlFor="stream-select-local">Stream</Label>
             <Select
-              value={selectedStreamId || 'none'}
+              value={isCreatingStream ? '__new__' : (selectedStreamId || 'none')}
               onValueChange={(value) => {
-                setSelectedStreamId(value === 'none' ? null : value)
-                setCreateNewStream(false)
+                if (value === '__new__') {
+                  setIsCreatingStream(true)
+                  setSelectedStreamId(null)
+                  setCreateNewStream(true)
+                } else {
+                  setIsCreatingStream(false)
+                  setSelectedStreamId(value === 'none' ? null : value)
+                  setCreateNewStream(false)
+                }
               }}
-              disabled={!selectedEventId || createNewStream || isCreatingEvent}
+              disabled={!selectedEventId || isCreatingEvent}
             >
               <SelectTrigger id="stream-select-local">
                 <SelectValue placeholder="Select stream" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="__new__" className="text-primary font-medium">
+                  <span className="flex items-center gap-1">
+                    <Plus className="h-3 w-3" />
+                    New Stream
+                  </span>
+                </SelectItem>
                 <SelectItem value="none">Select stream</SelectItem>
                 {streams.map((s) => (
                   <SelectItem key={s.id} value={s.id}>
@@ -403,34 +418,30 @@ export function LocalFileUploadTab({
                 ))}
               </SelectContent>
             </Select>
-          </div>
 
-          <div className="flex items-center gap-2">
-            <Checkbox
-              id="create-new-stream-local"
-              checked={createNewStream}
-              onCheckedChange={(checked) => {
-                setCreateNewStream(checked as boolean)
-                if (checked) setSelectedStreamId(null)
-              }}
-              disabled={!selectedEventId || isCreatingEvent}
-            />
-            <Label htmlFor="create-new-stream-local" className="cursor-pointer text-sm">
-              Create new stream
-            </Label>
+            {/* New Stream Input */}
+            {isCreatingStream && (
+              <div className="flex gap-2 mt-2">
+                <Input
+                  placeholder="Stream name (e.g., Day 1)"
+                  value={newStreamName}
+                  onChange={(e) => setNewStreamName(e.target.value)}
+                />
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => {
+                    setIsCreatingStream(false)
+                    setCreateNewStream(false)
+                    setNewStreamName('')
+                  }}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
           </div>
-
-          {createNewStream && (
-            <div className="space-y-2">
-              <Label htmlFor="new-stream-name-local">New Stream Name</Label>
-              <Input
-                id="new-stream-name-local"
-                placeholder="e.g., Day 1"
-                value={newStreamName}
-                onChange={(e) => setNewStreamName(e.target.value)}
-              />
-            </div>
-          )}
         </div>
       )}
 

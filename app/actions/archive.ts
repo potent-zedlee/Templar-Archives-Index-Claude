@@ -36,8 +36,8 @@ async function verifyAdmin(): Promise<{
       return { authorized: false, error: 'Unauthorized - Please sign in' }
     }
 
-    // 2. Firebase Auth 토큰 검증
-    const decodedToken = await adminAuth.verifyIdToken(sessionCookie.value)
+    // 2. Firebase Auth 세션 쿠키 검증
+    const decodedToken = await adminAuth.verifySessionCookie(sessionCookie.value, true)
     const userId = decodedToken.uid
 
     // 3. Firestore에서 사용자 role 조회
