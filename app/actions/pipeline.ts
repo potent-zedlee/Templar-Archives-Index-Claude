@@ -118,13 +118,14 @@ export async function getPipelineStatusCounts(): Promise<{
     ]
 
     // collectionGroup으로 모든 streams 서브컬렉션 조회
+    // count() 쿼리는 단일 필드 인덱스가 필요하므로, select()로 최소 데이터만 가져와서 길이 계산
     const countPromises = statuses.map(async (status) => {
       const snapshot = await adminFirestore
         .collectionGroup('streams')
         .where('pipelineStatus', '==', status)
-        .count()
+        .select() // 필드 없이 문서 ID만 가져옴
         .get()
-      return { status, count: snapshot.data().count }
+      return { status, count: snapshot.size }
     })
 
     const results = await Promise.all(countPromises)
