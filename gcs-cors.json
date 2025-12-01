@@ -6,13 +6,9 @@
       "https://templar-archives-index.web.app",
       "http://localhost:3000"
     ],
-    "method": ["GET", "PUT", "POST", "DELETE", "HEAD"],
+    "method": ["GET", "PUT", "POST", "DELETE", "HEAD", "OPTIONS"],
     "responseHeader": [
-      "Content-Type",
-      "Content-Length",
-      "Content-Range",
-      "x-goog-resumable",
-      "x-goog-content-length-range"
+      "*"
     ],
     "maxAgeSeconds": 3600
   }
