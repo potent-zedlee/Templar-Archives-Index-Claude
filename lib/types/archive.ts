@@ -281,6 +281,11 @@ export interface UnsortedVideo {
   videoSource: VideoSource
   publishedAt?: string
   createdAt: string
+  // GCS Upload 정보
+  gcsPath?: string
+  gcsUri?: string
+  gcsFileSize?: number
+  gcsUploadedAt?: string
 }
 
 export interface Payout {
