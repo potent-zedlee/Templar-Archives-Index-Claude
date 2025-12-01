@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Templar Archives는 포커 영상을 자동으로 핸드 히스토리로 변환하고 분석하는 프로덕션 플랫폼입니다.
 
-- **프로덕션 (Vercel)**: https://templar-archives.vercel.app (메인)
+- **프로덕션 (Vercel)**: https://templar-archives-index.vercel.app (메인)
 - **프로덕션 (Firebase)**: https://templar-archives-index.web.app (백업)
 - **로컬**: http://localhost:3000
 - **레이아웃**: 3-Column (Desktop 전용, lg+)
@@ -313,14 +313,14 @@ docker buildx build --platform linux/amd64 --load ...
 GitHub과 직접 연동되어 `main` 브랜치 push 시 자동 배포 (~1분)
 
 ```
-Git Push (main) → Vercel 자동 빌드 → https://templar-archives.vercel.app
+Git Push (main) → Vercel 자동 빌드 → https://templar-archives-index.vercel.app
 ```
 
 ### Firebase Hosting (백업)
-수동 트리거 또는 매주 일요일 자동 배포
+GitHub Actions로 `main` 브랜치 push 시 자동 배포 (~5분)
 
 ```
-.github/workflows/firebase-deploy.yml  # workflow_dispatch로 수동 실행
+Git Push (main) → GitHub Actions → https://templar-archives-index.web.app
 ```
 
 **GitHub Secrets 필요**:
@@ -455,4 +455,4 @@ created_at, stream_id, video_url, pot_size
 ---
 
 **마지막 업데이트**: 2025-12-01
-**문서 버전**: 7.1 (Zod 기반 타입 통합, E2E 테스트 비활성화)
+**문서 버전**: 8.0 (Vercel 메인 배포, UploadDialog 통합)
