@@ -22,17 +22,19 @@ interface LocalFileUploadTabProps {
   loading: boolean
   addToUnsorted: boolean
   setAddToUnsorted: (value: boolean) => void
+  selectedCategory: string | null
+  setSelectedCategory: (category: string | null) => void
   tournaments: Tournament[]
   selectedTournamentId: string | null
   setSelectedTournamentId: (id: string | null) => void
-  selectedSubEventId: string | null
-  setSelectedSubEventId: (id: string | null) => void
-  selectedDayId: string | null
-  setSelectedDayId: (id: string | null) => void
-  createNewDay: boolean
-  setCreateNewDay: (value: boolean) => void
-  newDayName: string
-  setNewDayName: (name: string) => void
+  selectedEventId: string | null
+  setSelectedEventId: (id: string | null) => void
+  selectedStreamId: string | null
+  setSelectedStreamId: (id: string | null) => void
+  createNewStream: boolean
+  setCreateNewStream: (value: boolean) => void
+  newStreamName: string
+  setNewStreamName: (name: string) => void
   onUpload: () => void
 }
 
@@ -44,23 +46,30 @@ export function LocalFileUploadTab({
   loading,
   addToUnsorted,
   setAddToUnsorted,
+  selectedCategory,
+  setSelectedCategory,
   tournaments,
   selectedTournamentId,
   setSelectedTournamentId,
-  selectedSubEventId,
-  setSelectedSubEventId,
-  selectedDayId,
-  setSelectedDayId,
-  createNewDay,
-  setCreateNewDay,
-  newDayName,
-  setNewDayName,
+  selectedEventId,
+  setSelectedEventId,
+  selectedStreamId,
+  setSelectedStreamId,
+  createNewStream,
+  setCreateNewStream,
+  newStreamName,
+  setNewStreamName,
   onUpload,
 }: LocalFileUploadTabProps) {
-  const selectedTournament = tournaments.find(t => t.id === selectedTournamentId)
-  const subEvents = selectedTournament?.events || []
-  const selectedSubEvent = selectedTournament?.events?.find(se => se.id === selectedSubEventId)
-  const days = selectedSubEvent?.streams || []
+  // Filter tournaments by selected category
+  const filteredTournaments = selectedCategory
+    ? tournaments.filter(t => t.category === selectedCategory)
+    : tournaments
+
+  const selectedTournament = filteredTournaments.find(t => t.id === selectedTournamentId)
+  const events = selectedTournament?.events || []
+  const selectedEvent = selectedTournament?.events?.find(e => e.id === selectedEventId)
+  const streams = selectedEvent?.streams || []
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -71,6 +80,19 @@ export function LocalFileUploadTab({
         setLocalName(file.name.replace(/\.[^/.]+$/, ''))
       }
     }
+  }
+
+  const handleCategorySelect = (category: string) => {
+    if (selectedCategory === category) {
+      // Deselect if already selected
+      setSelectedCategory(null)
+    } else {
+      setSelectedCategory(category)
+    }
+    // Reset downstream selections
+    setSelectedTournamentId(null)
+    setSelectedEventId(null)
+    setSelectedStreamId(null)
   }
 
   return (
@@ -112,17 +134,40 @@ export function LocalFileUploadTab({
         </Label>
       </div>
 
-      {/* Tournament/SubEvent/Day Selection */}
+      {/* Category/Tournament/Event/Stream Selection */}
       {!addToUnsorted && (
         <div className="space-y-3 pl-6 border-l-2">
+          {/* Category Toggle Buttons */}
+          <div className="space-y-2">
+            <Label>Category</Label>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant={selectedCategory === 'Triton' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => handleCategorySelect('Triton')}
+              >
+                Triton
+              </Button>
+              <Button
+                type="button"
+                variant={selectedCategory === 'EPT' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => handleCategorySelect('EPT')}
+              >
+                EPT
+              </Button>
+            </div>
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="tournament-select-local">Tournament</Label>
             <Select
               value={selectedTournamentId || 'none'}
               onValueChange={(value) => {
                 setSelectedTournamentId(value === 'none' ? null : value)
-                setSelectedSubEventId(null)
-                setSelectedDayId(null)
+                setSelectedEventId(null)
+                setSelectedStreamId(null)
               }}
             >
               <SelectTrigger id="tournament-select-local">
@@ -130,7 +175,7 @@ export function LocalFileUploadTab({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="none">Select tournament</SelectItem>
-                {tournaments.map((t) => (
+                {filteredTournaments.map((t) => (
                   <SelectItem key={t.id} value={t.id}>
                     {t.name}
                   </SelectItem>
@@ -140,23 +185,23 @@ export function LocalFileUploadTab({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="subevent-select-local">Sub-Event</Label>
+            <Label htmlFor="event-select-local">Event</Label>
             <Select
-              value={selectedSubEventId || 'none'}
+              value={selectedEventId || 'none'}
               onValueChange={(value) => {
-                setSelectedSubEventId(value === 'none' ? null : value)
-                setSelectedDayId(null)
+                setSelectedEventId(value === 'none' ? null : value)
+                setSelectedStreamId(null)
               }}
               disabled={!selectedTournamentId}
             >
-              <SelectTrigger id="subevent-select-local">
-                <SelectValue placeholder="Select sub-event" />
+              <SelectTrigger id="event-select-local">
+                <SelectValue placeholder="Select event" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="none">Select sub-event</SelectItem>
-                {subEvents.map((se) => (
-                  <SelectItem key={se.id} value={se.id}>
-                    {se.name}
+                <SelectItem value="none">Select event</SelectItem>
+                {events.map((e) => (
+                  <SelectItem key={e.id} value={e.id}>
+                    {e.name}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -164,23 +209,23 @@ export function LocalFileUploadTab({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="day-select-local">Day</Label>
+            <Label htmlFor="stream-select-local">Stream</Label>
             <Select
-              value={selectedDayId || 'none'}
+              value={selectedStreamId || 'none'}
               onValueChange={(value) => {
-                setSelectedDayId(value === 'none' ? null : value)
-                setCreateNewDay(false)
+                setSelectedStreamId(value === 'none' ? null : value)
+                setCreateNewStream(false)
               }}
-              disabled={!selectedSubEventId || createNewDay}
+              disabled={!selectedEventId || createNewStream}
             >
-              <SelectTrigger id="day-select-local">
-                <SelectValue placeholder="Select day" />
+              <SelectTrigger id="stream-select-local">
+                <SelectValue placeholder="Select stream" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="none">Select day</SelectItem>
-                {days.map((d) => (
-                  <SelectItem key={d.id} value={d.id}>
-                    {d.name}
+                <SelectItem value="none">Select stream</SelectItem>
+                {streams.map((s) => (
+                  <SelectItem key={s.id} value={s.id}>
+                    {s.name}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -189,27 +234,27 @@ export function LocalFileUploadTab({
 
           <div className="flex items-center gap-2">
             <Checkbox
-              id="create-new-day-local"
-              checked={createNewDay}
+              id="create-new-stream-local"
+              checked={createNewStream}
               onCheckedChange={(checked) => {
-                setCreateNewDay(checked as boolean)
-                if (checked) setSelectedDayId(null)
+                setCreateNewStream(checked as boolean)
+                if (checked) setSelectedStreamId(null)
               }}
-              disabled={!selectedSubEventId}
+              disabled={!selectedEventId}
             />
-            <Label htmlFor="create-new-day-local" className="cursor-pointer text-sm">
-              Create new day
+            <Label htmlFor="create-new-stream-local" className="cursor-pointer text-sm">
+              Create new stream
             </Label>
           </div>
 
-          {createNewDay && (
+          {createNewStream && (
             <div className="space-y-2">
-              <Label htmlFor="new-day-name-local">New Day Name</Label>
+              <Label htmlFor="new-stream-name-local">New Stream Name</Label>
               <Input
-                id="new-day-name-local"
+                id="new-stream-name-local"
                 placeholder="e.g., Day 1"
-                value={newDayName}
-                onChange={(e) => setNewDayName(e.target.value)}
+                value={newStreamName}
+                onChange={(e) => setNewStreamName(e.target.value)}
               />
             </div>
           )}
