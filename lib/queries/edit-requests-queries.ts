@@ -44,9 +44,9 @@ export type HandEditRequest = {
     id: string
     number: string
     description: string
-    day?: {
+    stream?: {
       name: string
-      subEvent?: {
+      event?: {
         name: string
         tournament?: {
           name: string
@@ -167,10 +167,10 @@ async function fetchUserEditRequests({
                 id: handSnap.id,
                 number: handData.number,
                 description: handData.description,
-                day: streamSnap.exists()
+                stream: streamSnap.exists()
                   ? {
                       name: (streamSnap.data() as FirestoreStream).name,
-                      subEvent: eventSnap.exists()
+                      event: eventSnap.exists()
                         ? {
                             name: (eventSnap.data() as FirestoreEvent).name,
                             tournament: tournamentSnap.exists()

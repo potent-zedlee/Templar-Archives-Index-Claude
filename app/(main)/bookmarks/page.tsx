@@ -167,7 +167,7 @@ export default function BookmarksClient() {
                   <div className="flex-1 space-y-2">
                     <div className="flex items-center gap-2">
                       <Link
-                        href={`/archive?tournament=${bookmark.hand?.day?.subEvent?.tournament?.id}&day=${bookmark.hand?.day?.id}`}
+                        href={`/archive?tournament=${bookmark.hand?.stream?.event?.tournament?.id}&stream=${bookmark.hand?.stream?.id}`}
                         className="hover:text-gold-400 transition-colors"
                       >
                         <h3 className="text-heading font-mono">
@@ -183,10 +183,10 @@ export default function BookmarksClient() {
                     </div>
 
                     {/* Tournament info */}
-                    {bookmark.hand?.day?.subEvent?.tournament && (
+                    {bookmark.hand?.stream?.event?.tournament && (
                       <div className="text-caption text-black-600">
-                        {bookmark.hand.day.subEvent.tournament.name} &gt;{' '}
-                        {bookmark.hand.day.subEvent.name} &gt; {bookmark.hand.day.name}
+                        {bookmark.hand.stream.event.tournament.name} &gt;{' '}
+                        {bookmark.hand.stream.event.name} &gt; {bookmark.hand.stream.name}
                       </div>
                     )}
 
@@ -214,7 +214,7 @@ export default function BookmarksClient() {
                   {/* Action buttons */}
                   <div className="flex flex-col gap-2">
                     <Link
-                      href={`/archive?tournament=${bookmark.hand?.day?.subEvent?.tournament?.id}&day=${bookmark.hand?.day?.id}`}
+                      href={`/archive?tournament=${bookmark.hand?.stream?.event?.tournament?.id}&stream=${bookmark.hand?.stream?.id}`}
                       className="btn-secondary text-sm"
                     >
                       View

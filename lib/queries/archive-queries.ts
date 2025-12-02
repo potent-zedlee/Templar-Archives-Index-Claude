@@ -625,7 +625,7 @@ export function useCheckHandMutation(streamId: string | null) {
 // ==================== Stream Players Query ====================
 
 /**
- * Fetch players for a specific stream (day)
+ * Fetch players for a specific stream
  * Returns unique players who participated in any hand in the stream
  * Firestore 버전으로 전환됨
  *

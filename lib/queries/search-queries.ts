@@ -32,7 +32,7 @@ export type Hand = {
   stream?: {
     name: string
     videoUrl?: string
-    subEvent?: {
+    event?: {
       name: string
       tournament?: {
         name: string
@@ -337,7 +337,7 @@ export function useHandQuery(handId: string) {
           hand.stream = {
             name: streamData.name,
             videoUrl: streamData.videoUrl,
-            subEvent: eventSnap.exists() ? {
+            event: eventSnap.exists() ? {
               name: (eventSnap.data() as FirestoreEvent).name,
               tournament: tournamentSnap.exists() ? {
                 name: (tournamentSnap.data() as FirestoreTournament).name,

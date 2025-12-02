@@ -160,9 +160,9 @@ export async function fetchEditRequests({
               id: data.handId,
               number: data.hand.number,
               description: data.hand.description,
-              day: {
+              stream: {
                 name: data.hand.streamName || 'N/A',
-                subEvent: {
+                event: {
                   name: data.hand.eventName || 'N/A',
                   tournament: {
                     name: data.hand.tournamentName || 'N/A',
@@ -222,9 +222,9 @@ export async function fetchUserEditRequests({
               id: data.handId,
               number: data.hand.number,
               description: data.hand.description,
-              day: {
+              stream: {
                 name: data.hand.streamName || 'N/A',
-                subEvent: {
+                event: {
                   name: data.hand.eventName || 'N/A',
                   tournament: {
                     name: data.hand.tournamentName || 'N/A',

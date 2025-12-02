@@ -41,10 +41,10 @@ export type HandBookmarkWithDetails = HandBookmark & {
     number: string
     description: string
     timestamp: string
-    day?: {
+    stream?: {
       id: string
       name: string
-      subEvent?: {
+      event?: {
         id: string
         name: string
         tournament?: {
@@ -127,11 +127,11 @@ async function getUserBookmarks(userId: string): Promise<HandBookmarkWithDetails
                 number: handData.number,
                 description: handData.description,
                 timestamp: handData.timestamp,
-                day: streamSnap.exists()
+                stream: streamSnap.exists()
                   ? {
                       id: handData.streamId,
                       name: (streamSnap.data() as FirestoreStream).name,
-                      subEvent: eventSnap.exists()
+                      event: eventSnap.exists()
                         ? {
                             id: handData.eventId,
                             name: (eventSnap.data() as FirestoreEvent).name,
