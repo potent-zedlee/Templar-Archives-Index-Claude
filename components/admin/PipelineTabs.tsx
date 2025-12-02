@@ -46,14 +46,15 @@ interface PipelineTab {
   bgColor: string
 }
 
+// StreamCard.tsx와 동일한 색상 팔레트 사용
 const tabs: PipelineTab[] = [
   { status: 'all', label: 'All', icon: LayoutGrid, color: 'text-foreground', bgColor: 'bg-muted' },
-  { status: 'pending', label: 'Upload', icon: Upload, color: 'text-gray-600 dark:text-gray-400', bgColor: 'bg-gray-100 dark:bg-gray-800' },
-  { status: 'needs_classify', label: 'Classify', icon: FolderTree, color: 'text-yellow-600 dark:text-yellow-400', bgColor: 'bg-yellow-100 dark:bg-yellow-900/30' },
+  { status: 'pending', label: 'Pending', icon: Upload, color: 'text-slate-600 dark:text-slate-400', bgColor: 'bg-slate-100 dark:bg-slate-800' },
+  { status: 'needs_classify', label: 'Classify', icon: FolderTree, color: 'text-amber-600 dark:text-amber-400', bgColor: 'bg-amber-100 dark:bg-amber-900/30' },
   { status: 'analyzing', label: 'Analyzing', icon: Sparkles, color: 'text-blue-600 dark:text-blue-400', bgColor: 'bg-blue-100 dark:bg-blue-900/30' },
-  { status: 'completed', label: 'Completed', icon: CheckCircle, color: 'text-emerald-600 dark:text-emerald-400', bgColor: 'bg-emerald-100 dark:bg-emerald-900/30' },
-  { status: 'needs_review', label: 'Review', icon: CheckCircle, color: 'text-orange-600 dark:text-orange-400', bgColor: 'bg-orange-100 dark:bg-orange-900/30' },
-  { status: 'published', label: 'Published', icon: Globe, color: 'text-green-600 dark:text-green-400', bgColor: 'bg-green-100 dark:bg-green-900/30' },
+  { status: 'completed', label: 'Completed', icon: CheckCircle, color: 'text-green-600 dark:text-green-400', bgColor: 'bg-green-100 dark:bg-green-900/30' },
+  { status: 'needs_review', label: 'Review', icon: CheckCircle, color: 'text-purple-600 dark:text-purple-400', bgColor: 'bg-purple-100 dark:bg-purple-900/30' },
+  { status: 'published', label: 'Published', icon: Globe, color: 'text-emerald-600 dark:text-emerald-400', bgColor: 'bg-emerald-100 dark:bg-emerald-900/30' },
   { status: 'failed', label: 'Failed', icon: AlertCircle, color: 'text-red-600 dark:text-red-400', bgColor: 'bg-red-100 dark:bg-red-900/30' },
 ]
 

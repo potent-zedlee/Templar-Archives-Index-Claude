@@ -3,10 +3,14 @@
 /**
  * ReviewPanel - 스트림 핸드 검토 패널
  *
- * 분석 완료된 스트림의 핸드를 검토하고 승인하는 컴포넌트
+ * 분석 완료(completed)된 스트림의 핸드를 검토하고 승인하는 컴포넌트
+ *
+ * 파이프라인 흐름:
+ * completed (분석 완료) → ReviewPanel 검토 → needs_review (발행 대기) → published (발행됨)
+ *
  * - 핸드 목록 표시
  * - 개별/전체 승인
- * - pipelineStatus를 'needs_review'로 변경
+ * - 승인 시 pipelineStatus를 'needs_review' (발행 대기)로 변경
  */
 
 import { useState } from 'react'
