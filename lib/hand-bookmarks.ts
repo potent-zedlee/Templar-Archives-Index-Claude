@@ -39,10 +39,10 @@ export type HandBookmarkWithDetails = HandBookmark & {
     number: string
     description: string
     timestamp: string
-    day?: {
+    stream?: {
       id: string
       name: string
-      sub_event?: {
+      event?: {
         id: string
         name: string
         tournament?: {
@@ -81,11 +81,11 @@ function convertToLegacyFormat(
           number: bookmark.refData.number || '',
           description: bookmark.refData.description || '',
           timestamp: bookmark.refData.timestamp || '',
-          day: bookmark.refData.streamName
+          stream: bookmark.refData.streamName
             ? {
                 id: '',
                 name: bookmark.refData.streamName,
-                sub_event: bookmark.refData.eventName
+                event: bookmark.refData.eventName
                   ? {
                       id: '',
                       name: bookmark.refData.eventName,

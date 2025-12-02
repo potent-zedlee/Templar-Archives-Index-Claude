@@ -170,7 +170,7 @@ export default function EditRequestsClient() {
                         #{(request as any).hand?.number}
                       </div>
                       <div className="text-xs text-black-600">
-                        {(request as any).hand?.day?.sub_event?.tournament?.name}
+                        {(request as any).hand?.stream?.event?.tournament?.name}
                       </div>
                     </div>
                     <div>

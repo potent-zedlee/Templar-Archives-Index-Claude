@@ -272,7 +272,7 @@ export async function deleteUnsortedVideosBatch(ids: string[]) {
 }
 
 /**
- * Organize a video by assigning it to a sub_event
+ * Organize a video by assigning it to an event
  */
 export async function organizeUnsortedVideo(
   videoId: string,
@@ -470,7 +470,7 @@ export async function createUnsortedVideosBatch(
 }
 
 /**
- * Add video directly to a stream (Day)
+ * Add video directly to a stream
  */
 export async function addVideoToStream(
   tournamentId: string,
@@ -522,7 +522,7 @@ export async function addVideoToStream(
 }
 
 /**
- * Create new stream (Day) with video
+ * Create new stream with video
  */
 export async function createStreamWithVideo(
   tournamentId: string,

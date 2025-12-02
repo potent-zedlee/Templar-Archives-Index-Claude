@@ -33,10 +33,10 @@ type Hand = {
   id: string
   number: string
   description: string
-  day: {
+  stream: {
     id: string
     name: string
-    sub_event: {
+    event: {
       name: string
       tournament: {
         name: string
@@ -173,10 +173,10 @@ export default function EditHandActionsPage() {
         id: handSnap.id,
         number: handData.number,
         description: handData.description || "",
-        day: {
+        stream: {
           id: handData.streamId || "",
           name: streamName || "Unknown Stream",
-          sub_event: {
+          event: {
             name: eventName || "Unknown Event",
             tournament: {
               name: tournamentName || "Unknown Tournament",
@@ -303,11 +303,11 @@ export default function EditHandActionsPage() {
                 {hand.description}
               </p>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <span>{hand.day.sub_event.tournament.name}</span>
+                <span>{hand.stream.event.tournament.name}</span>
                 <span>&gt;</span>
-                <span>{hand.day.sub_event.name}</span>
+                <span>{hand.stream.event.name}</span>
                 <span>&gt;</span>
-                <span>{hand.day.name}</span>
+                <span>{hand.stream.name}</span>
               </div>
             </div>
           </div>

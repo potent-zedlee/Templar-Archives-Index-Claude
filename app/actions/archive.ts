@@ -575,9 +575,6 @@ export async function createStream(eventId: string, data: {
   }
 }
 
-/** @deprecated Use createStream instead */
-export const createDay = createStream
-
 export async function updateStream(id: string, data: {
   name?: string
   video_source: 'youtube' | 'upload'
@@ -638,9 +635,6 @@ export async function updateStream(id: string, data: {
   }
 }
 
-/** @deprecated Use updateStream instead */
-export const updateDay = updateStream
-
 export async function deleteStream(id: string) {
   try {
     // 1. 관리자 권한 검증
@@ -697,9 +691,6 @@ export async function deleteStream(id: string) {
     return { success: false, error: error.message || 'Unknown error' }
   }
 }
-
-/** @deprecated Use deleteStream instead */
-export const deleteDay = deleteStream
 
 // ==================== Payout Actions ====================
 

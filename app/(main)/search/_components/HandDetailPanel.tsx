@@ -113,7 +113,7 @@ export function HandDetailPanel({ handId }: HandDetailPanelProps) {
   }
 
   const stream = hand.stream as any
-  const tournament = stream?.sub_event?.tournament
+  const tournament = stream?.event?.tournament
   const videoId = extractVideoId(stream?.videoUrl)
 
   return (
