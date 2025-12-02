@@ -922,3 +922,56 @@ export async function updateStreamUploadStatus(
     return { success: false, error: errorMsg }
   }
 }
+
+// ==================== Stream Video URL Actions ====================
+
+/**
+ * 스트림의 YouTube 비디오 URL 업데이트
+ *
+ * @param tournamentId - 토너먼트 ID
+ * @param eventId - 이벤트 ID
+ * @param streamId - 스트림 ID
+ * @param videoUrl - YouTube URL
+ * @returns {Promise<{success: boolean, error?: string}>}
+ */
+export async function updateStreamVideoUrl(
+  tournamentId: string,
+  eventId: string,
+  streamId: string,
+  videoUrl: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    // 1. 관리자 권한 확인
+    const auth = await verifyAdmin()
+    if (!auth.authorized) {
+      return { success: false, error: auth.error }
+    }
+
+    // 2. YouTube URL 유효성 검사
+    const youtubePattern = /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/
+    if (videoUrl && !youtubePattern.test(videoUrl)) {
+      return { success: false, error: '올바른 YouTube URL 형식이 아닙니다' }
+    }
+
+    // 3. 스트림 문서 업데이트
+    const streamPath = `${COLLECTION_PATHS.STREAMS(tournamentId, eventId)}/${streamId}`
+    const streamRef = adminFirestore.doc(streamPath)
+
+    await streamRef.update({
+      videoUrl: videoUrl || null,
+      videoSource: videoUrl ? 'youtube' : null,
+      updatedAt: FieldValue.serverTimestamp(),
+    })
+
+    // 4. 캐시 무효화
+    revalidatePath('/archive')
+    revalidatePath('/admin/archive')
+    revalidatePath('/admin/archive/pipeline')
+
+    return { success: true }
+  } catch (error: unknown) {
+    const errorMsg = error instanceof Error ? error.message : 'Unknown error'
+    console.error('[Server Action] Update stream video URL exception:', errorMsg)
+    return { success: false, error: errorMsg }
+  }
+}

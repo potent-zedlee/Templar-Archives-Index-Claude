@@ -17,7 +17,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Progress } from "@/components/ui/progress"
-import { Sparkles, Loader2, CheckCircle2, AlertCircle, Users, Plus, X, XCircle } from "lucide-react"
+import { Sparkles, Loader2, CheckCircle2, AlertCircle, Users, Plus, X, XCircle, Youtube, Link2 } from "lucide-react"
 import type { FirestoreStream } from "@/lib/firestore-types"
 
 // Extended Stream type with IDs for Firestore path
@@ -45,6 +45,7 @@ import { timeStringToSeconds } from "@/lib/types/video-segments"
 import { PlayerMatchResults } from "@/components/features/player/PlayerMatchResults"
 import { VideoPlayerWithTimestamp } from "@/components/features/video/VideoPlayerWithTimestamp"
 import { startKanAnalysis } from "@/app/actions/kan-analysis"
+import { updateStreamVideoUrl } from "@/app/actions/archive"
 import { useCloudRunJob } from "@/lib/hooks/use-cloud-run-job"
 import type { TimeSegment } from "@/types/segments"
 import { formatTime } from "@/types/segments"
@@ -103,6 +104,12 @@ export function AnalyzeVideoDialog({
   const [matchResults, setMatchResults] = useState<PlayerMatchResult[]>([])
   const [, setCurrentVideoTime] = useState(0)
   const [videoDuration, setVideoDuration] = useState(0)
+
+  // YouTube URL 입력 상태
+  const [youtubeInput, setYoutubeInput] = useState('')
+  const [youtubeUrl, setYoutubeUrl] = useState(day?.videoUrl || '')
+  const [isYoutubeEditing, setIsYoutubeEditing] = useState(false)
+  const [isSavingYoutube, setIsSavingYoutube] = useState(false)
 
   // Progress tracking
   const [progressPercent, setProgressPercent] = useState(0)
@@ -164,9 +171,13 @@ export function AnalyzeVideoDialog({
       console.log('[AnalyzeVideoDialog] Dialog opened - resetting state')
       resetDialog()
       uploadCleanup()
+      // YouTube URL 초기화
+      setYoutubeUrl(day?.videoUrl || '')
+      setYoutubeInput('')
+      setIsYoutubeEditing(false)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen])
+  }, [isOpen, day?.videoUrl])
 
   // day가 바뀌면 업로드 상태 정리
   useEffect(() => {
@@ -306,6 +317,63 @@ export function AnalyzeVideoDialog({
     return // Explicit return for TypeScript
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status, jobId])
+
+  // YouTube URL 확인 및 저장
+  const handleYoutubeConfirm = async () => {
+    const trimmed = youtubeInput.trim()
+    if (!trimmed) {
+      toast.error('YouTube URL을 입력해주세요')
+      return
+    }
+
+    // YouTube URL 유효성 검사
+    const youtubePattern = /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/
+    if (!youtubePattern.test(trimmed)) {
+      toast.error('올바른 YouTube URL을 입력해주세요')
+      return
+    }
+
+    // 로컬 상태 즉시 업데이트 (프리뷰용)
+    setYoutubeUrl(trimmed)
+    setIsYoutubeEditing(false)
+
+    // DB 업데이트 (Server Action)
+    if (day?.id && day?.tournamentId && day?.eventId) {
+      setIsSavingYoutube(true)
+      try {
+        const result = await updateStreamVideoUrl(
+          day.tournamentId,
+          day.eventId,
+          day.id,
+          trimmed
+        )
+        if (result.success) {
+          toast.success('YouTube 링크가 저장되었습니다')
+        } else {
+          toast.error(result.error || '저장에 실패했습니다')
+        }
+      } catch (err) {
+        console.error('[AnalyzeVideoDialog] YouTube save error:', err)
+        toast.error('저장 중 오류가 발생했습니다')
+      } finally {
+        setIsSavingYoutube(false)
+      }
+    }
+
+    setYoutubeInput('')
+  }
+
+  // YouTube URL 편집 모드 진입
+  const handleYoutubeEdit = () => {
+    setYoutubeInput(youtubeUrl)
+    setIsYoutubeEditing(true)
+  }
+
+  // YouTube URL 편집 취소
+  const handleYoutubeCancel = () => {
+    setYoutubeInput('')
+    setIsYoutubeEditing(false)
+  }
 
   // Add player
   const handleAddPlayer = () => {
@@ -501,8 +569,8 @@ export function AnalyzeVideoDialog({
             {/* Left Column: Video Player + Timeline */}
             <div className="flex-1 md:flex-[3] space-y-4 overflow-y-auto">
               <VideoPlayerWithTimestamp
-                videoUrl={day?.videoUrl}
-                videoSource={day?.videoSource}
+                videoUrl={youtubeUrl || day?.videoUrl}
+                videoSource={youtubeUrl ? 'youtube' : day?.videoSource}
                 videoFile={day?.videoFile}
                 onTimeUpdate={setCurrentVideoTime}
                 onDurationUpdate={setVideoDuration}
@@ -518,9 +586,78 @@ export function AnalyzeVideoDialog({
 
             {/* Right Column: Upload + Form */}
             <div className="flex-1 md:flex-[2] space-y-6 overflow-y-auto">
+            {/* YouTube URL Section */}
+            <div className="space-y-3">
+              <Label className="flex items-center gap-2">
+                <Youtube className="h-4 w-4 text-red-500" />
+                YouTube 링크 (선택)
+              </Label>
+
+              {/* YouTube URL이 없거나 편집 모드일 때 입력 폼 표시 */}
+              {(!youtubeUrl || isYoutubeEditing) ? (
+                <div className="space-y-2">
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="https://youtube.com/watch?v=..."
+                      value={youtubeInput}
+                      onChange={(e) => setYoutubeInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault()
+                          handleYoutubeConfirm()
+                        }
+                      }}
+                      disabled={isSavingYoutube}
+                    />
+                    <Button
+                      onClick={handleYoutubeConfirm}
+                      disabled={!youtubeInput.trim() || isSavingYoutube}
+                      size="sm"
+                    >
+                      {isSavingYoutube ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Link2 className="h-4 w-4" />
+                      )}
+                    </Button>
+                    {isYoutubeEditing && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleYoutubeCancel}
+                        disabled={isSavingYoutube}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                // YouTube URL이 있을 때 표시
+                <div className="flex items-center gap-2 rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3">
+                  <Youtube className="h-5 w-5 text-red-500" />
+                  <span className="text-sm font-medium text-red-400 flex-1 truncate">
+                    YouTube 연결됨
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleYoutubeEdit}
+                    className="text-xs h-7"
+                  >
+                    변경
+                  </Button>
+                </div>
+              )}
+
+              <p className="text-xs text-muted-foreground">
+                참고용 영상 링크입니다. 분석은 업로드된 파일로 진행됩니다.
+              </p>
+            </div>
+
             {/* Upload Section */}
             <div className="space-y-3">
-              <Label>영상 업로드</Label>
+              <Label>영상 업로드 (필수)</Label>
 
               {/* 업로드 가능 상태: DB가 none이고 gcsUri가 없고 훅도 idle일 때 */}
               {day?.uploadStatus === 'none' && !day?.gcsUri && uploadStatus === 'idle' && (
