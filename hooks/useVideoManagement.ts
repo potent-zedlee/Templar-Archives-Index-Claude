@@ -58,8 +58,8 @@ export function useVideoManagement({ onReload }: UseVideoManagementProps) {
       videoIdsToMove = [draggedVideo.video.id]
     }
 
-    // Handle drop on SubEvent
-    if (dropTarget.type === 'subevent') {
+    // Handle drop on Event or Stream
+    if (dropTarget.type === 'event' || dropTarget.type === 'stream') {
       if (videoIdsToMove.length > 1) {
         const result = await organizeVideos(videoIdsToMove, dropTarget.id)
         if (result.success) {
@@ -77,28 +77,6 @@ export function useVideoManagement({ onReload }: UseVideoManagementProps) {
           clearSelection()
         } else {
           toast.error(result.error || 'Failed to organize video')
-        }
-      }
-    }
-    // Handle drop on Day
-    else if (dropTarget.type === 'day') {
-      if (videoIdsToMove.length > 1) {
-        const result = await organizeVideos(videoIdsToMove, dropTarget.id)
-        if (result.success) {
-          toast.success(`${videoIdsToMove.length} videos moved successfully`)
-          await onReload()
-          clearSelection()
-        } else {
-          toast.error(result.error || 'Failed to move videos')
-        }
-      } else {
-        const result = await organizeVideo(videoIdsToMove[0], dropTarget.id)
-        if (result.success) {
-          toast.success('Video moved successfully')
-          await onReload()
-          clearSelection()
-        } else {
-          toast.error(result.error || 'Failed to move video')
         }
       }
     }

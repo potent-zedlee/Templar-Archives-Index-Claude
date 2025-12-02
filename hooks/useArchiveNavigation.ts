@@ -97,7 +97,7 @@ export function useArchiveNavigation({
       items = event?.streams?.map((stream: any) => ({
         id: stream.id,
         name: stream.name,
-        type: 'day' as const,
+        type: 'stream' as const,
         data: stream
       })) || []
     }
@@ -182,7 +182,7 @@ export function useArchiveNavigation({
       setNavigationLevel('event')
       setCurrentSubEventId(item.id)
     }
-    // Day clicks are handled by onSelectDay
+    // Stream clicks are handled by onSelectStream
   }
 
   // Navigate back

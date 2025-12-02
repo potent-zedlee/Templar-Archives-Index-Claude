@@ -129,7 +129,7 @@ export function ArchiveEventCard({
         return <Folder className="h-5 w-5" />
       case 'event':
         return <Folder className="h-5 w-5" />
-      case 'day':
+      case 'stream':
         return <FileVideo className="h-5 w-5" />
       case 'unorganized':
         return <Video className="h-5 w-5" />

@@ -12,8 +12,8 @@
  */
 export const FOLDER_COLORS = {
   tournament: "bg-blue-600/70",
-  subEvent: "bg-purple-600/70",
-  day: "bg-emerald-600/70",
+  event: "bg-purple-600/70",
+  stream: "bg-emerald-600/70",
 } as const
 
 /**
@@ -21,8 +21,8 @@ export const FOLDER_COLORS = {
  */
 export const FOLDER_HOVER_COLORS = {
   tournament: "hover:bg-blue-600/80",
-  subEvent: "hover:bg-purple-600/80",
-  day: "hover:bg-emerald-600/80",
+  event: "hover:bg-purple-600/80",
+  stream: "hover:bg-emerald-600/80",
 } as const
 
 /**
@@ -30,8 +30,8 @@ export const FOLDER_HOVER_COLORS = {
  */
 export const FOLDER_TEXT_COLORS = {
   tournament: "text-blue-50",
-  subEvent: "text-purple-50",
-  day: "text-emerald-50",
+  event: "text-purple-50",
+  stream: "text-emerald-50",
 } as const
 
 /**
@@ -39,8 +39,8 @@ export const FOLDER_TEXT_COLORS = {
  */
 export const FOLDER_ICON_COLORS = {
   tournament: "text-blue-100",
-  subEvent: "text-purple-100",
-  day: "text-emerald-100",
+  event: "text-purple-100",
+  stream: "text-emerald-100",
 } as const
 
 /**
@@ -48,8 +48,8 @@ export const FOLDER_ICON_COLORS = {
  */
 export const FOLDER_BADGE_COLORS = {
   tournament: "bg-blue-500/30",
-  subEvent: "bg-purple-500/30",
-  day: "bg-emerald-500/30",
+  event: "bg-purple-500/30",
+  stream: "bg-emerald-500/30",
 } as const
 
 /**

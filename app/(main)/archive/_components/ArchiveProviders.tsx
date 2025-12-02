@@ -48,8 +48,8 @@ export function ArchiveProviders({ children }: ArchiveProvidersProps) {
       videoIdsToMove = [draggedVideo.video.id]
     }
 
-    // Handle drop on SubEvent or Day
-    if (dropTarget.type === 'subevent' || dropTarget.type === 'day') {
+    // Handle drop on Event or Stream
+    if (dropTarget.type === 'event' || dropTarget.type === 'stream') {
       if (videoIdsToMove.length > 1) {
         const result = await organizeVideos(videoIdsToMove, dropTarget.id)
         if (result.success) {

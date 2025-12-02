@@ -62,7 +62,7 @@ export function ArchiveInfoDialog({
           <DialogTitle className="flex items-center gap-2">
             {item.type === 'tournament' && '🏆 Tournament Details'}
             {item.type === 'event' && '📋 Event Details'}
-            {item.type === 'day' && '📺 Stream Details'}
+            {item.type === 'stream' && '📺 Stream Details'}
           </DialogTitle>
           <DialogDescription>
             View detailed information about this {item.type}
@@ -81,7 +81,7 @@ export function ArchiveInfoDialog({
           )}
 
           {/* Stream Information */}
-          {item.type === 'day' && item.data && 'videoUrl' in item.data && (
+          {item.type === 'stream' && item.data && 'videoUrl' in item.data && (
             <StreamInfo stream={item.data as Stream} />
           )}
 

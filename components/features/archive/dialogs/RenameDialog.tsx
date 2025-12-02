@@ -51,8 +51,7 @@ export function RenameDialog({
 
     setIsSubmitting(true)
     try {
-      // Map 'day' to 'stream' (deprecated alias)
-      const itemType = item.type === 'day' ? 'stream' : item.type
+      const itemType = item.type
 
       // Call Server Action (type is now guaranteed to be 'tournament' | 'event' | 'stream')
       const result = await renameItem(itemType, item.id, renameValue.trim())

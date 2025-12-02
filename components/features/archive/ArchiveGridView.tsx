@@ -21,7 +21,7 @@ import { ArchiveEventCard } from "@/components/features/archive/ArchiveEventCard
 interface ArchiveGridViewProps {
   items: FolderItem[]
   onNavigate: (item: FolderItem) => void
-  onSelectDay?: (streamId: string) => void
+  onSelectStream?: (streamId: string) => void
   loading?: boolean
   isUnorganized?: boolean
   selectedIds?: Set<string>
@@ -38,7 +38,7 @@ interface ArchiveGridViewProps {
 export function ArchiveGridView({
   items,
   onNavigate,
-  onSelectDay,
+  onSelectStream,
   loading = false,
   isUnorganized = false,
   selectedIds = new Set(),
@@ -77,7 +77,7 @@ export function ArchiveGridView({
         return <Folder className="h-6 w-6 text-blue-500" />
       case 'event':
         return <Folder className="h-6 w-6 text-green-500" />
-      case 'day':
+      case 'stream':
         return <FileVideo className="h-6 w-6 text-purple-500" />
       case 'unorganized':
         return <Video className="h-6 w-6 text-orange-500" />
@@ -98,9 +98,9 @@ export function ArchiveGridView({
   }
 
   const handleItemClick = (item: FolderItem) => {
-    if (item.type === 'day' && onSelectDay && !isUnorganized) {
-      onSelectDay(item.id)
-    } else if (!isUnorganized && item.type !== 'day') {
+    if (item.type === 'stream' && onSelectStream && !isUnorganized) {
+      onSelectStream(item.id)
+    } else if (!isUnorganized && item.type !== 'stream') {
       onNavigate(item)
     }
   }
@@ -178,11 +178,11 @@ export function ArchiveGridView({
       )
     }
 
-    // Day (video) menu - for organized videos
-    if (item.type === 'day' && !isUnorganized) {
+    // Stream (video) menu - for organized videos
+    if (item.type === 'stream' && !isUnorganized) {
       return (
         <>
-          <DropdownMenuItem onClick={() => onSelectDay && onSelectDay(item.id)}>
+          <DropdownMenuItem onClick={() => onSelectStream && onSelectStream(item.id)}>
             <Play className="mr-2 h-4 w-4" />
             View Hands
           </DropdownMenuItem>
@@ -222,7 +222,7 @@ export function ArchiveGridView({
     }
 
     // Unorganized video menu
-    if (item.type === 'day' && isUnorganized) {
+    if (item.type === 'stream' && isUnorganized) {
       return (
         <>
           {onToggleSelect && (
@@ -297,7 +297,7 @@ export function ArchiveGridView({
           )
         }
 
-        // Use existing card for day/video/unorganized items
+        // Use existing card for stream/video/unorganized items
         const thumbnail = getYouTubeThumbnail(item)
         const isFolder = item.type === 'unorganized'
         const isSelected = selectedIds.has(item.id)
@@ -410,12 +410,12 @@ export function ArchiveGridView({
 
                 {/* Type Badge */}
                 <div>
-                  {item.type === 'day' && !isUnorganized && (
+                  {item.type === 'stream' && !isUnorganized && (
                     <Badge variant="outline" className="text-xs border-purple-500/50 text-purple-600 dark:text-purple-400">
                       Video
                     </Badge>
                   )}
-                  {item.type === 'day' && isUnorganized && (
+                  {item.type === 'stream' && isUnorganized && (
                     <Badge variant="outline" className="text-xs border-orange-500/50 text-orange-600 dark:text-orange-400">
                       Unorganized
                     </Badge>

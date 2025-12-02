@@ -374,7 +374,7 @@ export interface AdvancedFilters {
 
 // ==================== Folder Navigation Types ====================
 
-export type FolderItemType = "tournament" | "event" | "stream" | "day" | "unorganized"
+export type FolderItemType = "tournament" | "event" | "stream" | "unorganized"
 
 export interface FolderItem {
   id: string

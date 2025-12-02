@@ -76,12 +76,19 @@ const ACTION_LABELS: Record<string, string> = {
   create_tournament: 'Create Tournament',
   update_tournament: 'Update Tournament',
   delete_tournament: 'Delete Tournament',
-  create_subevent: 'Create SubEvent',
-  update_subevent: 'Update SubEvent',
-  delete_subevent: 'Delete SubEvent',
-  create_day: 'Create Day',
-  update_day: 'Update Day',
-  delete_day: 'Delete Day',
+  create_event: 'Create Event',
+  update_event: 'Update Event',
+  delete_event: 'Delete Event',
+  create_stream: 'Create Stream',
+  update_stream: 'Update Stream',
+  delete_stream: 'Delete Stream',
+  // Legacy aliases for backward compatibility
+  create_subevent: 'Create Event',
+  update_subevent: 'Update Event',
+  delete_subevent: 'Delete Event',
+  create_day: 'Create Stream',
+  update_day: 'Update Stream',
+  delete_day: 'Delete Stream',
   ban_user: 'Ban User',
   unban_user: 'Unban User',
   change_role: 'Change Role',
@@ -93,6 +100,9 @@ const ACTION_LABELS: Record<string, string> = {
 
 const RESOURCE_TYPE_COLORS: Record<string, string> = {
   tournament: 'bg-blue-100 text-blue-800',
+  event: 'bg-green-100 text-green-800',
+  stream: 'bg-yellow-100 text-yellow-800',
+  // Legacy aliases for backward compatibility
   subevent: 'bg-green-100 text-green-800',
   day: 'bg-yellow-100 text-yellow-800',
   user: 'bg-purple-100 text-purple-800',
@@ -430,8 +440,8 @@ export default function AuditLogsPage() {
             <SelectContent>
               <SelectItem value="all">All Types</SelectItem>
               <SelectItem value="tournament">Tournament</SelectItem>
-              <SelectItem value="subevent">SubEvent</SelectItem>
-              <SelectItem value="day">Day</SelectItem>
+              <SelectItem value="event">Event</SelectItem>
+              <SelectItem value="stream">Stream</SelectItem>
               <SelectItem value="user">User</SelectItem>
               <SelectItem value="post">Post</SelectItem>
               <SelectItem value="hand">Hand</SelectItem>
