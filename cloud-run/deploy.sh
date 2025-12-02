@@ -83,6 +83,20 @@ deploy_orchestrator() {
   SERVICE_NAME="video-orchestrator"
   cd "$(dirname "$0")/orchestrator"
 
+  # 기존 Segment Analyzer URL 가져오기 (있으면 유지)
+  EXISTING_SEGMENT_URL=$(gcloud run services describe "$SERVICE_NAME" \
+    --region="$REGION" --format='value(spec.template.spec.containers[0].env)' 2>/dev/null | \
+    grep -o 'SEGMENT_ANALYZER_URL=[^,]*' | cut -d'=' -f2 || echo "")
+
+  # Segment Analyzer URL 설정 (기존 값 또는 기본값)
+  if [ -z "$EXISTING_SEGMENT_URL" ]; then
+    SEGMENT_ANALYZER_URL="https://segment-analyzer-700566907563.${REGION}.run.app"
+    echo_warn "No existing SEGMENT_ANALYZER_URL, using default: $SEGMENT_ANALYZER_URL"
+  else
+    SEGMENT_ANALYZER_URL="$EXISTING_SEGMENT_URL"
+    echo_info "Using existing SEGMENT_ANALYZER_URL: $SEGMENT_ANALYZER_URL"
+  fi
+
   # Cloud Build로 빌드 및 배포 (--source 사용)
   # 로컬 Docker 빌드 없이 서버에서 빌드하므로 플랫폼 문제 없음
   echo_info "Building and deploying with Cloud Build..."
@@ -98,7 +112,8 @@ deploy_orchestrator() {
     --set-env-vars="GOOGLE_CLOUD_PROJECT=${PROJECT_ID}" \
     --set-env-vars="FIRESTORE_COLLECTION=analysis-jobs" \
     --set-env-vars="CLOUD_TASKS_LOCATION=${REGION}" \
-    --set-env-vars="CLOUD_TASKS_QUEUE=video-analysis-queue"
+    --set-env-vars="CLOUD_TASKS_QUEUE=video-analysis-queue" \
+    --set-env-vars="SEGMENT_ANALYZER_URL=${SEGMENT_ANALYZER_URL}"
 
   ORCHESTRATOR_URL=$(gcloud run services describe "$SERVICE_NAME" \
     --region="$REGION" --format='value(status.url)')
