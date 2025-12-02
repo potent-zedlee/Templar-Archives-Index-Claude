@@ -160,7 +160,10 @@ export async function startKanAnalysis(
 
     // Stream 상태 업데이트 (분석 중)
     await streamRef.update({
-      status: 'analyzing',
+      pipelineStatus: 'analyzing',
+      pipelineProgress: 0,
+      pipelineUpdatedAt: FieldValue.serverTimestamp(),
+      currentJobId: jobId,
       updatedAt: FieldValue.serverTimestamp(),
     })
 
