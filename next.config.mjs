@@ -76,7 +76,7 @@ const nextConfig = {
               "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://apis.google.com https://www.youtube.com https://vercel.live",
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: https: blob:",
-              "font-src 'self' data: https://fonts.gstatic.com",
+              "font-src 'self' data: https://fonts.gstatic.com https://vercel.live",
               "connect-src 'self' https://api.anthropic.com https://storage.googleapis.com https://firebasestorage.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.googleapis.com https://firestore.googleapis.com https://*.run.app https://*.cloudfunctions.net",
               "media-src 'self' https: blob:",
               "worker-src 'self' blob:",
