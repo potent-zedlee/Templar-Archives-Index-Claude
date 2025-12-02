@@ -100,6 +100,9 @@ deploy_orchestrator() {
   # Cloud Build로 빌드 및 배포 (--source 사용)
   # 로컬 Docker 빌드 없이 서버에서 빌드하므로 플랫폼 문제 없음
   echo_info "Building and deploying with Cloud Build..."
+  # Cloud Tasks OIDC 인증용 서비스 계정
+  SERVICE_ACCOUNT_EMAIL="${PROJECT_ID}@appspot.gserviceaccount.com"
+
   gcloud run deploy "$SERVICE_NAME" \
     --source=. \
     --region="$REGION" \
@@ -113,7 +116,8 @@ deploy_orchestrator() {
     --set-env-vars="FIRESTORE_COLLECTION=analysis-jobs" \
     --set-env-vars="CLOUD_TASKS_LOCATION=${REGION}" \
     --set-env-vars="CLOUD_TASKS_QUEUE=video-analysis-queue" \
-    --set-env-vars="SEGMENT_ANALYZER_URL=${SEGMENT_ANALYZER_URL}"
+    --set-env-vars="SEGMENT_ANALYZER_URL=${SEGMENT_ANALYZER_URL}" \
+    --set-env-vars="SERVICE_ACCOUNT_EMAIL=${SERVICE_ACCOUNT_EMAIL}"
 
   ORCHESTRATOR_URL=$(gcloud run services describe "$SERVICE_NAME" \
     --region="$REGION" --format='value(status.url)')
@@ -131,6 +135,10 @@ deploy_segment_analyzer() {
 
   # Cloud Build로 빌드 및 배포 (--source 사용)
   echo_info "Building and deploying with Cloud Build..."
+
+  # Orchestrator URL (Phase 1 완료 콜백용)
+  ORCHESTRATOR_URL="https://video-orchestrator-700566907563.${REGION}.run.app"
+
   gcloud run deploy "$SERVICE_NAME" \
     --source=. \
     --region="$REGION" \
@@ -143,7 +151,8 @@ deploy_segment_analyzer() {
     --set-env-vars="GOOGLE_CLOUD_PROJECT=${PROJECT_ID}" \
     --set-env-vars="FIRESTORE_COLLECTION=analysis-jobs" \
     --set-env-vars="GCS_BUCKET_NAME=templar-archives-videos" \
-    --set-env-vars="VERTEX_AI_LOCATION=global"
+    --set-env-vars="VERTEX_AI_LOCATION=global" \
+    --set-env-vars="ORCHESTRATOR_URL=${ORCHESTRATOR_URL}"
 
   SEGMENT_ANALYZER_URL=$(gcloud run services describe "$SERVICE_NAME" \
     --region="$REGION" --format='value(status.url)')

@@ -156,6 +156,13 @@ Tournament → Event → Stream → Hand
 - 2-Phase 분석: Phase 1 (타임스탬프 추출) → Phase 2 (상세 분석 + 시맨틱 태깅)
 - Chain-of-Thought 추론으로 포커 심리 분석
 
+**Cloud Run 환경 변수** (deploy.sh에서 자동 설정):
+| 서비스 | 환경 변수 | 설명 |
+|--------|----------|------|
+| Orchestrator | `SERVICE_ACCOUNT_EMAIL` | Cloud Tasks OIDC 인증용 서비스 계정 |
+| Orchestrator | `SEGMENT_ANALYZER_URL` | Segment Analyzer 호출 URL |
+| Segment Analyzer | `ORCHESTRATOR_URL` | Phase 1 완료 콜백 URL |
+
 ### Admin Archive Pipeline Dashboard
 
 **URL**: `/admin/archive/pipeline`
@@ -530,5 +537,5 @@ const MAX_CONCURRENT_UPLOADS = 3     // 동시 파일 3개 - 대역폭 활용
 
 ---
 
-**마지막 업데이트**: 2025-12-01
-**문서 버전**: 8.3 (업로드 속도 최적화: 16MB 청크, 동시 3파일)
+**마지막 업데이트**: 2025-12-02
+**문서 버전**: 8.4 (Cloud Run 환경 변수 문서화: SERVICE_ACCOUNT_EMAIL, ORCHESTRATOR_URL)
