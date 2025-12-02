@@ -118,6 +118,8 @@ export interface ProcessPhase2Request {
 export interface AnalysisJob {
   jobId: string
   streamId: string
+  tournamentId?: string  // 타임아웃 시 스트림 상태 업데이트용
+  eventId?: string       // 타임아웃 시 스트림 상태 업데이트용
   gcsUri: string
   platform: 'ept' | 'triton' | 'wsop'
   status: 'pending' | 'analyzing' | 'completed' | 'failed'
@@ -148,6 +150,8 @@ export interface SegmentInfo {
 
 export interface AnalyzeRequest {
   streamId: string
+  tournamentId?: string  // 타임아웃 시 스트림 상태 업데이트용
+  eventId?: string       // 타임아웃 시 스트림 상태 업데이트용
   gcsUri: string
   segments: { start: number; end: number }[]
   platform: 'ept' | 'triton' | 'wsop'

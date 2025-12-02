@@ -42,6 +42,7 @@ import {
 import { useActiveJobs } from '@/lib/queries/kan-queries'
 import type { PipelineStatus } from '@/lib/types/archive'
 import { Loader2 } from 'lucide-react'
+import { toast } from 'sonner'
 
 /**
  * Active Jobs Panel (KAN 통합)
@@ -143,8 +144,16 @@ function DashboardContent() {
 
   // 재시도 핸들러
   const handleRetry = useCallback(
-    (streamId: string) => {
-      retryMutation.mutate(streamId)
+    (stream: PipelineStream) => {
+      if (!stream.tournamentId || !stream.eventId) {
+        toast.error('토너먼트/이벤트 정보가 없습니다. 먼저 분류해주세요.')
+        return
+      }
+      retryMutation.mutate({
+        streamId: stream.id,
+        tournamentId: stream.tournamentId,
+        eventId: stream.eventId,
+      })
     },
     [retryMutation]
   )
@@ -244,14 +253,20 @@ function DashboardContent() {
                 <FlatView
                   streams={streams || []}
                   isLoading={isLoading}
-                  onRetry={handleRetry}
+                  onRetry={(streamId) => {
+                    const stream = streams?.find(s => s.id === streamId)
+                    if (stream) handleRetry(stream)
+                  }}
                 />
               ) : (
                 // TreeView는 추후 구현, 일단 FlatView 표시
                 <FlatView
                   streams={streams || []}
                   isLoading={isLoading}
-                  onRetry={handleRetry}
+                  onRetry={(streamId) => {
+                    const stream = streams?.find(s => s.id === streamId)
+                    if (stream) handleRetry(stream)
+                  }}
                 />
               )}
             </div>
@@ -286,7 +301,7 @@ function DashboardContent() {
                   onAnalyze={() => handleAnalyze(selectedStream)}
                   onReview={() => handleReview(selectedStream)}
                   onPublish={() => handlePublish(selectedStream.id)}
-                  onRetry={() => handleRetry(selectedStream.id)}
+                  onRetry={() => handleRetry(selectedStream)}
                 />
               ) : (
                 <div className="flex items-center justify-center h-full text-muted-foreground">

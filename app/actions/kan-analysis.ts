@@ -126,6 +126,8 @@ export async function startKanAnalysis(
       },
       body: JSON.stringify({
         streamId,
+        tournamentId,  // 타임아웃 시 스트림 상태 업데이트용
+        eventId,       // 타임아웃 시 스트림 상태 업데이트용
         gcsUri: stream.gcsUri,
         segments: formattedSegments,
         platform,

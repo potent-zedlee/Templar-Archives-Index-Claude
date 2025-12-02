@@ -65,6 +65,8 @@ export async function analyzeHandler(c: Context) {
     const job: AnalysisJob = {
       jobId,
       streamId: body.streamId,
+      tournamentId: body.tournamentId,  // 타임아웃 시 스트림 상태 업데이트용
+      eventId: body.eventId,            // 타임아웃 시 스트림 상태 업데이트용
       gcsUri: body.gcsUri,
       platform: body.platform,
       status: 'pending',

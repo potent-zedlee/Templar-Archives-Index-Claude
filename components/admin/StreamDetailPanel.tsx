@@ -287,10 +287,11 @@ export function StreamDetailPanel({
           </Button>
         )}
 
-        {isFailed && onRetry && (
+        {/* 실패 또는 분석 중(멈춘 경우)일 때 재시도 버튼 */}
+        {(isFailed || isAnalyzing) && onRetry && (
           <Button variant="outline" className="w-full" onClick={() => onRetry(stream.id)}>
             <RefreshCw className="h-4 w-4 mr-2" />
-            다시 시도
+            {isAnalyzing ? '분석 리셋 (재시도)' : '다시 시도'}
           </Button>
         )}
       </div>

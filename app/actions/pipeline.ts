@@ -321,3 +321,57 @@ export async function updateStreamPipelineStatus(
     return { success: false, error: error.message }
   }
 }
+
+/**
+ * 스트림 분석 리셋 (analyzing/failed → pending)
+ *
+ * 분석이 멈추거나 실패한 스트림을 pending 상태로 리셋하여
+ * 다시 분석 요청할 수 있게 합니다.
+ */
+export async function resetStreamAnalysis(
+  streamId: string,
+  tournamentId: string,
+  eventId: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const auth = await verifyAdmin()
+    if (!auth.authorized) {
+      return { success: false, error: auth.error }
+    }
+
+    const streamRef = adminFirestore
+      .collection('tournaments')
+      .doc(tournamentId)
+      .collection('events')
+      .doc(eventId)
+      .collection('streams')
+      .doc(streamId)
+
+    const streamDoc = await streamRef.get()
+    if (!streamDoc.exists) {
+      return { success: false, error: 'Stream not found' }
+    }
+
+    const currentStatus = streamDoc.data()?.pipelineStatus
+    if (!['analyzing', 'failed'].includes(currentStatus)) {
+      return {
+        success: false,
+        error: `Cannot reset stream with status: ${currentStatus}. Only 'analyzing' or 'failed' streams can be reset.`
+      }
+    }
+
+    await streamRef.update({
+      pipelineStatus: 'pending',
+      pipelineProgress: 0,
+      pipelineError: null,
+      currentJobId: null,
+      pipelineUpdatedAt: new Date(),
+    })
+
+    console.log(`[resetStreamAnalysis] Stream ${streamId} reset to pending`)
+    return { success: true }
+  } catch (error: any) {
+    console.error('[resetStreamAnalysis] Error:', error)
+    return { success: false, error: error.message }
+  }
+}

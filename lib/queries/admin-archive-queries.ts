@@ -411,6 +411,7 @@ export function useBulkUnpublishMutation() {
 import {
   getPipelineStatusCounts as getPipelineStatusCountsAction,
   getStreamsByPipelineStatus as getStreamsByPipelineStatusAction,
+  resetStreamAnalysis as resetStreamAnalysisAction,
 } from '@/app/actions/pipeline'
 
 /**
@@ -546,38 +547,38 @@ export function useUpdatePipelineStatus() {
 
 /**
  * 분석 재시도 뮤테이션
+ *
+ * subcollection 구조 (tournaments/{id}/events/{id}/streams/{id})를
+ * 지원하기 위해 Server Action 사용
  */
 export function useRetryAnalysis() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async (streamId: string) => {
-      const streamRef = doc(firestore, 'streams', streamId)
-      const streamDoc = await getDoc(streamRef)
+    mutationFn: async ({
+      streamId,
+      tournamentId,
+      eventId,
+    }: {
+      streamId: string
+      tournamentId: string
+      eventId: string
+    }) => {
+      const result = await resetStreamAnalysisAction(streamId, tournamentId, eventId)
 
-      if (!streamDoc.exists()) {
-        throw new Error('스트림을 찾을 수 없습니다')
+      if (!result.success) {
+        throw new Error(result.error || '분석 리셋 실패')
       }
 
-      const currentAttempts = streamDoc.data().analysisAttempts || 0
-
-      await updateDoc(streamRef, {
-        pipelineStatus: 'pending',
-        pipelineProgress: 0,
-        pipelineError: null,
-        pipelineUpdatedAt: Timestamp.now(),
-        analysisAttempts: currentAttempts + 1,
-      })
-
-      return { streamId, attempts: currentAttempts + 1 }
+      return { streamId }
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: adminArchiveQueryKeys.all })
-      toast.success(`분석을 재시작합니다 (시도 #${data.attempts})`)
+      toast.success('분석이 리셋되었습니다. Pending 탭에서 다시 시작하세요.')
     },
     onError: (error) => {
       console.error('[useRetryAnalysis] Error:', error)
-      toast.error('분석 재시도 실패')
+      toast.error(error instanceof Error ? error.message : '분석 재시도 실패')
     },
   })
 }
