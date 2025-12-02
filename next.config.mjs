@@ -80,7 +80,7 @@ const nextConfig = {
               "connect-src 'self' https://api.anthropic.com https://storage.googleapis.com https://firebasestorage.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.googleapis.com https://firestore.googleapis.com",
               "media-src 'self' https: blob:",
               "worker-src 'self' blob:",
-              "frame-src 'self' https://www.youtube.com https://accounts.google.com https://*.firebaseapp.com",
+              "frame-src 'self' https://www.youtube.com https://accounts.google.com https://*.firebaseapp.com https://vercel.live",
               "object-src 'none'",
               "base-uri 'self'",
               "form-action 'self'",
