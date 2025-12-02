@@ -449,7 +449,7 @@ export async function GET() {
       method: 'POST',
       contentType: 'application/json',
       body: {
-        dayId: 'uuid-of-day',
+        streamId: 'uuid-of-stream',
         source: 'external-analyzer-v1 (optional)',
         hands: [
           {

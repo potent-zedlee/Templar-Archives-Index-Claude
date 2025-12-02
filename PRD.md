@@ -320,7 +320,7 @@ Templar Archives Index는 포커 핸드 데이터의 자동 추출, 보관, 분�
 **Zustand Stores (4개)**:
 1. `archive-data-store.ts` - 데이터 관리 (tournaments, hands, userRole)
 2. `archive-ui-store.ts` - UI 상태 (dialogs, navigation, filters) - **persist**
-3. `archive-form-store.ts` - 폼 데이터 (tournamentForm, subEventForm, streamForm)
+3. `archive-form-store.ts` - 폼 데이터 (tournamentForm, eventForm, streamForm)
 4. `filter-store.ts` - 검색 필터 (searchQuery, sortBy, dateRange)
 
 **React Query** - Server State:

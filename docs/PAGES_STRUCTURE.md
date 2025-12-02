@@ -316,7 +316,7 @@ WSOP, Triton, EPT, APL, Hustler Casino Live, WSOP Classic, GGPOKER
 
 **기능**: 외부 시스템에서 분석한 핸드 히스토리를 Templar Archives에 추가
 
-**요청 예시**: dayId, source, hands[] (handNumber, startTime, endTime, players[], potSize 등)
+**요청 예시**: streamId, source, hands[] (handNumber, startTime, endTime, players[], potSize 등)
 
 **응답 예시**:
 ```json

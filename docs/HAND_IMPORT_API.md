@@ -18,7 +18,7 @@ Content-Type: application/json
 ### Body
 ```typescript
 {
-  "dayId": "uuid-of-day",  // 필수: 핸드를 추가할 Day의 ID
+  "streamId": "uuid-of-stream",  // 필수: 핸드를 추가할 Stream의 ID
   "source": "external-analyzer-v1",  // 선택: 데이터 출처 식별자
   "hands": [
     {
@@ -101,7 +101,7 @@ Content-Type: application/json
 ```json
 {
   "success": false,
-  "error": "dayId와 hands 배열이 필요합니다",
+  "error": "streamId와 hands 배열이 필요합니다",
   "imported": 0,
   "failed": 0
 }
@@ -111,7 +111,7 @@ Content-Type: application/json
 ```json
 {
   "success": false,
-  "error": "Day를 찾을 수 없습니다",
+  "error": "Stream을 찾을 수 없습니다",
   "imported": 0,
   "failed": 0
 }
@@ -124,7 +124,7 @@ Content-Type: application/json
 curl -X POST http://localhost:3000/api/import-hands \
   -H "Content-Type: application/json" \
   -d '{
-    "dayId": "00000000-0000-0000-0000-000000000003",
+    "streamId": "00000000-0000-0000-0000-000000000003",
     "source": "my-analyzer-v1",
     "hands": [
       {
@@ -156,7 +156,7 @@ import requests
 
 url = "http://localhost:3000/api/import-hands"
 data = {
-    "dayId": "00000000-0000-0000-0000-000000000003",
+    "streamId": "00000000-0000-0000-0000-000000000003",
     "source": "my-analyzer-v1",
     "hands": [
         {
@@ -193,7 +193,7 @@ const response = await fetch('http://localhost:3000/api/import-hands', {
     'Content-Type': 'application/json'
   },
   body: JSON.stringify({
-    dayId: '00000000-0000-0000-0000-000000000003',
+    streamId: '00000000-0000-0000-0000-000000000003',
     source: 'my-analyzer-v1',
     hands: [
       {

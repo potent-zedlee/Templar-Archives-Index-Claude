@@ -194,21 +194,20 @@ const tournamentsWithUIState = tournamentsData.map(tournament => ({
 
 ### 핸드 로딩
 ```tsx
-// Day 선택 시 핸드 로딩
+// Stream 선택 시 핸드 로딩
 useEffect(() => {
-  if (selectedDay) {
-    loadHands(selectedDay)
+  if (selectedStream) {
+    loadHands(selectedStream)
   }
-}, [selectedDay])
+}, [selectedStream])
 
-const loadHands = async (dayId) => {
-  const { data } = await supabase
-    .from('hands')
-    .select('*')
-    .eq('day_id', dayId)
-    .order('created_at', { ascending: true })
+const loadHands = async (streamId) => {
+  // Firestore에서 핸드 로딩
+  const handsRef = collection(firestore, 'hands')
+  const q = query(handsRef, where('streamId', '==', streamId), orderBy('createdAt', 'asc'))
+  const snapshot = await getDocs(q)
 
-  setHands(data?.map(hand => ({ ...hand, checked: false })))
+  setHands(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), checked: false })))
 }
 ```
 
