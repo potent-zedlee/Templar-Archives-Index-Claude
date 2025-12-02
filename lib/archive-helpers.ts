@@ -45,12 +45,12 @@ function timestampToString(ts: Timestamp | undefined): string | undefined {
  * 토너먼트 목록 로드 (UI 상태 포함)
  *
  * @param setTournaments - 토너먼트 상태 설정 함수
- * @param setSelectedDay - 선택된 날짜 설정 함수
+ * @param setSelectedStream - 선택된 스트림 설정 함수
  * @param setLoading - 로딩 상태 설정 함수
  */
 export async function loadTournamentsHelper(
   setTournaments: (tournaments: unknown[]) => void,
-  _setSelectedDay: (day: string) => void,
+  _setSelectedStream: (streamId: string) => void,
   setLoading: (loading: boolean) => void,
 ): Promise<void> {
   setLoading(true)
@@ -69,7 +69,7 @@ export async function loadTournamentsHelper(
 
     setTournaments(tournamentsWithUIState)
 
-    // Don't auto-select any day - user must manually select
+    // Don't auto-select any stream - user must manually select
   } catch (error) {
     console.error('Error loading tournaments:', error)
     toast.error('Failed to load tournaments')
@@ -149,15 +149,15 @@ export function toggleTournamentHelper(
 }
 
 /**
- * 서브이벤트 확장/축소 토글
+ * 이벤트 확장/축소 토글
  *
  * @param tournamentId - 토너먼트 ID
- * @param subEventId - 서브이벤트 ID
+ * @param eventId - 이벤트 ID
  * @param setTournaments - 토너먼트 상태 설정 함수
  */
-export function toggleSubEventHelper(
+export function toggleEventHelper(
   tournamentId: string,
-  subEventId: string,
+  eventId: string,
   setTournaments: (fn: (prev: unknown[]) => unknown[]) => void,
 ): void {
   setTournaments((prev: unknown[]) =>
@@ -167,7 +167,7 @@ export function toggleSubEventHelper(
         ? {
             ...tournament,
             events: tournament.events?.map((e) =>
-              e.id === subEventId ? { ...e, expanded: !e.expanded } : e,
+              e.id === eventId ? { ...e, expanded: !e.expanded } : e,
             ),
           }
         : tournament
@@ -176,18 +176,18 @@ export function toggleSubEventHelper(
 }
 
 /**
- * 스트림(날짜) 선택
+ * 스트림 선택
  *
  * @param streamId - 스트림 ID
- * @param setSelectedDay - 선택된 날짜 설정 함수
+ * @param setSelectedStream - 선택된 스트림 설정 함수
  * @param setTournaments - 토너먼트 상태 설정 함수
  */
-export function selectDayHelper(
+export function selectStreamHelper(
   streamId: string,
-  setSelectedDay: (day: string) => void,
+  setSelectedStream: (streamId: string) => void,
   setTournaments: (fn: (prev: unknown[]) => unknown[]) => void,
 ): void {
-  setSelectedDay(streamId)
+  setSelectedStream(streamId)
   setTournaments((prev: unknown[]) =>
     prev.map((t: unknown) => {
       const tournament = t as {
@@ -309,14 +309,13 @@ export async function deleteTournamentHelper(
 }
 
 /**
- * 서브이벤트 삭제
+ * 이벤트 삭제
  *
- * @param tournamentId - 토너먼트 ID
- * @param subEventId - 서브이벤트 ID
+ * @param eventId - 이벤트 ID
  * @param setTournaments - 토너먼트 상태 설정 함수
  */
-export async function deleteSubEventHelper(
-  subEventId: string,
+export async function deleteEventHelper(
+  eventId: string,
   setTournaments: (fn: (prev: unknown[]) => unknown[]) => void,
 ): Promise<void> {
   try {
@@ -331,7 +330,7 @@ export async function deleteSubEventHelper(
         firestore,
         COLLECTION_PATHS.EVENTS(tournamentDoc.id),
       )
-      const eventQuery = query(eventsRef, where('__name__', '==', subEventId))
+      const eventQuery = query(eventsRef, where('__name__', '==', eventId))
       const eventSnapshot = await getDocs(eventQuery)
 
       if (!eventSnapshot.empty) {
@@ -346,7 +345,7 @@ export async function deleteSubEventHelper(
         const eventRef = doc(
           firestore,
           COLLECTION_PATHS.EVENTS(tournamentDoc.id),
-          subEventId,
+          eventId,
         )
         const eventDoc = await getDoc(eventRef)
         if (eventDoc.exists()) {
@@ -367,14 +366,14 @@ export async function deleteSubEventHelper(
     const eventRef = doc(
       firestore,
       COLLECTION_PATHS.EVENTS(foundTournamentId),
-      subEventId,
+      eventId,
     )
     batch.delete(eventRef)
 
     // 하위 스트림 삭제
     const streamsRef = collection(
       firestore,
-      COLLECTION_PATHS.STREAMS(foundTournamentId, subEventId),
+      COLLECTION_PATHS.STREAMS(foundTournamentId, eventId),
     )
     const streamsSnapshot = await getDocs(streamsRef)
 
@@ -384,7 +383,7 @@ export async function deleteSubEventHelper(
 
     // 관련 핸드 삭제
     const handsRef = collection(firestore, COLLECTION_PATHS.HANDS)
-    const handsQuery = query(handsRef, where('eventId', '==', subEventId))
+    const handsQuery = query(handsRef, where('eventId', '==', eventId))
     const handsSnapshot = await getDocs(handsQuery)
 
     for (const handDoc of handsSnapshot.docs) {
@@ -401,25 +400,25 @@ export async function deleteSubEventHelper(
         }
         return {
           ...tournament,
-          events: tournament.events?.filter((e) => e.id !== subEventId),
+          events: tournament.events?.filter((e) => e.id !== eventId),
         }
       }),
     )
     toast.success('Event deleted successfully')
   } catch (error: unknown) {
-    console.error('Error deleting sub-event:', error)
+    console.error('Error deleting event:', error)
     const errorMessage = error instanceof Error ? error.message : 'Failed to delete event'
     toast.error(errorMessage)
   }
 }
 
 /**
- * 스트림(날짜) 삭제
+ * 스트림 삭제
  *
  * @param streamId - 스트림 ID
  * @param setTournaments - 토너먼트 상태 설정 함수
  */
-export async function deleteDayHelper(
+export async function deleteStreamHelper(
   streamId: string,
   setTournaments: (fn: (prev: unknown[]) => unknown[]) => void,
 ): Promise<void> {

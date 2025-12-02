@@ -19,7 +19,7 @@ export function useArchiveData() {
   const [tournaments, setTournaments] = useState<any[]>([])
   const [hands, setHands] = useState<any[]>([])
   const [unsortedVideos, setUnsortedVideos] = useState<UnsortedVideo[]>([])
-  const [selectedDay, setSelectedDay] = useState<string>("")
+  const [selectedStream, setSelectedStream] = useState<string>("")
   const [loading, setLoading] = useState(true)
   const [userEmail, setUserEmail] = useState<string | null>(null)
 
@@ -66,7 +66,6 @@ export function useArchiveData() {
                 buy_in: eventData.buyIn,
                 date: eventData.date?.toDate?.()?.toISOString(),
                 streams,
-                days: streams, // Legacy compatibility
                 expanded: false,
               }
             })
@@ -104,7 +103,7 @@ export function useArchiveData() {
     }
   }, [])
 
-  // Load hands for selected day from Firestore
+  // Load hands for selected stream from Firestore
   const loadHands = useCallback(async (streamId: string) => {
     try {
       const handsRef = collection(firestore, COLLECTION_PATHS.HANDS)
@@ -147,12 +146,12 @@ export function useArchiveData() {
     loadUnsortedVideos()
   }, [loadTournaments, loadUnsortedVideos])
 
-  // Load hands when day changes
+  // Load hands when stream changes
   useEffect(() => {
-    if (selectedDay) {
-      loadHands(selectedDay)
+    if (selectedStream) {
+      loadHands(selectedStream)
     }
-  }, [selectedDay, loadHands])
+  }, [selectedStream, loadHands])
 
   // Listen to auth state changes (Firebase Auth)
   useEffect(() => {
@@ -170,8 +169,8 @@ export function useArchiveData() {
     setHands,
     unsortedVideos,
     setUnsortedVideos,
-    selectedDay,
-    setSelectedDay,
+    selectedStream,
+    setSelectedStream,
     loading,
     setLoading,
     userEmail,

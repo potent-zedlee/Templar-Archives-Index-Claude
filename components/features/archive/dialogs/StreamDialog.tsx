@@ -19,26 +19,26 @@ import { organizeVideo } from "@/lib/unsorted-videos"
 import type { UnsortedVideo } from "@/lib/types/archive"
 import { createStream, updateStream as updateStreamAction } from "@/app/actions/archive"
 
-interface DayDialogProps {
+interface StreamDialogProps {
   isOpen: boolean
   onOpenChange: (open: boolean) => void
-  selectedSubEventId: string | null
-  editingDayId?: string
+  selectedEventId: string | null
+  editingStreamId?: string
   unsortedVideos?: UnsortedVideo[]
   onSuccess?: () => void
 }
 
-export function DayDialog({
+export function StreamDialog({
   isOpen,
   onOpenChange,
-  selectedSubEventId,
-  editingDayId = "",
+  selectedEventId,
+  editingStreamId = "",
   unsortedVideos = [],
   onSuccess,
-}: DayDialogProps) {
-  const [newDayName, setNewDayName] = useState("")
+}: StreamDialogProps) {
+  const [newStreamName, setNewStreamName] = useState("")
   const [videoSourceTab, setVideoSourceTab] = useState<'youtube' | 'upload' | 'unsorted'>('youtube')
-  const [newDayVideoUrl, setNewDayVideoUrl] = useState("")
+  const [newStreamVideoUrl, setNewStreamVideoUrl] = useState("")
   const [uploadFile, setUploadFile] = useState<File | null>(null)
   const [selectedUnsortedId, setSelectedUnsortedId] = useState<string | null>(null)
   const [publishedAt, setPublishedAt] = useState("")
@@ -48,8 +48,8 @@ export function DayDialog({
   // Reset form when dialog closes
   useEffect(() => {
     if (!isOpen) {
-      setNewDayName("")
-      setNewDayVideoUrl("")
+      setNewStreamName("")
+      setNewStreamVideoUrl("")
       setUploadFile(null)
       setSelectedUnsortedId(null)
       setPublishedAt("")
@@ -58,29 +58,29 @@ export function DayDialog({
     }
   }, [isOpen])
 
-  // Load day data when editing
+  // Load stream data when editing
   useEffect(() => {
-    if (isOpen && editingDayId) {
-      loadDayData()
+    if (isOpen && editingStreamId) {
+      loadStreamData()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, editingDayId])
+  }, [isOpen, editingStreamId])
 
-  const loadDayData = async () => {
-    if (!editingDayId) return
+  const loadStreamData = async () => {
+    if (!editingStreamId) return
 
     try {
       setLoadingData(true)
-      const response = await fetch(`/api/streams/${editingDayId}`)
+      const response = await fetch(`/api/streams/${editingStreamId}`)
       if (!response.ok) {
         throw new Error('Failed to fetch stream data')
       }
       const { data } = await response.json()
 
       if (data) {
-        setNewDayName(data.name || "")
+        setNewStreamName(data.name || "")
         setVideoSourceTab(data.videoSource || 'youtube')
-        setNewDayVideoUrl(data.videoUrl || "")
+        setNewStreamVideoUrl(data.videoUrl || "")
         // Handle Firestore Timestamp format
         setPublishedAt(data.publishedAt?._seconds
           ? new Date(data.publishedAt._seconds * 1000).toISOString().split('T')[0]
@@ -94,8 +94,8 @@ export function DayDialog({
     }
   }
 
-  const updateDay = async () => {
-    if (!editingDayId) return
+  const updateStream = async () => {
+    if (!editingStreamId) return
 
     try {
       // Unsorted tab is not allowed for editing
@@ -105,21 +105,21 @@ export function DayDialog({
       }
 
       // Validate YouTube URL if needed
-      if (videoSourceTab === 'youtube' && !newDayVideoUrl.trim()) {
+      if (videoSourceTab === 'youtube' && !newStreamVideoUrl.trim()) {
         toast.error('Please enter YouTube URL')
         return
       }
 
       const streamData = {
-        name: newDayName.trim() || undefined,
+        name: newStreamName.trim() || undefined,
         video_source: videoSourceTab as 'youtube' | 'upload',
-        video_url: videoSourceTab === 'youtube' ? newDayVideoUrl.trim() : undefined,
+        video_url: videoSourceTab === 'youtube' ? newStreamVideoUrl.trim() : undefined,
         video_file: undefined,
         published_at: publishedAt || undefined,
       }
 
       // Call Server Action
-      const result = await updateStreamAction(editingDayId, streamData)
+      const result = await updateStreamAction(editingStreamId, streamData)
 
       if (!result.success) {
         throw new Error(result.error || 'Unknown error')
@@ -129,15 +129,15 @@ export function DayDialog({
       onOpenChange(false)
       onSuccess?.()
     } catch (error: unknown) {
-      console.error('[DayDialog] Error updating stream:', error)
+      console.error('[StreamDialog] Error updating stream:', error)
       const errorMessage = error instanceof Error ? error.message : 'Failed to update stream'
       toast.error(errorMessage)
     }
   }
 
   const organizeUnsortedVideo = async () => {
-    if (!selectedSubEventId) {
-      toast.error('No sub-event selected')
+    if (!selectedEventId) {
+      toast.error('No event selected')
       return
     }
 
@@ -148,7 +148,7 @@ export function DayDialog({
 
     try {
       setUploading(true)
-      const result = await organizeVideo(selectedUnsortedId, selectedSubEventId)
+      const result = await organizeVideo(selectedUnsortedId, selectedEventId)
 
       if (result.success) {
         toast.success('Video organized successfully')
@@ -165,15 +165,15 @@ export function DayDialog({
     }
   }
 
-  const addDay = async () => {
-    if (!selectedSubEventId) {
-      toast.error('No sub-event selected')
+  const addStream = async () => {
+    if (!selectedEventId) {
+      toast.error('No event selected')
       return
     }
 
-    // If editing, call updateDay instead
-    if (editingDayId) {
-      return updateDay()
+    // If editing, call updateStream instead
+    if (editingStreamId) {
+      return updateStream()
     }
 
     // If unsorted tab, organize existing video
@@ -186,7 +186,7 @@ export function DayDialog({
 
       // YouTube source
       if (videoSourceTab === 'youtube') {
-        if (!newDayVideoUrl.trim()) {
+        if (!newStreamVideoUrl.trim()) {
           toast.error('Please enter YouTube URL')
           return
         }
@@ -209,14 +209,14 @@ export function DayDialog({
 
       // Create Stream via Server Action
       const streamData = {
-        name: newDayName.trim() || undefined,
+        name: newStreamName.trim() || undefined,
         video_source: videoSourceTab as 'youtube' | 'upload',
-        video_url: videoSourceTab === 'youtube' ? newDayVideoUrl.trim() : undefined,
+        video_url: videoSourceTab === 'youtube' ? newStreamVideoUrl.trim() : undefined,
         video_file: videoFile,
         published_at: publishedAt || undefined,
       }
 
-      const result = await createStream(selectedSubEventId, streamData)
+      const result = await createStream(selectedEventId, streamData)
 
       if (!result.success) {
         throw new Error(result.error || 'Unknown error')
@@ -226,7 +226,7 @@ export function DayDialog({
       onOpenChange(false)
       onSuccess?.()
     } catch (error: unknown) {
-      console.error('[DayDialog] Error adding stream:', error)
+      console.error('[StreamDialog] Error adding stream:', error)
       const errorMessage = error instanceof Error ? error.message : 'Failed to add stream'
       toast.error(errorMessage)
       setUploading(false)
@@ -237,7 +237,7 @@ export function DayDialog({
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[1000px]">
         <DialogHeader>
-          <DialogTitle>{editingDayId ? "Day Edit" : "Day Add"}</DialogTitle>
+          <DialogTitle>{editingStreamId ? "Stream Edit" : "Stream Add"}</DialogTitle>
         </DialogHeader>
         {loadingData ? (
           <div className="flex items-center justify-center h-[300px]">
@@ -246,12 +246,12 @@ export function DayDialog({
         ) : (
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="day-name">Day Name (Optional)</Label>
+              <Label htmlFor="stream-name">Stream Name (Optional)</Label>
               <Input
-                id="day-name"
+                id="stream-name"
                 placeholder="e.g., Day 1, Day 2 (auto-generated if empty)"
-                value={newDayName}
-                onChange={(e) => setNewDayName(e.target.value)}
+                value={newStreamName}
+                onChange={(e) => setNewStreamName(e.target.value)}
               />
             </div>
 
@@ -309,8 +309,8 @@ export function DayDialog({
                 <Input
                   id="youtube-url"
                   placeholder="https://youtube.com/watch?v=..."
-                  value={newDayVideoUrl}
-                  onChange={(e) => setNewDayVideoUrl(e.target.value)}
+                  value={newStreamVideoUrl}
+                  onChange={(e) => setNewStreamVideoUrl(e.target.value)}
                 />
               </div>
             )}
@@ -448,8 +448,8 @@ export function DayDialog({
               >
                 Cancel
               </Button>
-              <Button onClick={addDay} disabled={uploading || loadingData}>
-                {uploading ? 'Uploading...' : (editingDayId ? 'Edit' : 'Add')}
+              <Button onClick={addStream} disabled={uploading || loadingData}>
+                {uploading ? 'Uploading...' : (editingStreamId ? 'Edit' : 'Add')}
               </Button>
             </div>
           </div>

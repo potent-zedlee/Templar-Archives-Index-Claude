@@ -13,16 +13,12 @@ import { devtools } from 'zustand/middleware'
 interface ArchiveDataState {
   // UI State
   selectedStream: string | null
-  /** @deprecated Use selectedStream instead */
-  selectedDay: string | null
 
   // User info
   userEmail: string | null
 
   // Actions - State Management
   setSelectedStream: (streamId: string | null) => void
-  /** @deprecated Use setSelectedStream instead */
-  setSelectedDay: (streamId: string | null) => void
   setUserEmail: (email: string | null) => void
 }
 
@@ -31,18 +27,10 @@ export const useArchiveDataStore = create<ArchiveDataState>()(
     (set) => ({
       // Initial State
       selectedStream: null,
-      selectedDay: null, // Backward compatibility
       userEmail: null,
 
       // Setters
-      setSelectedStream: (streamId) => set({
-        selectedStream: streamId,
-        selectedDay: streamId // Keep in sync for backward compatibility
-      }),
-      setSelectedDay: (streamId) => set({
-        selectedStream: streamId,
-        selectedDay: streamId // Backward compatibility
-      }),
+      setSelectedStream: (streamId) => set({ selectedStream: streamId }),
       setUserEmail: (email) => set({ userEmail: email }),
     }),
     { name: 'ArchiveDataStore' }

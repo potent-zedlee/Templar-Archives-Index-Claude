@@ -88,8 +88,8 @@ export function PlayerDetailPanel({ player }: PlayerDetailPanelProps) {
   const totalHandsCount = useMemo(() => {
     return handsData.reduce((total: number, tournament: any) => {
       return total + tournament.events.reduce((subTotal: number, event: any) => {
-        return subTotal + event.days.reduce((dayTotal: number, day: any) => {
-          return dayTotal + day.hands.length
+        return subTotal + event.streams.reduce((streamTotal: number, stream: any) => {
+          return streamTotal + stream.hands.length
         }, 0)
       }, 0)
     }, 0)
@@ -106,8 +106,8 @@ export function PlayerDetailPanel({ player }: PlayerDetailPanelProps) {
       tournament.events?.forEach((event: any) => {
         let eventHandCount = 0
 
-        event.days?.forEach((day: any) => {
-          day.hands?.forEach((_hand: any) => {
+        event.streams?.forEach((stream: any) => {
+          stream.hands?.forEach((_hand: any) => {
             eventHandCount++
             tournamentHandCount++
           })
@@ -184,10 +184,10 @@ export function PlayerDetailPanel({ player }: PlayerDetailPanelProps) {
     }))
   }
 
-  const toggleSubEvent = (_tournamentId: string, subEventId: string) => {
+  const toggleEvent = (_tournamentId: string, eventId: string) => {
     setExpandedSubEvents((prev) => ({
       ...prev,
-      [subEventId]: !(prev[subEventId] ?? false)
+      [eventId]: !(prev[eventId] ?? false)
     }))
   }
 
@@ -407,7 +407,7 @@ export function PlayerDetailPanel({ player }: PlayerDetailPanelProps) {
                           <div key={event.id}>
                             <div
                               className="flex items-center gap-3 py-2 px-4 hover:bg-accent transition-colors cursor-pointer border-b border-border"
-                              onClick={() => toggleSubEvent(tournament.id, event.id)}
+                              onClick={() => toggleEvent(tournament.id, event.id)}
                             >
                               {event.expanded ? (
                                 <ChevronDown className="h-4 w-4 text-green-500 dark:text-green-400" />
@@ -418,26 +418,26 @@ export function PlayerDetailPanel({ player }: PlayerDetailPanelProps) {
                                 {event.name}
                               </span>
                               <div className="ml-auto inline-flex items-center px-2 py-1 bg-muted text-foreground text-xs font-medium rounded">
-                                {event.days.reduce((total: number, day: any) => total + day.hands.length, 0)} hands
+                                {event.streams.reduce((total: number, stream: any) => total + stream.hands.length, 0)} hands
                               </div>
                             </div>
 
-                            {/* Day Level with Hands */}
+                            {/* Stream Level with Hands */}
                             {event.expanded && (
                               <div className="ml-8 mt-2">
-                                {event.days?.map((day: any) => (
-                                  <div key={day.id} className="mb-4">
+                                {event.streams?.map((stream: any) => (
+                                  <div key={stream.id} className="mb-4">
                                     <div className="flex items-center gap-2 py-2 px-3 mb-2 bg-muted rounded">
                                       <span className="text-xs font-semibold text-foreground font-mono">
-                                        {day.name}
+                                        {stream.name}
                                       </span>
                                       <span className="text-xs text-muted-foreground">
-                                        ({day.hands.length} hands)
+                                        ({stream.hands.length} hands)
                                       </span>
                                     </div>
                                     <HandListAccordion
-                                      handIds={day.hands.map((h: any) => h.id)}
-                                      hands={day.hands.map((hand: any) => {
+                                      handIds={stream.hands.map((h: any) => h.id)}
+                                      hands={stream.hands.map((hand: any) => {
                                         const timestamp = hand.timestamp || ""
                                         const parts = timestamp.split('-')
                                         const startTime = parts[0] || "00:00"

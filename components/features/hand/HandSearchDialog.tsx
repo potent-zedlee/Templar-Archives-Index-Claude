@@ -46,13 +46,13 @@ type Tournament = {
   startDate: string
 }
 
-type SubEvent = {
+type Event = {
   id: string
   name: string
   buyIn?: string
 }
 
-type Day = {
+type Stream = {
   id: string
   name: string
 }
@@ -67,18 +67,18 @@ type Hand = {
 type HandSearchDialogProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
-  onSelect: (hand: { id: string; number: string; description: string; tournament: string; day: string }) => void
+  onSelect: (hand: { id: string; number: string; description: string; tournament: string; stream: string }) => void
 }
 
 export function HandSearchDialog({ open, onOpenChange, onSelect }: HandSearchDialogProps) {
-  const [step, setStep] = useState<'tournament' | 'subevent' | 'day' | 'hand'>('tournament')
+  const [step, setStep] = useState<'tournament' | 'event' | 'stream' | 'hand'>('tournament')
   const [selectedTournament, setSelectedTournament] = useState<Tournament | null>(null)
-  const [selectedSubEvent, setSelectedSubEvent] = useState<SubEvent | null>(null)
-  const [selectedDay, setSelectedDay] = useState<Day | null>(null)
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null)
+  const [selectedStream, setSelectedStream] = useState<Stream | null>(null)
 
   const [tournaments, setTournaments] = useState<Tournament[]>([])
-  const [subEvents, setSubEvents] = useState<SubEvent[]>([])
-  const [days, setDays] = useState<Day[]>([])
+  const [events, setEvents] = useState<Event[]>([])
+  const [streams, setStreams] = useState<Stream[]>([])
   const [hands, setHands] = useState<Hand[]>([])
 
   const [searchQuery, setSearchQuery] = useState('')
@@ -89,8 +89,8 @@ export function HandSearchDialog({ open, onOpenChange, onSelect }: HandSearchDia
     if (open) {
       setStep('tournament')
       setSelectedTournament(null)
-      setSelectedSubEvent(null)
-      setSelectedDay(null)
+      setSelectedEvent(null)
+      setSelectedStream(null)
       setSearchQuery('')
       loadTournaments()
     }
@@ -122,8 +122,8 @@ export function HandSearchDialog({ open, onOpenChange, onSelect }: HandSearchDia
     }
   }
 
-  // Sub Event 목록 로드 (Firestore)
-  const loadSubEvents = async (tournamentId: string) => {
+  // Event 목록 로드 (Firestore)
+  const loadEvents = async (tournamentId: string) => {
     setIsLoading(true)
     try {
       const eventsRef = collection(firestore, COLLECTION_PATHS.EVENTS(tournamentId))
@@ -138,23 +138,23 @@ export function HandSearchDialog({ open, onOpenChange, onSelect }: HandSearchDia
           buyIn: d.buyIn,
         }
       })
-      setSubEvents(data)
+      setEvents(data)
     } catch (error) {
-      console.error('Sub Event 로드 실패:', error)
+      console.error('Event 로드 실패:', error)
     } finally {
       setIsLoading(false)
     }
   }
 
-  // Day 목록 로드 (Firestore)
-  const loadDays = async (subEventId: string) => {
+  // Stream 목록 로드 (Firestore)
+  const loadStreams = async (eventId: string) => {
     setIsLoading(true)
     try {
       if (!selectedTournament) return
 
       const streamsRef = collection(
         firestore,
-        COLLECTION_PATHS.STREAMS(selectedTournament.id, subEventId)
+        COLLECTION_PATHS.STREAMS(selectedTournament.id, eventId)
       )
       const q = query(streamsRef, orderBy('name'))
       const snapshot = await getDocs(q)
@@ -166,9 +166,9 @@ export function HandSearchDialog({ open, onOpenChange, onSelect }: HandSearchDia
           name: d.name,
         }
       })
-      setDays(data)
+      setStreams(data)
     } catch (error) {
-      console.error('Day 로드 실패:', error)
+      console.error('Stream 로드 실패:', error)
     } finally {
       setIsLoading(false)
     }
@@ -206,34 +206,34 @@ export function HandSearchDialog({ open, onOpenChange, onSelect }: HandSearchDia
   // Tournament 선택
   const handleSelectTournament = (tournament: Tournament) => {
     setSelectedTournament(tournament)
-    setStep('subevent')
-    loadSubEvents(tournament.id)
+    setStep('event')
+    loadEvents(tournament.id)
   }
 
-  // SubEvent 선택
-  const handleSelectSubEvent = (subEvent: SubEvent) => {
-    setSelectedSubEvent(subEvent)
-    setStep('day')
-    loadDays(subEvent.id)
+  // Event 선택
+  const handleSelectEvent = (event: Event) => {
+    setSelectedEvent(event)
+    setStep('stream')
+    loadStreams(event.id)
   }
 
-  // Day 선택
-  const handleSelectDay = (day: Day) => {
-    setSelectedDay(day)
+  // Stream 선택
+  const handleSelectStream = (stream: Stream) => {
+    setSelectedStream(stream)
     setStep('hand')
-    loadHands(day.id)
+    loadHands(stream.id)
   }
 
   // Hand 선택
   const handleSelectHand = (hand: Hand) => {
-    if (!selectedTournament || !selectedDay) return
+    if (!selectedTournament || !selectedStream) return
 
     onSelect({
       id: hand.id,
       number: hand.number,
       description: hand.description,
       tournament: selectedTournament.name,
-      day: selectedDay.name,
+      stream: selectedStream.name,
     })
     onOpenChange(false)
   }
@@ -241,12 +241,12 @@ export function HandSearchDialog({ open, onOpenChange, onSelect }: HandSearchDia
   // 뒤로 가기
   const handleBack = () => {
     if (step === 'hand') {
-      setStep('day')
-      setSelectedDay(null)
-    } else if (step === 'day') {
-      setStep('subevent')
-      setSelectedSubEvent(null)
-    } else if (step === 'subevent') {
+      setStep('stream')
+      setSelectedStream(null)
+    } else if (step === 'stream') {
+      setStep('event')
+      setSelectedEvent(null)
+    } else if (step === 'event') {
       setStep('tournament')
       setSelectedTournament(null)
     }
@@ -258,10 +258,10 @@ export function HandSearchDialog({ open, onOpenChange, onSelect }: HandSearchDia
 
     if (step === 'tournament') {
       return tournaments.filter((t) => t.name.toLowerCase().includes(query))
-    } else if (step === 'subevent') {
-      return subEvents.filter((s) => s.name.toLowerCase().includes(query))
-    } else if (step === 'day') {
-      return days.filter((d) => d.name.toLowerCase().includes(query))
+    } else if (step === 'event') {
+      return events.filter((e) => e.name.toLowerCase().includes(query))
+    } else if (step === 'stream') {
+      return streams.filter((s) => s.name.toLowerCase().includes(query))
     } else if (step === 'hand') {
       return hands.filter((h) =>
         h.number.toLowerCase().includes(query) ||
@@ -275,10 +275,10 @@ export function HandSearchDialog({ open, onOpenChange, onSelect }: HandSearchDia
     switch (step) {
       case 'tournament':
         return 'Tournament 선택'
-      case 'subevent':
-        return 'Sub Event 선택'
-      case 'day':
-        return 'Day 선택'
+      case 'event':
+        return 'Event 선택'
+      case 'stream':
+        return 'Stream 선택'
       case 'hand':
         return 'Hand 선택'
     }
@@ -287,8 +287,8 @@ export function HandSearchDialog({ open, onOpenChange, onSelect }: HandSearchDia
   const getBreadcrumb = () => {
     const parts = []
     if (selectedTournament) parts.push(selectedTournament.name)
-    if (selectedSubEvent) parts.push(selectedSubEvent.name)
-    if (selectedDay) parts.push(selectedDay.name)
+    if (selectedEvent) parts.push(selectedEvent.name)
+    if (selectedStream) parts.push(selectedStream.name)
     return parts.join(' > ')
   }
 
@@ -351,18 +351,18 @@ export function HandSearchDialog({ open, onOpenChange, onSelect }: HandSearchDia
                   </Card>
                 ))}
 
-              {step === 'subevent' &&
-                (filteredItems() as SubEvent[]).map((subEvent) => (
+              {step === 'event' &&
+                (filteredItems() as Event[]).map((event) => (
                   <Card
-                    key={subEvent.id}
+                    key={event.id}
                     className="p-4 cursor-pointer hover:bg-accent transition-colors"
-                    onClick={() => handleSelectSubEvent(subEvent)}
+                    onClick={() => handleSelectEvent(event)}
                   >
                     <div className="flex items-center justify-between">
                       <div>
-                        <h3 className="text-body font-semibold">{subEvent.name}</h3>
-                        {subEvent.buyIn && (
-                          <p className="text-caption text-muted-foreground">Buy-in: {subEvent.buyIn}</p>
+                        <h3 className="text-body font-semibold">{event.name}</h3>
+                        {event.buyIn && (
+                          <p className="text-caption text-muted-foreground">Buy-in: {event.buyIn}</p>
                         )}
                       </div>
                       <ChevronRight className="h-5 w-5 text-muted-foreground" />
@@ -370,15 +370,15 @@ export function HandSearchDialog({ open, onOpenChange, onSelect }: HandSearchDia
                   </Card>
                 ))}
 
-              {step === 'day' &&
-                (filteredItems() as Day[]).map((day) => (
+              {step === 'stream' &&
+                (filteredItems() as Stream[]).map((stream) => (
                   <Card
-                    key={day.id}
+                    key={stream.id}
                     className="p-4 cursor-pointer hover:bg-accent transition-colors"
-                    onClick={() => handleSelectDay(day)}
+                    onClick={() => handleSelectStream(stream)}
                   >
                     <div className="flex items-center justify-between">
-                      <h3 className="text-body font-semibold">{day.name}</h3>
+                      <h3 className="text-body font-semibold">{stream.name}</h3>
                       <ChevronRight className="h-5 w-5 text-muted-foreground" />
                     </div>
                   </Card>

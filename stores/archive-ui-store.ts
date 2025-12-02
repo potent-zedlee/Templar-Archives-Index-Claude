@@ -23,8 +23,6 @@ interface ArchiveUIState {
   eventDialog: DialogState
   eventInfoDialog: DialogState
   streamDialog: DialogState
-  /** @deprecated Use streamDialog instead */
-  dayDialog: DialogState
   videoDialog: VideoPlayerState
   analyzeDialog: DialogState
   renameDialog: DialogState
@@ -63,10 +61,6 @@ interface ArchiveUIState {
   closeEventInfoDialog: () => void
   openStreamDialog: (eventId: string, editingId?: string) => void
   closeStreamDialog: () => void
-  /** @deprecated Use openStreamDialog instead */
-  openDayDialog: (eventId: string, editingId?: string) => void
-  /** @deprecated Use closeStreamDialog instead */
-  closeDayDialog: () => void
   openVideoDialog: (stream: Stream | null, startTime?: string) => void
   closeVideoDialog: () => void
   openAnalyzeDialog: (stream: Stream | null) => void
@@ -115,7 +109,6 @@ export const useArchiveUIStore = create<ArchiveUIState>()(
         eventDialog: { isOpen: false, editingId: null },
         eventInfoDialog: { isOpen: false, editingId: null },
         streamDialog: { isOpen: false, editingId: null },
-        dayDialog: { isOpen: false, editingId: null }, // Backward compatibility
         videoDialog: { isOpen: false, startTime: '', stream: null },
         analyzeDialog: { isOpen: false, editingId: null },
         renameDialog: { isOpen: false, editingId: null },
@@ -181,27 +174,11 @@ export const useArchiveUIStore = create<ArchiveUIState>()(
         openStreamDialog: (eventId, editingId) =>
           set({
             streamDialog: { isOpen: true, editingId: editingId || null },
-            dayDialog: { isOpen: true, editingId: editingId || null }, // Keep in sync
             selectedEventIdForDialog: eventId,
           }),
         closeStreamDialog: () =>
           set({
             streamDialog: { isOpen: false, editingId: null },
-            dayDialog: { isOpen: false, editingId: null }, // Keep in sync
-            selectedEventIdForDialog: '',
-          }),
-
-        // Backward compatibility
-        openDayDialog: (eventId, editingId) =>
-          set({
-            dayDialog: { isOpen: true, editingId: editingId || null },
-            streamDialog: { isOpen: true, editingId: editingId || null }, // Keep in sync
-            selectedEventIdForDialog: eventId,
-          }),
-        closeDayDialog: () =>
-          set({
-            dayDialog: { isOpen: false, editingId: null },
-            streamDialog: { isOpen: false, editingId: null }, // Keep in sync
             selectedEventIdForDialog: '',
           }),
 

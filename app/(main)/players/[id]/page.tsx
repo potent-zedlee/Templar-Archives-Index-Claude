@@ -58,11 +58,11 @@ interface EventView {
   id: string
   name: string
   date?: string
-  days: DayView[]
+  streams: StreamView[]
   expanded: boolean
 }
 
-interface DayView {
+interface StreamView {
   id: string
   name: string
   video_url?: string
@@ -131,8 +131,8 @@ export default function PlayerDetailClient() {
   const totalHandsCount = useMemo(() => {
     return handsData.reduce((total: number, tournament: any) => {
       return total + tournament.events.reduce((subTotal: number, event: any) => {
-        return subTotal + event.days.reduce((dayTotal: number, day: any) => {
-          return dayTotal + day.hands.length
+        return subTotal + event.streams.reduce((streamTotal: number, stream: any) => {
+          return streamTotal + stream.hands.length
         }, 0)
       }, 0)
     }, 0)
@@ -149,8 +149,8 @@ export default function PlayerDetailClient() {
       tournament.events?.forEach((event) => {
         let eventHandCount = 0
 
-        event.days?.forEach((day) => {
-          day.hands?.forEach((_hand: any) => {
+        event.streams?.forEach((stream) => {
+          stream.hands?.forEach((_hand: any) => {
             eventHandCount++
             tournamentHandCount++
           })
@@ -489,26 +489,26 @@ export default function PlayerDetailClient() {
                                 {event.name}
                               </span>
                               <div className="ml-auto inline-flex items-center px-2 py-1 bg-muted text-foreground text-xs font-medium rounded">
-                                {event.days.reduce((total, day) => total + day.hands.length, 0)} hands
+                                {event.streams.reduce((total, stream) => total + stream.hands.length, 0)} hands
                               </div>
                             </div>
 
-                            {/* Day Level with Hands */}
+                            {/* Stream Level with Hands */}
                             {event.expanded && (
                               <div className="ml-8 mt-2">
-                                {event.days?.map((day) => (
-                                  <div key={day.id} className="mb-4">
+                                {event.streams?.map((stream) => (
+                                  <div key={stream.id} className="mb-4">
                                     <div className="flex items-center gap-2 py-2 px-3 mb-2 bg-muted rounded">
                                       <span className="text-xs font-semibold text-foreground font-mono">
-                                        {day.name}
+                                        {stream.name}
                                       </span>
                                       <span className="text-xs text-muted-foreground">
-                                        ({day.hands.length} hands)
+                                        ({stream.hands.length} hands)
                                       </span>
                                     </div>
                                     <HandListAccordion
-                                      handIds={day.hands.map(h => h.id)}
-                                      hands={day.hands.map((hand: any) => {
+                                      handIds={stream.hands.map(h => h.id)}
+                                      hands={stream.hands.map((hand: any) => {
                                         const timestamp = hand.timestamp || ""
                                         const parts = timestamp.split('-')
                                         const startTime = parts[0] || "00:00"
