@@ -138,7 +138,10 @@ export async function getPipelineStatusCounts(): Promise<{
         queryRef = queryRef.where('uploadStatus', '==', 'uploaded')
       }
 
+      // orderBy 추가하여 기존 복합 인덱스 활용
+      // (pipelineStatus + uploadStatus + pipelineUpdatedAt)
       const snapshot = await queryRef
+        .orderBy('pipelineUpdatedAt', 'desc')
         .select() // 필드 없이 문서 ID만 가져옴
         .get()
       return { status, count: snapshot.size }
