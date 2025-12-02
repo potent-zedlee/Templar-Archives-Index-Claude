@@ -45,6 +45,8 @@ export async function phase2Handler(c: Context) {
     await handDocRef.set({
       id: handDocRef.id,
       streamId: body.streamId,
+      tournamentId: body.tournamentId,
+      eventId: body.eventId,
       jobId: body.jobId,
       number: String(result.handNumber),
 

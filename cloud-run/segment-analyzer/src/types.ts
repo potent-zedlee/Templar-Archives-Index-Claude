@@ -101,6 +101,8 @@ export interface Phase2Result {
 export interface ProcessPhase2Request {
   jobId: string
   streamId: string
+  tournamentId: string
+  eventId: string
   handIndex: number
   gcsUri: string
   handTimestamp: {

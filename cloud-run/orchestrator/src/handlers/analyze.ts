@@ -173,8 +173,15 @@ export async function phase1CompleteHandler(c: Context) {
     console.log(`[Orchestrator] Phase 1 complete for job ${body.jobId}`)
     console.log(`[Orchestrator] Found ${body.hands.length} hands`)
 
-    // 1. Job 상태 업데이트
+    // 1. Job 정보 가져오기 (tournamentId, eventId)
     const jobRef = firestore.collection(COLLECTION_NAME).doc(body.jobId)
+    const jobDoc = await jobRef.get()
+    const jobData = jobDoc.data()
+
+    const tournamentId = jobData?.tournamentId || ''
+    const eventId = jobData?.eventId || ''
+
+    // 2. Job 상태 업데이트
     await jobRef.update({
       phase: 'phase2',
       phase1CompletedSegments: body.hands.length,
@@ -183,7 +190,7 @@ export async function phase1CompleteHandler(c: Context) {
       progress: 30, // Phase 1 완료 = 30%
     })
 
-    // 2. 각 핸드에 대해 Phase 2 태스크 생성
+    // 3. 각 핸드에 대해 Phase 2 태스크 생성
     const PHASE2_ANALYZER_URL = `${SEGMENT_ANALYZER_URL}/analyze-phase2`
     const queuePath = tasksClient.queuePath(PROJECT_ID, LOCATION, QUEUE_NAME)
     const taskPromises: Promise<string>[] = []
@@ -194,6 +201,8 @@ export async function phase1CompleteHandler(c: Context) {
       const request: ProcessPhase2Request = {
         jobId: body.jobId,
         streamId: body.streamId,
+        tournamentId,
+        eventId,
         handIndex: hand.handNumber,
         gcsUri: body.gcsUri,
         handTimestamp: hand,
