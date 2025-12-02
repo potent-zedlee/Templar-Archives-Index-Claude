@@ -124,7 +124,7 @@ export interface Event {
 
 export interface Stream {
   id: string
-  eventId: string // DB: sub_event_id (테이블명 유지)
+  eventId: string
   name: string
   description?: string
   videoUrl?: string

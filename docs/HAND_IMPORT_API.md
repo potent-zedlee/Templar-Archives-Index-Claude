@@ -231,15 +231,11 @@ Archive 페이지에서 Day를 선택한 후, 브라우저 개발자 도구에�
 # 모든 Tournament 조회
 curl http://localhost:3000/api/tournaments
 
-# Day ID는 tournaments[].sub_events[].days[].id 에 있습니다
+# Stream ID는 tournaments[].events[].streams[].id 에 있습니다
 ```
 
-또는 Supabase에서 직접 조회:
-```sql
-SELECT id, name, sub_event_id
-FROM days
-ORDER BY created_at DESC;
-```
+또는 Firestore Console에서 직접 조회:
+- 경로: `streams` 컬렉션
 
 ## 카드 표기법
 

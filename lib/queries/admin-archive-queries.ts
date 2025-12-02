@@ -179,7 +179,7 @@ export function useAdminEventsQuery(
   return useQuery({
     queryKey: adminArchiveKeys.events(tournamentId, statusFilter),
     queryFn: async () => {
-      const eventsRef = collection(firestore, 'sub_events') as CollectionReference
+      const eventsRef = collection(firestore, 'events') as CollectionReference
       const constraints: QueryConstraint[] = [
         where('tournamentId', '==', tournamentId),
         orderBy('date', 'desc')
@@ -265,7 +265,7 @@ export function useAdminStreamsQuery(
 
         streams.push({
           id: doc.id,
-          eventId: data.subEventId || data.eventId,
+          eventId: data.eventId,
           name: data.name,
           description: data.description,
           videoUrl: data.videoUrl,
@@ -600,7 +600,7 @@ export function useClassifyStream() {
     }) => {
       // 토너먼트와 이벤트 정보 조회
       const tournamentRef = doc(firestore, 'tournaments', tournamentId)
-      const eventRef = doc(firestore, 'sub_events', eventId)
+      const eventRef = doc(firestore, 'events', eventId)
 
       const [tournamentDoc, eventDoc] = await Promise.all([
         getDoc(tournamentRef),

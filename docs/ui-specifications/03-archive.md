@@ -92,16 +92,16 @@ const toggleTournament = (id) => {
   ))
 }
 
-// Day 선택
-const selectDay = (dayId) => {
-  setSelectedDay(dayId)
+// Stream 선택
+const selectStream = (streamId) => {
+  setSelectedStream(streamId)
   setTournaments(prev => prev.map(t => ({
     ...t,
-    sub_events: t.sub_events?.map(se => ({
-      ...se,
-      days: se.days?.map(d => ({
-        ...d,
-        selected: d.id === dayId
+    events: t.events?.map(e => ({
+      ...e,
+      streams: e.streams?.map(s => ({
+        ...s,
+        selected: s.id === streamId
       }))
     }))
   })))
@@ -183,9 +183,9 @@ const tournamentsData = await fetchTournamentsTree()
 // UI 상태 추가
 const tournamentsWithUIState = tournamentsData.map(tournament => ({
   ...tournament,
-  sub_events: tournament.sub_events?.map(subEvent => ({
-    ...subEvent,
-    days: subEvent.days?.map(day => ({ ...day, selected: false })),
+  events: tournament.events?.map(event => ({
+    ...event,
+    streams: event.streams?.map(stream => ({ ...stream, selected: false })),
     expanded: false,
   })),
   expanded: true,

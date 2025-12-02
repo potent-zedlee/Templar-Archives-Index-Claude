@@ -43,9 +43,9 @@ Tournament (토너먼트)
 
 ### 3. Templar Archives DB 스키마 지식
 
-#### 핵심 테이블 (26개)
+#### 핵심 컬렉션 (Firestore)
 1. **tournaments**: 토너먼트 정보
-2. **sub_events**: 서브 이벤트 (Event #15 등)
+2. **events**: 이벤트 (Event #15 등)
 3. **streams**: 일별 스트림 (Day 1A, Day 2 등)
 4. **hands**: 포커 핸드 기본 정보
    - number: 핸드 번호
