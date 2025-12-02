@@ -399,7 +399,7 @@ export function AnalyzeVideoDialog({
     ))
   }
 
-  // Start analysis
+  // Start analysis (INP 최적화: d5625ea 패턴 적용)
   const handleAnalyze = async () => {
     console.log('============================================')
     console.log('[AnalyzeVideoDialog] handleAnalyze called')
@@ -407,8 +407,7 @@ export function AnalyzeVideoDialog({
     console.log('[AnalyzeVideoDialog] stream:', stream)
     console.log('============================================')
 
-    toast.info("분석 요청을 처리하고 있습니다...")
-
+    // 1단계: 즉시 검증 (UI 블로킹 최소화)
     if (!stream?.gcsUri) {
       console.error('[AnalyzeVideoDialog] No GCS URI')
       setStatus("error")
@@ -426,11 +425,24 @@ export function AnalyzeVideoDialog({
       return
     }
 
+    // 2단계: 즉시 UI 응답 (최소한의 상태만 변경하여 INP 최적화)
     setStatus("analyzing")
-    setProgress("Gemini AI가 영상을 분석하고 있습니다...")
-    setError("")
-    setJobId(null)
 
+    // 3단계: 무거운 작업은 다음 프레임으로 미루기
+    requestAnimationFrame(() => {
+      // 나머지 상태 업데이트 (다음 프레임에서 처리)
+      toast.info("분석 요청을 처리하고 있습니다...")
+      setProgress("Gemini AI가 영상을 분석하고 있습니다...")
+      setError("")
+      setJobId(null)
+
+      // 비동기 작업 실행
+      performAnalysis()
+    })
+  }
+
+  // 실제 분석 로직 (handleAnalyze에서 분리하여 INP 최적화)
+  const performAnalysis = async () => {
     try {
       console.log('[AnalyzeVideoDialog] Starting analysis...')
 
@@ -485,12 +497,12 @@ export function AnalyzeVideoDialog({
 
       // Use Cloud Run for GCS-based analysis (검증된 세그먼트 사용)
       const result = await startKanAnalysis({
-        videoUrl: stream.gcsUri,
+        videoUrl: stream!.gcsUri!,
         segments: validatedSegments,
         platform: platform as 'ept' | 'triton' | 'wsop',
-        streamId: stream.id,
-        tournamentId: stream.tournamentId,
-        eventId: stream.eventId,
+        streamId: stream!.id,
+        tournamentId: stream!.tournamentId,
+        eventId: stream!.eventId,
       })
 
       console.log('[AnalyzeVideoDialog] startKanAnalysis result:', result)
@@ -499,21 +511,23 @@ export function AnalyzeVideoDialog({
         throw new Error(result.error || "분석에 실패했습니다")
       }
 
-      // Success - transition to processing state
-      setJobId(result.jobId ?? null)
-      setStatus("processing")
-      setStartTime(new Date())
-      setProgressPercent(0)
-      setHandsFound(0)
-      // Initialize segment results with pending status
-      setSegmentResults(
-        timeSegments.map((seg, idx) => ({
-          status: 'pending' as const,
-          segment_id: `seg_${idx}_${seg.start}_${seg.end}`,
-        }))
-      )
-      setProgress("분석 작업이 시작되었습니다...")
-      toast.success("분석 요청이 접수되었습니다. 실시간으로 진행 상황을 확인할 수 있습니다.")
+      // 4단계: 결과 상태 업데이트도 다음 프레임으로 분리 (INP 최적화)
+      requestAnimationFrame(() => {
+        setJobId(result.jobId ?? null)
+        setStatus("processing")
+        setStartTime(new Date())
+        setProgressPercent(0)
+        setHandsFound(0)
+        // Initialize segment results with pending status
+        setSegmentResults(
+          timeSegments.map((seg, idx) => ({
+            status: 'pending' as const,
+            segment_id: `seg_${idx}_${seg.start}_${seg.end}`,
+          }))
+        )
+        setProgress("분석 작업이 시작되었습니다...")
+        toast.success("분석 요청이 접수되었습니다. 실시간으로 진행 상황을 확인할 수 있습니다.")
+      })
     } catch (err) {
       setStatus("error")
       setError(err instanceof Error ? err.message : "분석 중 오류가 발생했습니다")
