@@ -179,9 +179,9 @@ export const tournamentSchema = z.object({
 })
 
 /**
- * SubEvent 생성/수정 스키마
+ * Event 생성/수정 스키마
  */
-export const subEventSchema = z.object({
+export const eventSchema = z.object({
   tournamentId: z.string().uuid(),
   name: z.string().trim().min(1).max(200),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
@@ -196,10 +196,10 @@ export const subEventSchema = z.object({
 })
 
 /**
- * Day 생성/수정 스키마
+ * Stream 생성/수정 스키마
  */
-export const daySchema = z.object({
-  subEventId: z.string().uuid(),
+export const streamSchema = z.object({
+  eventId: z.string().uuid(),
   name: z.string().trim().min(1).max(100),
   videoSource: z.enum(["youtube", "upload"]),
   videoUrl: z.string().url().optional().or(z.literal("")),

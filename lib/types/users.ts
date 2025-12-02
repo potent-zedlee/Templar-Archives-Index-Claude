@@ -101,7 +101,7 @@ export function getRoleDescription(role: UserRole): string {
     user: '기본 사용자 권한. 읽기 및 커뮤니티 참여 가능',
     templar: '커뮤니티 관리 권한. 게시글 및 댓글 관리 가능',
     arbiter: '핸드 수동 입력 권한. 핸드 데이터 생성/수정/삭제 가능',
-    high_templar: '아카이브 관리 권한. Tournament/SubEvent/Stream 관리 및 KAN 분석 가능',
+    high_templar: '아카이브 관리 권한. Tournament/Event/Stream 관리 및 KAN 분석 가능',
     admin: '전체 관리자 권한. 사용자 관리 및 모든 기능 접근 가능',
   }
   return roleDescriptions[role]

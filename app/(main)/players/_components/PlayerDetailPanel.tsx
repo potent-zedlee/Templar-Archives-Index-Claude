@@ -62,7 +62,7 @@ export function PlayerDetailPanel({ player }: PlayerDetailPanelProps) {
 
   // UI states
   const [expandedTournaments, setExpandedTournaments] = useState<Record<string, boolean>>({})
-  const [expandedSubEvents, setExpandedSubEvents] = useState<Record<string, boolean>>({})
+  const [expandedEvents, setExpandedEvents] = useState<Record<string, boolean>>({})
   const [claimDialogOpen, setClaimDialogOpen] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -79,10 +79,10 @@ export function PlayerDetailPanel({ player }: PlayerDetailPanelProps) {
       expanded: expandedTournaments[tournament.id] ?? true,
       events: tournament.events.map((event: any) => ({
         ...event,
-        expanded: expandedSubEvents[event.id] ?? false,
+        expanded: expandedEvents[event.id] ?? false,
       })),
     }))
-  }, [handsData, expandedTournaments, expandedSubEvents])
+  }, [handsData, expandedTournaments, expandedEvents])
 
   // Calculate total hands count
   const totalHandsCount = useMemo(() => {
@@ -185,7 +185,7 @@ export function PlayerDetailPanel({ player }: PlayerDetailPanelProps) {
   }
 
   const toggleEvent = (_tournamentId: string, eventId: string) => {
-    setExpandedSubEvents((prev) => ({
+    setExpandedEvents((prev) => ({
       ...prev,
       [eventId]: !(prev[eventId] ?? false)
     }))

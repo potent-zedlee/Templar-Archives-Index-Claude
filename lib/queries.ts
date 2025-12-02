@@ -418,7 +418,7 @@ export async function fetchTournamentsTree(
       const eventsQuery = query(eventsRef, orderBy('date', 'desc'))
       const eventsSnapshot = await getDocs(eventsQuery)
 
-      const subEvents: EventTreeItem[] = []
+      const events: EventTreeItem[] = []
 
       for (const eventDoc of eventsSnapshot.docs) {
         const event = eventDoc.data() as FirestoreEvent
@@ -459,7 +459,7 @@ export async function fetchTournamentsTree(
           })
         }
 
-        subEvents.push({
+        events.push({
           id: eventId,
           name: event.name,
           date: timestampToString(event.date as Timestamp) || '',
@@ -478,7 +478,7 @@ export async function fetchTournamentsTree(
         endDate: timestampToString(tournament.endDate as Timestamp) || '',
         status: tournament.status,
         gameType: tournament.gameType,
-        events: subEvents,
+        events: events,
       })
     }
 

@@ -23,33 +23,33 @@ import { Plus, X } from "lucide-react"
 import type { PayoutRow } from "@/hooks/useArchiveState"
 import { createEvent, updateEvent, saveEventPayouts } from "@/app/actions/archive"
 
-interface SubEventDialogProps {
+interface EventDialogProps {
   isOpen: boolean
   onOpenChange: (open: boolean) => void
   selectedTournamentId: string
-  editingSubEventId: string
+  editingEventId: string
   onSuccess?: () => void
 }
 
-export function SubEventDialog({
+export function EventDialog({
   isOpen,
   onOpenChange,
   selectedTournamentId,
-  editingSubEventId,
+  editingEventId,
   onSuccess,
-}: SubEventDialogProps) {
+}: EventDialogProps) {
   // Form state
-  const [newSubEventName, setNewSubEventName] = useState("")
-  const [newSubEventDate, setNewSubEventDate] = useState("")
-  const [newSubEventEventNumber, setNewSubEventEventNumber] = useState("")
-  const [newSubEventPrize, setNewSubEventPrize] = useState("")
-  const [newSubEventWinner, setNewSubEventWinner] = useState("")
-  const [newSubEventBuyIn, setNewSubEventBuyIn] = useState("")
-  const [newSubEventEntryCount, setNewSubEventEntryCount] = useState("")
-  const [newSubEventBlindStructure, setNewSubEventBlindStructure] = useState("")
-  const [newSubEventLevelDuration, setNewSubEventLevelDuration] = useState("")
-  const [newSubEventStartingStack, setNewSubEventStartingStack] = useState("")
-  const [newSubEventNotes, setNewSubEventNotes] = useState("")
+  const [newEventName, setNewEventName] = useState("")
+  const [newEventDate, setNewEventDate] = useState("")
+  const [newEventEventNumber, setNewEventEventNumber] = useState("")
+  const [newEventPrize, setNewEventPrize] = useState("")
+  const [newEventWinner, setNewEventWinner] = useState("")
+  const [newEventBuyIn, setNewEventBuyIn] = useState("")
+  const [newEventEntryCount, setNewEventEntryCount] = useState("")
+  const [newEventBlindStructure, setNewEventBlindStructure] = useState("")
+  const [newEventLevelDuration, setNewEventLevelDuration] = useState("")
+  const [newEventStartingStack, setNewEventStartingStack] = useState("")
+  const [newEventNotes, setNewEventNotes] = useState("")
 
   // Payout state
   const [payouts, setPayouts] = useState<PayoutRow[]>([{ rank: 1, playerName: "", prizeAmount: "" }])
@@ -60,11 +60,11 @@ export function SubEventDialog({
 
   // Load existing data when editing
   useEffect(() => {
-    if (isOpen && editingSubEventId) {
-      loadSubEventData()
+    if (isOpen && editingEventId) {
+      loadEventData()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, editingSubEventId])
+  }, [isOpen, editingEventId])
 
   // Reset form when dialog closes
   useEffect(() => {
@@ -73,35 +73,35 @@ export function SubEventDialog({
     }
   }, [isOpen])
 
-  const loadSubEventData = async () => {
+  const loadEventData = async () => {
     try {
       setLoadingData(true)
       // Fetch event data via API
-      const response = await fetch(`/api/events/${editingSubEventId}`)
+      const response = await fetch(`/api/events/${editingEventId}`)
       if (!response.ok) {
         throw new Error('Failed to fetch event data')
       }
-      const { data: subEvent } = await response.json()
+      const { data: event } = await response.json()
 
-      if (subEvent) {
-        setNewSubEventName(subEvent.name || "")
+      if (event) {
+        setNewEventName(event.name || "")
         // Handle Firestore Timestamp format
-        setNewSubEventDate(subEvent.date?._seconds
-          ? new Date(subEvent.date._seconds * 1000).toISOString().split('T')[0]
-          : subEvent.date || "")
-        setNewSubEventEventNumber(subEvent.eventNumber || "")
-        setNewSubEventPrize(subEvent.totalPrize || "")
-        setNewSubEventWinner(subEvent.winner || "")
-        setNewSubEventBuyIn(subEvent.buyIn || "")
-        setNewSubEventEntryCount(subEvent.entryCount?.toString() || "")
-        setNewSubEventBlindStructure(subEvent.blindStructure || "")
-        setNewSubEventLevelDuration(subEvent.levelDuration?.toString() || "")
-        setNewSubEventStartingStack(subEvent.startingStack?.toString() || "")
-        setNewSubEventNotes(subEvent.notes || "")
+        setNewEventDate(event.date?._seconds
+          ? new Date(event.date._seconds * 1000).toISOString().split('T')[0]
+          : event.date || "")
+        setNewEventEventNumber(event.eventNumber || "")
+        setNewEventPrize(event.totalPrize || "")
+        setNewEventWinner(event.winner || "")
+        setNewEventBuyIn(event.buyIn || "")
+        setNewEventEntryCount(event.entryCount?.toString() || "")
+        setNewEventBlindStructure(event.blindStructure || "")
+        setNewEventLevelDuration(event.levelDuration?.toString() || "")
+        setNewEventStartingStack(event.startingStack?.toString() || "")
+        setNewEventNotes(event.notes || "")
       }
 
       // Load existing payouts via API
-      const payoutsResponse = await fetch(`/api/events/${editingSubEventId}/payouts`)
+      const payoutsResponse = await fetch(`/api/events/${editingEventId}/payouts`)
       if (payoutsResponse.ok) {
         const { data: existingPayouts } = await payoutsResponse.json()
 
@@ -117,7 +117,7 @@ export function SubEventDialog({
         }
       }
     } catch (error) {
-      console.error('Error loading sub event:', error)
+      console.error('Error loading event:', error)
       toast.error('Failed to load event data')
     } finally {
       setLoadingData(false)
@@ -125,17 +125,17 @@ export function SubEventDialog({
   }
 
   const resetForm = () => {
-    setNewSubEventName("")
-    setNewSubEventDate("")
-    setNewSubEventEventNumber("")
-    setNewSubEventPrize("")
-    setNewSubEventWinner("")
-    setNewSubEventBuyIn("")
-    setNewSubEventEntryCount("")
-    setNewSubEventBlindStructure("")
-    setNewSubEventLevelDuration("")
-    setNewSubEventStartingStack("")
-    setNewSubEventNotes("")
+    setNewEventName("")
+    setNewEventDate("")
+    setNewEventEventNumber("")
+    setNewEventPrize("")
+    setNewEventWinner("")
+    setNewEventBuyIn("")
+    setNewEventEntryCount("")
+    setNewEventBlindStructure("")
+    setNewEventLevelDuration("")
+    setNewEventStartingStack("")
+    setNewEventNotes("")
     setPayouts([{ rank: 1, playerName: "", prizeAmount: "" }])
     setHendonMobHtml("")
     setCsvText("")
@@ -243,37 +243,37 @@ export function SubEventDialog({
   }
 
   const handleSubmit = async () => {
-    if (!newSubEventName.trim() || !newSubEventDate) {
+    if (!newEventName.trim() || !newEventDate) {
       toast.error('Please fill in required fields')
       return
     }
 
     try {
-      const subEventData = {
-        name: newSubEventName.trim(),
-        date: newSubEventDate,
-        event_number: newSubEventEventNumber || undefined,
-        total_prize: newSubEventPrize || undefined,
-        winner: newSubEventWinner || undefined,
-        buy_in: newSubEventBuyIn || undefined,
-        entry_count: newSubEventEntryCount ? parseInt(newSubEventEntryCount) : undefined,
-        blind_structure: newSubEventBlindStructure || undefined,
-        level_duration: newSubEventLevelDuration ? parseInt(newSubEventLevelDuration) : undefined,
-        starting_stack: newSubEventStartingStack ? parseInt(newSubEventStartingStack) : undefined,
-        notes: newSubEventNotes || undefined,
+      const eventData = {
+        name: newEventName.trim(),
+        date: newEventDate,
+        event_number: newEventEventNumber || undefined,
+        total_prize: newEventPrize || undefined,
+        winner: newEventWinner || undefined,
+        buy_in: newEventBuyIn || undefined,
+        entry_count: newEventEntryCount ? parseInt(newEventEntryCount) : undefined,
+        blind_structure: newEventBlindStructure || undefined,
+        level_duration: newEventLevelDuration ? parseInt(newEventLevelDuration) : undefined,
+        starting_stack: newEventStartingStack ? parseInt(newEventStartingStack) : undefined,
+        notes: newEventNotes || undefined,
       }
 
       let result
-      let targetSubEventId = editingSubEventId
+      let targetEventId = editingEventId
 
-      if (editingSubEventId) {
+      if (editingEventId) {
         // Update existing event via Server Action
-        result = await updateEvent(editingSubEventId, subEventData)
+        result = await updateEvent(editingEventId, eventData)
       } else {
         // Create new event via Server Action
-        result = await createEvent(selectedTournamentId, subEventData)
+        result = await createEvent(selectedTournamentId, eventData)
         if (result.success && result.data) {
-          targetSubEventId = result.data.id
+          targetEventId = result.data.id
         }
       }
 
@@ -282,19 +282,19 @@ export function SubEventDialog({
       }
 
       // Save payouts via Server Action
-      const payoutResult = await saveEventPayouts(targetSubEventId, payouts)
+      const payoutResult = await saveEventPayouts(targetEventId, payouts)
 
       if (!payoutResult.success) {
-        console.warn('[SubEventDialog] Payout save failed:', payoutResult.error)
+        console.warn('[EventDialog] Payout save failed:', payoutResult.error)
         // Don't throw - event was saved successfully
       }
 
-      toast.success(editingSubEventId ? 'Event updated successfully' : 'Event added successfully')
+      toast.success(editingEventId ? 'Event updated successfully' : 'Event added successfully')
 
       onOpenChange(false)
       onSuccess?.()
     } catch (error: unknown) {
-      console.error('[SubEventDialog] Error saving sub event:', error)
+      console.error('[EventDialog] Error saving event:', error)
       const errorMessage = error instanceof Error ? error.message : 'Failed to save event'
       toast.error(errorMessage)
     }
@@ -304,7 +304,7 @@ export function SubEventDialog({
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-5xl max-h-[90vh]">
         <DialogHeader>
-          <DialogTitle>{editingSubEventId ? "Edit Event" : "Add Event"}</DialogTitle>
+          <DialogTitle>{editingEventId ? "Edit Event" : "Add Event"}</DialogTitle>
         </DialogHeader>
         {loadingData ? (
           <div className="flex items-center justify-center h-[500px]">
@@ -323,32 +323,32 @@ export function SubEventDialog({
               <ScrollArea className="h-[500px] pr-4">
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="subevent-name">Event Name *</Label>
+                    <Label htmlFor="event-name">Event Name *</Label>
                     <Input
-                      id="subevent-name"
+                      id="event-name"
                       placeholder="e.g., Main Event, High Roller"
-                      value={newSubEventName}
-                      onChange={(e) => setNewSubEventName(e.target.value)}
+                      value={newEventName}
+                      onChange={(e) => setNewEventName(e.target.value)}
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="subevent-date">Date *</Label>
+                    <Label htmlFor="event-date">Date *</Label>
                     <Input
-                      id="subevent-date"
+                      id="event-date"
                       type="date"
-                      value={newSubEventDate}
-                      onChange={(e) => setNewSubEventDate(e.target.value)}
+                      value={newEventDate}
+                      onChange={(e) => setNewEventDate(e.target.value)}
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="subevent-event-number">Event Number</Label>
+                    <Label htmlFor="event-event-number">Event Number</Label>
                     <Input
-                      id="subevent-event-number"
+                      id="event-event-number"
                       placeholder="e.g., #15, Event 1A, #1"
-                      value={newSubEventEventNumber}
-                      onChange={(e) => setNewSubEventEventNumber(e.target.value)}
+                      value={newEventEventNumber}
+                      onChange={(e) => setNewEventEventNumber(e.target.value)}
                     />
                     <p className="text-caption text-muted-foreground">
                       Optional. Supports both sequential numbering and official event codes.
@@ -356,65 +356,65 @@ export function SubEventDialog({
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="subevent-prize">Total Prize</Label>
+                    <Label htmlFor="event-prize">Total Prize</Label>
                     <Input
-                      id="subevent-prize"
+                      id="event-prize"
                       placeholder="e.g., $10,000,000"
-                      value={newSubEventPrize}
-                      onChange={(e) => setNewSubEventPrize(e.target.value)}
+                      value={newEventPrize}
+                      onChange={(e) => setNewEventPrize(e.target.value)}
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="subevent-winner">Winner</Label>
+                    <Label htmlFor="event-winner">Winner</Label>
                     <Input
-                      id="subevent-winner"
+                      id="event-winner"
                       placeholder="e.g., Daniel Negreanu"
-                      value={newSubEventWinner}
-                      onChange={(e) => setNewSubEventWinner(e.target.value)}
+                      value={newEventWinner}
+                      onChange={(e) => setNewEventWinner(e.target.value)}
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="subevent-buyin">Buy-in</Label>
+                    <Label htmlFor="event-buyin">Buy-in</Label>
                     <Input
-                      id="subevent-buyin"
+                      id="event-buyin"
                       placeholder="e.g., $10,000 + $400"
-                      value={newSubEventBuyIn}
-                      onChange={(e) => setNewSubEventBuyIn(e.target.value)}
+                      value={newEventBuyIn}
+                      onChange={(e) => setNewEventBuyIn(e.target.value)}
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="subevent-entries">Entry Count</Label>
+                    <Label htmlFor="event-entries">Entry Count</Label>
                     <Input
-                      id="subevent-entries"
+                      id="event-entries"
                       type="number"
                       placeholder="e.g., 8569"
-                      value={newSubEventEntryCount}
-                      onChange={(e) => setNewSubEventEntryCount(e.target.value)}
+                      value={newEventEntryCount}
+                      onChange={(e) => setNewEventEntryCount(e.target.value)}
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="subevent-level-duration">Level Duration (min)</Label>
+                    <Label htmlFor="event-level-duration">Level Duration (min)</Label>
                     <Input
-                      id="subevent-level-duration"
+                      id="event-level-duration"
                       type="number"
                       placeholder="e.g., 60"
-                      value={newSubEventLevelDuration}
-                      onChange={(e) => setNewSubEventLevelDuration(e.target.value)}
+                      value={newEventLevelDuration}
+                      onChange={(e) => setNewEventLevelDuration(e.target.value)}
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="subevent-starting-stack">Starting Stack</Label>
+                    <Label htmlFor="event-starting-stack">Starting Stack</Label>
                     <Input
-                      id="subevent-starting-stack"
+                      id="event-starting-stack"
                       type="number"
                       placeholder="e.g., 60000"
-                      value={newSubEventStartingStack}
-                      onChange={(e) => setNewSubEventStartingStack(e.target.value)}
+                      value={newEventStartingStack}
+                      onChange={(e) => setNewEventStartingStack(e.target.value)}
                     />
                   </div>
                 </div>
@@ -555,12 +555,12 @@ export function SubEventDialog({
               <ScrollArea className="h-[500px] pr-4">
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="subevent-blind-structure">Blind Structure</Label>
+                    <Label htmlFor="event-blind-structure">Blind Structure</Label>
                     <Textarea
-                      id="subevent-blind-structure"
+                      id="event-blind-structure"
                       placeholder="Level 1: 100/200/200&#10;Level 2: 200/400/400&#10;Level 3: 300/600/600&#10;..."
-                      value={newSubEventBlindStructure}
-                      onChange={(e) => setNewSubEventBlindStructure(e.target.value)}
+                      value={newEventBlindStructure}
+                      onChange={(e) => setNewEventBlindStructure(e.target.value)}
                       className="min-h-[300px] resize-none font-mono text-xs"
                     />
                     <p className="text-caption text-muted-foreground">
@@ -569,12 +569,12 @@ export function SubEventDialog({
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="subevent-notes">Notes</Label>
+                    <Label htmlFor="event-notes">Notes</Label>
                     <Textarea
-                      id="subevent-notes"
+                      id="event-notes"
                       placeholder="Additional notes or information about the event"
-                      value={newSubEventNotes}
-                      onChange={(e) => setNewSubEventNotes(e.target.value)}
+                      value={newEventNotes}
+                      onChange={(e) => setNewEventNotes(e.target.value)}
                       className="min-h-[150px] resize-none"
                     />
                     <p className="text-caption text-muted-foreground">
@@ -592,7 +592,7 @@ export function SubEventDialog({
             Cancel
           </Button>
           <Button onClick={handleSubmit} disabled={loadingData}>
-            {editingSubEventId ? "Edit" : "Add"}
+            {editingEventId ? "Edit" : "Add"}
           </Button>
         </div>
       </DialogContent>

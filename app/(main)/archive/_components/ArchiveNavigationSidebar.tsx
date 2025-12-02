@@ -3,7 +3,7 @@
 /**
  * Archive Navigation Sidebar
  *
- * Tournament → SubEvent → Stream 3-level 네비게이션 사이드바
+ * Tournament → Event → Stream 3-level 네비게이션 사이드바
  * - Nested Accordion 구조
  * - 스트림 선택 시 우측 패널에 핸드 리스트 표시
  */

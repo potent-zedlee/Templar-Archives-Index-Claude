@@ -41,7 +41,7 @@ export interface ArchiveState {
   newEndDate: string
   setNewEndDate: (date: string) => void
 
-  // Event dialog states (formerly SubEvent)
+  // Event dialog states
   isEventDialogOpen: boolean
   setIsEventDialogOpen: (open: boolean) => void
   selectedTournamentId: string
@@ -162,7 +162,7 @@ export function useArchiveState(): ArchiveState {
   const [newStartDate, setNewStartDate] = useState("")
   const [newEndDate, setNewEndDate] = useState("")
 
-  // Event dialog states (formerly SubEvent)
+  // Event dialog states
   const [isEventDialogOpen, setIsEventDialogOpen] = useState(false)
   const [selectedTournamentId, setSelectedTournamentId] = useState<string>("")
   const [editingEventId, setEditingEventId] = useState<string>("")

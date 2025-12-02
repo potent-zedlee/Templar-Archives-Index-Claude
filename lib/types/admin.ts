@@ -132,7 +132,7 @@ export interface ContentStatsByStatus {
  */
 export interface AdminDashboardStats {
   tournaments: ContentStatsByStatus
-  subEvents: ContentStatsByStatus
+  events: ContentStatsByStatus
   streams: ContentStatsByStatus
   hands: {
     total: number

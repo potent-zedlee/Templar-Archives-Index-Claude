@@ -220,7 +220,7 @@ export async function archiveTournament(id: string): Promise<ActionResult> {
 /**
  * Event를 published 상태로 변경
  */
-export async function publishSubEvent(
+export async function publishEvent(
   tournamentId: string,
   eventId: string
 ): Promise<ActionResult> {
@@ -248,7 +248,7 @@ export async function publishSubEvent(
 
     return { success: true }
   } catch (error: any) {
-    console.error('[publishSubEvent] Error:', error)
+    console.error('[publishEvent] Error:', error)
     return { success: false, error: error.message || 'Unknown error' }
   }
 }
@@ -256,7 +256,7 @@ export async function publishSubEvent(
 /**
  * Event를 draft 상태로 변경 (Unpublish)
  */
-export async function unpublishSubEvent(
+export async function unpublishEvent(
   tournamentId: string,
   eventId: string
 ): Promise<ActionResult> {
@@ -284,7 +284,7 @@ export async function unpublishSubEvent(
 
     return { success: true }
   } catch (error: any) {
-    console.error('[unpublishSubEvent] Error:', error)
+    console.error('[unpublishEvent] Error:', error)
     return { success: false, error: error.message || 'Unknown error' }
   }
 }
@@ -292,7 +292,7 @@ export async function unpublishSubEvent(
 /**
  * Event를 archived 상태로 변경
  */
-export async function archiveSubEvent(
+export async function archiveEvent(
   tournamentId: string,
   eventId: string
 ): Promise<ActionResult> {
@@ -318,7 +318,7 @@ export async function archiveSubEvent(
 
     return { success: true }
   } catch (error: any) {
-    console.error('[archiveSubEvent] Error:', error)
+    console.error('[archiveEvent] Error:', error)
     return { success: false, error: error.message || 'Unknown error' }
   }
 }

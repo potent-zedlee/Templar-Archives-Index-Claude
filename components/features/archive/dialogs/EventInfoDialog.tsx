@@ -30,23 +30,23 @@ interface EventPayout {
   prizeAmount: number
 }
 
-interface SubEventInfoDialogProps {
+interface EventInfoDialogProps {
   isOpen: boolean
   onOpenChange: (open: boolean) => void
-  subEventId: string | null
-  subEvent: Event | null
+  eventId: string | null
+  event: Event | null
   isUserAdmin: boolean
   onSuccess?: () => void
 }
 
-export function SubEventInfoDialog({
+export function EventInfoDialog({
   isOpen,
   onOpenChange,
-  subEventId,
-  subEvent,
+  eventId,
+  event,
   isUserAdmin,
   onSuccess,
-}: SubEventInfoDialogProps) {
+}: EventInfoDialogProps) {
   const [viewingPayouts, setViewingPayouts] = useState<EventPayout[]>([])
   const [loadingViewingPayouts, setLoadingViewingPayouts] = useState(false)
   const [isEditingViewingPayouts, setIsEditingViewingPayouts] = useState(false)
@@ -63,15 +63,15 @@ export function SubEventInfoDialog({
 
   // Load payouts when dialog opens
   useEffect(() => {
-    if (isOpen && subEventId) {
-      loadViewingPayouts(subEventId)
+    if (isOpen && eventId) {
+      loadViewingPayouts(eventId)
     }
-  }, [isOpen, subEventId])
+  }, [isOpen, eventId])
 
-  const loadViewingPayouts = async (eventId: string) => {
+  const loadViewingPayouts = async (eventIdParam: string) => {
     setLoadingViewingPayouts(true)
     try {
-      const response = await fetch(`/api/events/${eventId}/payouts`)
+      const response = await fetch(`/api/events/${eventIdParam}/payouts`)
       if (!response.ok) {
         throw new Error('Failed to fetch payouts')
       }
@@ -176,19 +176,19 @@ export function SubEventInfoDialog({
 
   // Save edited payouts via Server Action
   const saveEditingPayouts = async () => {
-    if (!subEventId) return
+    if (!eventId) return
 
     setSavingPayouts(true)
     try {
       // Save via Server Action
-      const result = await saveEventPayouts(subEventId, editingViewingPayouts)
+      const result = await saveEventPayouts(eventId, editingViewingPayouts)
 
       if (!result.success) {
         throw new Error(result.error || 'Failed to save payouts')
       }
 
       // Reload payouts and exit edit mode
-      await loadViewingPayouts(subEventId)
+      await loadViewingPayouts(eventId)
       setIsEditingViewingPayouts(false)
       setEditingViewingPayouts([])
       toast.success('Payouts saved successfully')
@@ -207,7 +207,7 @@ export function SubEventInfoDialog({
         <DialogHeader>
           <DialogTitle>Event Information</DialogTitle>
         </DialogHeader>
-        {subEvent && (
+        {event && (
           <Tabs defaultValue="basic" className="w-full">
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="basic">Basic Info</TabsTrigger>
@@ -222,22 +222,22 @@ export function SubEventInfoDialog({
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label className="text-caption text-muted-foreground">Event Name</Label>
-                      <p className="text-body font-medium">{subEvent.name}</p>
+                      <p className="text-body font-medium">{event.name}</p>
                     </div>
                     <div>
                       <Label className="text-caption text-muted-foreground">Date</Label>
-                      <p className="text-body font-medium">{subEvent.date || "-"}</p>
+                      <p className="text-body font-medium">{event.date || "-"}</p>
                     </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label className="text-caption text-muted-foreground">Total Prize</Label>
-                      <p className="text-body font-medium">{subEvent.totalPrize || "-"}</p>
+                      <p className="text-body font-medium">{event.totalPrize || "-"}</p>
                     </div>
                     <div>
                       <Label className="text-caption text-muted-foreground">Winner</Label>
-                      <p className="text-body font-medium">{subEvent.winner || "-"}</p>
+                      <p className="text-body font-medium">{event.winner || "-"}</p>
                     </div>
                   </div>
 
@@ -246,11 +246,11 @@ export function SubEventInfoDialog({
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <Label className="text-caption text-muted-foreground">Buy-in</Label>
-                        <p className="text-body">{subEvent.buyIn || "-"}</p>
+                        <p className="text-body">{event.buyIn || "-"}</p>
                       </div>
                       <div>
                         <Label className="text-caption text-muted-foreground">Entry Count</Label>
-                        <p className="text-body">{subEvent.entryCount?.toLocaleString() || "-"}</p>
+                        <p className="text-body">{event.entryCount?.toLocaleString() || "-"}</p>
                       </div>
                     </div>
                   </div>
@@ -258,18 +258,18 @@ export function SubEventInfoDialog({
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label className="text-caption text-muted-foreground">Level Duration</Label>
-                      <p className="text-body">{subEvent.levelDuration ? `${subEvent.levelDuration} minutes` : "-"}</p>
+                      <p className="text-body">{event.levelDuration ? `${event.levelDuration} minutes` : "-"}</p>
                     </div>
                     <div>
                       <Label className="text-caption text-muted-foreground">Starting Stack</Label>
-                      <p className="text-body">{subEvent.startingStack?.toLocaleString() || "-"}</p>
+                      <p className="text-body">{event.startingStack?.toLocaleString() || "-"}</p>
                     </div>
                   </div>
 
-                  {subEvent.notes && (
+                  {event.notes && (
                     <div className="border-t pt-4">
                       <Label className="text-caption text-muted-foreground">Notes</Label>
-                      <p className="text-body mt-1 p-3 rounded-md border bg-muted/30 whitespace-pre-wrap">{subEvent.notes}</p>
+                      <p className="text-body mt-1 p-3 rounded-md border bg-muted/30 whitespace-pre-wrap">{event.notes}</p>
                     </div>
                   )}
                 </div>
@@ -416,10 +416,10 @@ export function SubEventInfoDialog({
             {/* Blind Structure Tab */}
             <TabsContent value="structure" className="space-y-4 mt-4">
               <ScrollArea className="h-[400px] pr-4">
-                {subEvent.blindStructure ? (
+                {event.blindStructure ? (
                   <div className="space-y-2">
                     <Label className="text-caption text-muted-foreground">Blind Structure</Label>
-                    <pre className="text-xs whitespace-pre-wrap font-mono p-4 rounded-md border bg-muted/30">{subEvent.blindStructure}</pre>
+                    <pre className="text-xs whitespace-pre-wrap font-mono p-4 rounded-md border bg-muted/30">{event.blindStructure}</pre>
                   </div>
                 ) : (
                   <div className="flex items-center justify-center h-40">

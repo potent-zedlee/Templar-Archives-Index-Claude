@@ -39,7 +39,7 @@ export function useArchiveData() {
           const eventsRef = collection(firestore, COLLECTION_PATHS.EVENTS(tournamentId))
           const eventsSnap = await getDocs(query(eventsRef, orderBy('date', 'desc')))
 
-          const subEvents = await Promise.all(
+          const events = await Promise.all(
             eventsSnap.docs.map(async (eventDoc) => {
               const eventData = eventDoc.data() as FirestoreEvent
               const eventId = eventDoc.id
@@ -78,7 +78,7 @@ export function useArchiveData() {
             location: tournamentData.location,
             start_date: tournamentData.startDate?.toDate?.()?.toISOString(),
             end_date: tournamentData.endDate?.toDate?.()?.toISOString(),
-            events: subEvents,
+            events: events,
             expanded: true,
           }
         })

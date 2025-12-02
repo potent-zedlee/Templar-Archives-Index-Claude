@@ -100,8 +100,8 @@ describe('Archive Form Store', () => {
     })
   })
 
-  describe('SubEvent Form', () => {
-    it('should set sub-event form field', () => {
+  describe('Event Form', () => {
+    it('should set event form field', () => {
       const { setEventFormField } = useArchiveFormStore.getState()
       setEventFormField('name', 'Event #15: Main Event')
 
@@ -109,7 +109,7 @@ describe('Archive Form Store', () => {
       expect(eventForm.name).toBe('Event #15: Main Event')
     })
 
-    it('should set multiple sub-event form fields', () => {
+    it('should set multiple event form fields', () => {
       const { setEventFormField } = useArchiveFormStore.getState()
       setEventFormField('name', 'Event #15')
       setEventFormField('buyIn', '10000')
@@ -121,7 +121,7 @@ describe('Archive Form Store', () => {
       expect(eventForm.totalPrize).toBe('50000000')
     })
 
-    it('should set entire sub-event form', () => {
+    it('should set entire event form', () => {
       const newForm = {
         name: 'Event #20',
         date: '2024-07-15',

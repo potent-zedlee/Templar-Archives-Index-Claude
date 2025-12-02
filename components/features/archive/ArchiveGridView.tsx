@@ -117,7 +117,7 @@ export function ArchiveGridView({
           {isAdmin && onAddSubItem && (
             <DropdownMenuItem onClick={() => onAddSubItem(item)}>
               <FolderPlus className="mr-2 h-4 w-4" />
-              Add SubEvent
+              Add Event
             </DropdownMenuItem>
           )}
           {isAdmin && onRename && (
@@ -142,7 +142,7 @@ export function ArchiveGridView({
       )
     }
 
-    // SubEvent folder menu
+    // Event folder menu
     if (item.type === 'event') {
       return (
         <>

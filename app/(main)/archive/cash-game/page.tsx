@@ -5,7 +5,7 @@
  *
  * Desktop only (lg+):
  * - Left: Filter sidebar (320px)
- * - Center: Navigation sidebar (400px) - Tournament → SubEvent → Stream
+ * - Center: Navigation sidebar (400px) - Tournament → Event → Stream
  * - Right: Main panel - Dashboard or Hands List
  *
  * Mobile (< lg): Desktop-only message

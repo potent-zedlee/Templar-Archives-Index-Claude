@@ -244,7 +244,7 @@ export function useAdminStreamsQuery(
     queryFn: async () => {
       const streamsRef = collection(firestore, 'streams') as CollectionReference
       const constraints: QueryConstraint[] = [
-        where('subEventId', '==', eventId),
+        where('eventId', '==', eventId),
         orderBy('publishedAt', 'desc')
       ]
 
@@ -621,7 +621,6 @@ export function useClassifyStream() {
       // 스트림 업데이트
       const streamRef = doc(firestore, 'streams', streamId)
       await updateDoc(streamRef, {
-        subEventId: eventId,
         tournamentId: tournamentId,
         tournamentName: tournamentData.name,
         eventId: eventId,

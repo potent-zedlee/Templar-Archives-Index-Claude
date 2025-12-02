@@ -138,7 +138,7 @@ export async function createUnsortedVideo(data: {
       videoUrl: normalizedUrl,
       videoFile: data.video_file || null,
       videoSource: data.video_source || 'youtube',
-      subEventId: null,
+      eventId: null,
       isOrganized: false,
       publishedAt: data.published_at ? new Date(data.published_at) : null,
       createdAt: now,
@@ -276,7 +276,7 @@ export async function deleteUnsortedVideosBatch(ids: string[]) {
  */
 export async function organizeUnsortedVideo(
   videoId: string,
-  subEventId: string
+  eventId: string
 ) {
   // 권한 검증
   const { authorized, error } = await verifyAdmin()
@@ -289,7 +289,7 @@ export async function organizeUnsortedVideo(
       .collection(COLLECTION_PATHS.UNSORTED_STREAMS)
       .doc(videoId)
       .update({
-        subEventId: subEventId,
+        eventId: eventId,
         isOrganized: true,
         organizedAt: new Date(),
         updatedAt: new Date(),
@@ -311,7 +311,7 @@ export async function organizeUnsortedVideo(
  */
 export async function organizeUnsortedVideosBatch(
   videoIds: string[],
-  subEventId: string
+  eventId: string
 ) {
   // 권한 검증
   const { authorized, error } = await verifyAdmin()
@@ -326,7 +326,7 @@ export async function organizeUnsortedVideosBatch(
 
     for (const videoId of videoIds) {
       batch.update(streamsRef.doc(videoId), {
-        subEventId: subEventId,
+        eventId: eventId,
         isOrganized: true,
         organizedAt: now,
         updatedAt: now,
@@ -359,7 +359,7 @@ export async function getUnsortedVideos() {
   try {
     const snapshot = await adminFirestore
       .collection(COLLECTION_PATHS.UNSORTED_STREAMS)
-      .where('subEventId', '==', null)
+      .where('eventId', '==', null)
       .where('isOrganized', '==', false)
       .orderBy('createdAt', 'desc')
       .get()
@@ -430,7 +430,7 @@ export async function createUnsortedVideosBatch(
           videoUrl: normalizedUrl,
           videoFile: null,
           videoSource: video.video_source || 'youtube',
-          subEventId: null,
+          eventId: null,
           isOrganized: false,
           publishedAt: video.published_at ? new Date(video.published_at) : null,
           createdAt: now,
@@ -613,7 +613,7 @@ export async function autoOrganizeVideos(structure: {
     location: string
     startDate: string
     endDate: string
-    subEvents: Array<{
+    events: Array<{
       name: string
       date: string
       videos: Array<{
@@ -664,7 +664,7 @@ export async function autoOrganizeVideos(structure: {
         endDate: new Date(tournament.endDate),
         status: 'draft',
         stats: {
-          eventsCount: tournament.subEvents.length,
+          eventsCount: tournament.events.length,
           streamsCount: 0,
           handsCount: 0,
           playersCount: 0,
@@ -675,23 +675,23 @@ export async function autoOrganizeVideos(structure: {
 
       let tournamentStreamsCount = 0
 
-      for (const subEvent of tournament.subEvents) {
+      for (const event of tournament.events) {
         // Create event
         const eventRef = tournamentRef.collection('events').doc()
 
         await eventRef.set({
-          name: subEvent.name,
-          date: new Date(subEvent.date),
+          name: event.name,
+          date: new Date(event.date),
           status: 'draft',
           stats: {
-            streamsCount: subEvent.videos.length,
+            streamsCount: event.videos.length,
             handsCount: 0,
           },
           createdAt: FieldValue.serverTimestamp(),
           updatedAt: FieldValue.serverTimestamp(),
         })
 
-        for (const video of subEvent.videos) {
+        for (const video of event.videos) {
           // Create stream
           const streamRef = eventRef.collection('streams').doc()
 

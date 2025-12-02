@@ -30,7 +30,7 @@ interface BulkActionsProps {
   selectedEventIds?: string[]
   selectedStreamIds: string[]
   selectedStreamMeta: Map<string, {tournamentId: string, eventId: string}>
-  subEvents?: Map<string, any[]>
+  events?: Map<string, any[]>
   streams?: Map<string, any[]>
   onSuccess?: () => void
   onClearSelection?: () => void
@@ -41,7 +41,7 @@ export function BulkActions({
   selectedEventIds = [],
   selectedStreamIds,
   selectedStreamMeta,
-  subEvents: _subEvents,
+  events: _events,
   streams: _streams,
   onSuccess,
   onClearSelection

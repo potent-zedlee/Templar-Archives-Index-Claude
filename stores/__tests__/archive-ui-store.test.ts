@@ -10,7 +10,6 @@ describe('Archive UI Store', () => {
       eventDialog: { isOpen: false, editingId: null },
       eventInfoDialog: { isOpen: false, editingId: null },
       streamDialog: { isOpen: false, editingId: null },
-      dayDialog: { isOpen: false, editingId: null },
       videoDialog: { isOpen: false, startTime: '', stream: null },
       analyzeDialog: { isOpen: false, editingId: null },
       renameDialog: { isOpen: false, editingId: null },
@@ -91,13 +90,14 @@ describe('Archive UI Store', () => {
       expect(selectedEventIdForDialog).toBe('event-1')
     })
 
-    it('should keep dayDialog in sync with streamDialog (backward compatibility)', () => {
+    it('should open stream dialog with editing ID', () => {
       const { openStreamDialog } = useArchiveUIStore.getState()
-      openStreamDialog('event-1')
+      openStreamDialog('event-1', 'stream-edit-1')
 
-      const { streamDialog, dayDialog } = useArchiveUIStore.getState()
-      expect(streamDialog.isOpen).toBe(dayDialog.isOpen)
-      expect(streamDialog.editingId).toBe(dayDialog.editingId)
+      const { streamDialog, selectedEventIdForDialog } = useArchiveUIStore.getState()
+      expect(streamDialog.isOpen).toBe(true)
+      expect(streamDialog.editingId).toBe('stream-edit-1')
+      expect(selectedEventIdForDialog).toBe('event-1')
     })
 
     it('should open video dialog with stream and start time', () => {

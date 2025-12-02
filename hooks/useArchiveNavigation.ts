@@ -13,7 +13,7 @@ export function useArchiveNavigation({
   // Navigation state
   const [navigationLevel, setNavigationLevel] = useState<NavigationLevel>('root')
   const [currentTournamentId, setCurrentTournamentId] = useState<string>("")
-  const [currentSubEventId, setCurrentSubEventId] = useState<string>("")
+  const [currentEventId, setCurrentEventId] = useState<string>("")
 
   // Search and filter state
   const [searchQuery, setSearchQuery] = useState<string>('')
@@ -49,7 +49,7 @@ export function useArchiveNavigation({
 
     if (navigationLevel === 'event') {
       const tournament = tournaments.find(t => t.id === currentTournamentId)
-      const event = tournament?.events?.find((e: any) => e.id === currentSubEventId)
+      const event = tournament?.events?.find((e: any) => e.id === currentEventId)
       if (event) {
         items.push({
           id: event.id,
@@ -60,7 +60,7 @@ export function useArchiveNavigation({
     }
 
     return items
-  }, [tournaments, navigationLevel, currentTournamentId, currentSubEventId])
+  }, [tournaments, navigationLevel, currentTournamentId, currentEventId])
 
   // Build folder items with filters
   const folderItems = useMemo((): FolderItem[] => {
@@ -93,7 +93,7 @@ export function useArchiveNavigation({
     } else if (navigationLevel === 'event') {
       // Show streams of current event
       const tournament = tournaments.find(t => t.id === currentTournamentId)
-      const event = tournament?.events?.find((e: any) => e.id === currentSubEventId)
+      const event = tournament?.events?.find((e: any) => e.id === currentEventId)
       items = event?.streams?.map((stream: any) => ({
         id: stream.id,
         name: stream.name,
@@ -151,7 +151,7 @@ export function useArchiveNavigation({
     })
 
     return items
-  }, [navigationLevel, filteredTournaments, tournaments, currentTournamentId, currentSubEventId, searchQuery, advancedFilters, sortBy])
+  }, [navigationLevel, filteredTournaments, tournaments, currentTournamentId, currentEventId, searchQuery, advancedFilters, sortBy])
 
   // Handle breadcrumb navigation
   const handleBreadcrumbNavigate = (item: { id: string; name: string; type: 'home' | 'tournament' | 'event' } | null) => {
@@ -159,16 +159,16 @@ export function useArchiveNavigation({
       // Navigate to root
       setNavigationLevel('root')
       setCurrentTournamentId('')
-      setCurrentSubEventId('')
+      setCurrentEventId('')
     } else if (item.type === 'tournament') {
       // Navigate to tournament level
       setNavigationLevel('tournament')
       setCurrentTournamentId(item.id)
-      setCurrentSubEventId('')
+      setCurrentEventId('')
     } else if (item.type === 'event') {
-      // Navigate to subevent level (stay at current level)
+      // Navigate to event level (stay at current level)
       setNavigationLevel('event')
-      setCurrentSubEventId(item.id)
+      setCurrentEventId(item.id)
     }
   }
 
@@ -177,10 +177,10 @@ export function useArchiveNavigation({
     if (item.type === 'tournament') {
       setNavigationLevel('tournament')
       setCurrentTournamentId(item.id)
-      setCurrentSubEventId('')
+      setCurrentEventId('')
     } else if (item.type === 'event') {
       setNavigationLevel('event')
-      setCurrentSubEventId(item.id)
+      setCurrentEventId(item.id)
     }
     // Stream clicks are handled by onSelectStream
   }
@@ -189,11 +189,11 @@ export function useArchiveNavigation({
   const navigateBack = () => {
     if (navigationLevel === 'event') {
       setNavigationLevel('tournament')
-      setCurrentSubEventId('')
+      setCurrentEventId('')
     } else if (navigationLevel === 'tournament') {
       setNavigationLevel('root')
       setCurrentTournamentId('')
-      setCurrentSubEventId('')
+      setCurrentEventId('')
     }
   }
 
@@ -202,8 +202,8 @@ export function useArchiveNavigation({
     setNavigationLevel,
     currentTournamentId,
     setCurrentTournamentId,
-    currentSubEventId,
-    setCurrentSubEventId,
+    currentEventId,
+    setCurrentEventId,
     searchQuery,
     setSearchQuery,
     sortBy,
