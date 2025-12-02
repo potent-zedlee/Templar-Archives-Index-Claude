@@ -16,8 +16,8 @@ export interface ArchiveState {
   setTournaments: (tournaments: any[]) => void
   hands: any[]
   setHands: (hands: any[]) => void
-  selectedDay: string
-  setSelectedDay: (day: string) => void
+  selectedStream: string
+  setSelectedStream: (stream: string) => void
   loading: boolean
   setLoading: (loading: boolean) => void
   userEmail: string | null
@@ -41,41 +41,41 @@ export interface ArchiveState {
   newEndDate: string
   setNewEndDate: (date: string) => void
 
-  // SubEvent dialog states
-  isSubEventDialogOpen: boolean
-  setIsSubEventDialogOpen: (open: boolean) => void
+  // Event dialog states (formerly SubEvent)
+  isEventDialogOpen: boolean
+  setIsEventDialogOpen: (open: boolean) => void
   selectedTournamentId: string
   setSelectedTournamentId: (id: string) => void
-  editingSubEventId: string
-  setEditingSubEventId: (id: string) => void
-  newSubEventName: string
-  setNewSubEventName: (name: string) => void
-  newSubEventDate: string
-  setNewSubEventDate: (date: string) => void
-  newSubEventPrize: string
-  setNewSubEventPrize: (prize: string) => void
-  newSubEventWinner: string
-  setNewSubEventWinner: (winner: string) => void
-  newSubEventBuyIn: string
-  setNewSubEventBuyIn: (buyIn: string) => void
-  newSubEventEntryCount: string
-  setNewSubEventEntryCount: (count: string) => void
-  newSubEventBlindStructure: string
-  setNewSubEventBlindStructure: (structure: string) => void
-  newSubEventLevelDuration: string
-  setNewSubEventLevelDuration: (duration: string) => void
-  newSubEventStartingStack: string
-  setNewSubEventStartingStack: (stack: string) => void
-  newSubEventNotes: string
-  setNewSubEventNotes: (notes: string) => void
+  editingEventId: string
+  setEditingEventId: (id: string) => void
+  newEventName: string
+  setNewEventName: (name: string) => void
+  newEventDate: string
+  setNewEventDate: (date: string) => void
+  newEventPrize: string
+  setNewEventPrize: (prize: string) => void
+  newEventWinner: string
+  setNewEventWinner: (winner: string) => void
+  newEventBuyIn: string
+  setNewEventBuyIn: (buyIn: string) => void
+  newEventEntryCount: string
+  setNewEventEntryCount: (count: string) => void
+  newEventBlindStructure: string
+  setNewEventBlindStructure: (structure: string) => void
+  newEventLevelDuration: string
+  setNewEventLevelDuration: (duration: string) => void
+  newEventStartingStack: string
+  setNewEventStartingStack: (stack: string) => void
+  newEventNotes: string
+  setNewEventNotes: (notes: string) => void
 
-  // SubEvent Info dialog states
-  isSubEventInfoDialogOpen: boolean
-  setIsSubEventInfoDialogOpen: (open: boolean) => void
-  viewingSubEventId: string
-  setViewingSubEventId: (id: string) => void
-  viewingSubEvent: any | null
-  setViewingSubEvent: (subEvent: any | null) => void
+  // Event Info dialog states
+  isEventInfoDialogOpen: boolean
+  setIsEventInfoDialogOpen: (open: boolean) => void
+  viewingEventId: string
+  setViewingEventId: (id: string) => void
+  viewingEvent: any | null
+  setViewingEvent: (event: any | null) => void
   viewingPayouts: any[]
   setViewingPayouts: (payouts: any[]) => void
   loadingViewingPayouts: boolean
@@ -101,19 +101,19 @@ export interface ArchiveState {
   loadingPayouts: boolean
   setLoadingPayouts: (loading: boolean) => void
 
-  // Day dialog states
-  isDayDialogOpen: boolean
-  setIsDayDialogOpen: (open: boolean) => void
-  selectedSubEventId: string
-  setSelectedSubEventId: (id: string) => void
-  editingDayId: string
-  setEditingDayId: (id: string) => void
-  newDayName: string
-  setNewDayName: (name: string) => void
+  // Stream dialog states (formerly Day)
+  isStreamDialogOpen: boolean
+  setIsStreamDialogOpen: (open: boolean) => void
+  selectedEventId: string
+  setSelectedEventId: (id: string) => void
+  editingStreamId: string
+  setEditingStreamId: (id: string) => void
+  newStreamName: string
+  setNewStreamName: (name: string) => void
   videoSourceTab: VideoSourceTab
   setVideoSourceTab: (tab: VideoSourceTab) => void
-  newDayVideoUrl: string
-  setNewDayVideoUrl: (url: string) => void
+  newStreamVideoUrl: string
+  setNewStreamVideoUrl: (url: string) => void
   uploadFile: File | null
   setUploadFile: (file: File | null) => void
   uploading: boolean
@@ -132,12 +132,12 @@ export interface ArchiveState {
   setOpenMenuId: (id: string) => void
 
   // Folder navigation states
-  navigationLevel: 'root' | 'tournament' | 'subevent' | 'unorganized'
-  setNavigationLevel: (level: 'root' | 'tournament' | 'subevent' | 'unorganized') => void
+  navigationLevel: 'root' | 'tournament' | 'event' | 'unorganized'
+  setNavigationLevel: (level: 'root' | 'tournament' | 'event' | 'unorganized') => void
   currentTournamentId: string
   setCurrentTournamentId: (id: string) => void
-  currentSubEventId: string
-  setCurrentSubEventId: (id: string) => void
+  currentEventId: string
+  setCurrentEventId: (id: string) => void
 
   // Unsorted videos state
   unsortedVideos: any[]
@@ -148,7 +148,7 @@ export function useArchiveState(): ArchiveState {
   // Data states
   const [tournaments, setTournaments] = useState<any[]>([])
   const [hands, setHands] = useState<any[]>([])
-  const [selectedDay, setSelectedDay] = useState<string>("")
+  const [selectedStream, setSelectedStream] = useState<string>("")
   const [loading, setLoading] = useState(true)
   const [userEmail, setUserEmail] = useState<string | null>(null)
   const [selectedCategory, setSelectedCategory] = useState<string>("All")
@@ -162,25 +162,25 @@ export function useArchiveState(): ArchiveState {
   const [newStartDate, setNewStartDate] = useState("")
   const [newEndDate, setNewEndDate] = useState("")
 
-  // SubEvent dialog states
-  const [isSubEventDialogOpen, setIsSubEventDialogOpen] = useState(false)
+  // Event dialog states (formerly SubEvent)
+  const [isEventDialogOpen, setIsEventDialogOpen] = useState(false)
   const [selectedTournamentId, setSelectedTournamentId] = useState<string>("")
-  const [editingSubEventId, setEditingSubEventId] = useState<string>("")
-  const [newSubEventName, setNewSubEventName] = useState("")
-  const [newSubEventDate, setNewSubEventDate] = useState("")
-  const [newSubEventPrize, setNewSubEventPrize] = useState("")
-  const [newSubEventWinner, setNewSubEventWinner] = useState("")
-  const [newSubEventBuyIn, setNewSubEventBuyIn] = useState("")
-  const [newSubEventEntryCount, setNewSubEventEntryCount] = useState("")
-  const [newSubEventBlindStructure, setNewSubEventBlindStructure] = useState("")
-  const [newSubEventLevelDuration, setNewSubEventLevelDuration] = useState("")
-  const [newSubEventStartingStack, setNewSubEventStartingStack] = useState("")
-  const [newSubEventNotes, setNewSubEventNotes] = useState("")
+  const [editingEventId, setEditingEventId] = useState<string>("")
+  const [newEventName, setNewEventName] = useState("")
+  const [newEventDate, setNewEventDate] = useState("")
+  const [newEventPrize, setNewEventPrize] = useState("")
+  const [newEventWinner, setNewEventWinner] = useState("")
+  const [newEventBuyIn, setNewEventBuyIn] = useState("")
+  const [newEventEntryCount, setNewEventEntryCount] = useState("")
+  const [newEventBlindStructure, setNewEventBlindStructure] = useState("")
+  const [newEventLevelDuration, setNewEventLevelDuration] = useState("")
+  const [newEventStartingStack, setNewEventStartingStack] = useState("")
+  const [newEventNotes, setNewEventNotes] = useState("")
 
-  // SubEvent Info dialog states
-  const [isSubEventInfoDialogOpen, setIsSubEventInfoDialogOpen] = useState(false)
-  const [viewingSubEventId, setViewingSubEventId] = useState<string>("")
-  const [viewingSubEvent, setViewingSubEvent] = useState<any | null>(null)
+  // Event Info dialog states
+  const [isEventInfoDialogOpen, setIsEventInfoDialogOpen] = useState(false)
+  const [viewingEventId, setViewingEventId] = useState<string>("")
+  const [viewingEvent, setViewingEvent] = useState<any | null>(null)
   const [viewingPayouts, setViewingPayouts] = useState<any[]>([])
   const [loadingViewingPayouts, setLoadingViewingPayouts] = useState(false)
   const [isEditingViewingPayouts, setIsEditingViewingPayouts] = useState(false)
@@ -197,13 +197,13 @@ export function useArchiveState(): ArchiveState {
   const [csvText, setCsvText] = useState("")
   const [loadingPayouts, setLoadingPayouts] = useState(false)
 
-  // Day dialog states
-  const [isDayDialogOpen, setIsDayDialogOpen] = useState(false)
-  const [selectedSubEventId, setSelectedSubEventId] = useState<string>("")
-  const [editingDayId, setEditingDayId] = useState<string>("")
-  const [newDayName, setNewDayName] = useState("")
+  // Stream dialog states (formerly Day)
+  const [isStreamDialogOpen, setIsStreamDialogOpen] = useState(false)
+  const [selectedEventId, setSelectedEventId] = useState<string>("")
+  const [editingStreamId, setEditingStreamId] = useState<string>("")
+  const [newStreamName, setNewStreamName] = useState("")
   const [videoSourceTab, setVideoSourceTab] = useState<VideoSourceTab>('youtube')
-  const [newDayVideoUrl, setNewDayVideoUrl] = useState("")
+  const [newStreamVideoUrl, setNewStreamVideoUrl] = useState("")
   const [uploadFile, setUploadFile] = useState<File | null>(null)
   const [uploading, setUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
@@ -216,9 +216,9 @@ export function useArchiveState(): ArchiveState {
   const [openMenuId, setOpenMenuId] = useState<string>("")
 
   // Folder navigation states
-  const [navigationLevel, setNavigationLevel] = useState<'root' | 'tournament' | 'subevent' | 'unorganized'>('root')
+  const [navigationLevel, setNavigationLevel] = useState<'root' | 'tournament' | 'event' | 'unorganized'>('root')
   const [currentTournamentId, setCurrentTournamentId] = useState<string>("")
-  const [currentSubEventId, setCurrentSubEventId] = useState<string>("")
+  const [currentEventId, setCurrentEventId] = useState<string>("")
 
   // Unsorted videos state
   const [unsortedVideos, setUnsortedVideos] = useState<any[]>([])
@@ -228,8 +228,8 @@ export function useArchiveState(): ArchiveState {
     setTournaments,
     hands,
     setHands,
-    selectedDay,
-    setSelectedDay,
+    selectedStream,
+    setSelectedStream,
     loading,
     setLoading,
     userEmail,
@@ -250,38 +250,38 @@ export function useArchiveState(): ArchiveState {
     setNewStartDate,
     newEndDate,
     setNewEndDate,
-    isSubEventDialogOpen,
-    setIsSubEventDialogOpen,
+    isEventDialogOpen,
+    setIsEventDialogOpen,
     selectedTournamentId,
     setSelectedTournamentId,
-    editingSubEventId,
-    setEditingSubEventId,
-    newSubEventName,
-    setNewSubEventName,
-    newSubEventDate,
-    setNewSubEventDate,
-    newSubEventPrize,
-    setNewSubEventPrize,
-    newSubEventWinner,
-    setNewSubEventWinner,
-    newSubEventBuyIn,
-    setNewSubEventBuyIn,
-    newSubEventEntryCount,
-    setNewSubEventEntryCount,
-    newSubEventBlindStructure,
-    setNewSubEventBlindStructure,
-    newSubEventLevelDuration,
-    setNewSubEventLevelDuration,
-    newSubEventStartingStack,
-    setNewSubEventStartingStack,
-    newSubEventNotes,
-    setNewSubEventNotes,
-    isSubEventInfoDialogOpen,
-    setIsSubEventInfoDialogOpen,
-    viewingSubEventId,
-    setViewingSubEventId,
-    viewingSubEvent,
-    setViewingSubEvent,
+    editingEventId,
+    setEditingEventId,
+    newEventName,
+    setNewEventName,
+    newEventDate,
+    setNewEventDate,
+    newEventPrize,
+    setNewEventPrize,
+    newEventWinner,
+    setNewEventWinner,
+    newEventBuyIn,
+    setNewEventBuyIn,
+    newEventEntryCount,
+    setNewEventEntryCount,
+    newEventBlindStructure,
+    setNewEventBlindStructure,
+    newEventLevelDuration,
+    setNewEventLevelDuration,
+    newEventStartingStack,
+    setNewEventStartingStack,
+    newEventNotes,
+    setNewEventNotes,
+    isEventInfoDialogOpen,
+    setIsEventInfoDialogOpen,
+    viewingEventId,
+    setViewingEventId,
+    viewingEvent,
+    setViewingEvent,
     viewingPayouts,
     setViewingPayouts,
     loadingViewingPayouts,
@@ -304,18 +304,18 @@ export function useArchiveState(): ArchiveState {
     setCsvText,
     loadingPayouts,
     setLoadingPayouts,
-    isDayDialogOpen,
-    setIsDayDialogOpen,
-    selectedSubEventId,
-    setSelectedSubEventId,
-    editingDayId,
-    setEditingDayId,
-    newDayName,
-    setNewDayName,
+    isStreamDialogOpen,
+    setIsStreamDialogOpen,
+    selectedEventId,
+    setSelectedEventId,
+    editingStreamId,
+    setEditingStreamId,
+    newStreamName,
+    setNewStreamName,
     videoSourceTab,
     setVideoSourceTab,
-    newDayVideoUrl,
-    setNewDayVideoUrl,
+    newStreamVideoUrl,
+    setNewStreamVideoUrl,
     uploadFile,
     setUploadFile,
     uploading,
@@ -332,8 +332,8 @@ export function useArchiveState(): ArchiveState {
     setNavigationLevel,
     currentTournamentId,
     setCurrentTournamentId,
-    currentSubEventId,
-    setCurrentSubEventId,
+    currentEventId,
+    setCurrentEventId,
     unsortedVideos,
     setUnsortedVideos,
   }
