@@ -19,14 +19,14 @@ const DEFAULT_WIDTH = 1200
 const DEFAULT_HEIGHT = 700
 
 interface VideoPlayerDialogProps {
-  day: Stream | null
+  stream: Stream | null
   isOpen: boolean
   onOpenChange: (open: boolean) => void
   initialTime?: string
 }
 
 export function VideoPlayerDialog({
-  day,
+  stream,
   isOpen,
   onOpenChange,
   initialTime,
@@ -90,8 +90,8 @@ export function VideoPlayerDialog({
   }
 
   const videoId =
-    day?.video_source === "youtube" && day?.video_url
-      ? getYouTubeId(day.video_url)
+    stream?.video_source === "youtube" && stream?.video_url
+      ? getYouTubeId(stream.video_url)
       : null
 
   const startTimeSeconds = initialTime ? parseTimeToSeconds(initialTime) : 0
@@ -140,7 +140,7 @@ export function VideoPlayerDialog({
 
   useEffect(() => {
     if (!videoRef.current || !isOpen) return
-    if (!day || (day.video_source !== "upload" && day.video_source !== "nas"))
+    if (!stream || (stream.video_source !== "upload" && stream.video_source !== "nas"))
       return
 
     const video = videoRef.current
@@ -161,11 +161,11 @@ export function VideoPlayerDialog({
     return () => {
       video.removeEventListener("loadedmetadata", handleLoadedMetadata)
     }
-  }, [day, isOpen, startTimeSeconds])
+  }, [stream, isOpen, startTimeSeconds])
 
   if (!isOpen) return null
 
-  if (!day) {
+  if (!stream) {
     return (
       <>
         <div
@@ -243,7 +243,7 @@ export function VideoPlayerDialog({
         <div className="bg-background border rounded-lg shadow-2xl flex flex-col h-full">
           <div className={`flex items-center justify-between border-b bg-muted/50 cursor-move ${isPipMode ? 'p-1' : 'p-3'}`}>
             {!isPipMode && (
-              <h2 className="text-title font-semibold">{day.name || "영상 플레이어"}</h2>
+              <h2 className="text-title font-semibold">{stream.name || "영상 플레이어"}</h2>
             )}
             <div className={`flex items-center gap-1 ${isPipMode ? 'ml-auto' : ''}`}>
               {!isPipMode && (
@@ -280,7 +280,7 @@ export function VideoPlayerDialog({
           </div>
 
           <div className={`flex-1 overflow-auto bg-black ${isPipMode ? 'p-0' : 'p-4'}`}>
-            {day.video_source === "youtube" && day.video_url && videoId && (
+            {stream.video_source === "youtube" && stream.video_url && videoId && (
               <div className="w-full h-full flex items-center justify-center">
                 <div className="w-full max-w-full" style={{ aspectRatio: '16/9' }}>
                   <div
@@ -292,11 +292,11 @@ export function VideoPlayerDialog({
               </div>
             )}
 
-            {day.video_source === "upload" && day.video_file && (
+            {stream.video_source === "upload" && stream.video_file && (
               <div className="w-full h-full flex items-center justify-center">
                 <video
                   ref={videoRef}
-                  src={day.video_file}
+                  src={stream.video_file}
                   controls
                   className="w-full h-full"
                   controlsList="nodownload"
@@ -306,12 +306,12 @@ export function VideoPlayerDialog({
               </div>
             )}
 
-            {day.video_source === "nas" && day.video_nas_path && (
+            {stream.video_source === "nas" && stream.video_nas_path && (
               <div className="w-full h-full flex items-center justify-center">
                 <video
                   ref={videoRef}
                   src={`/api/nas-video?path=${encodeURIComponent(
-                    day.video_nas_path
+                    stream.video_nas_path
                   )}`}
                   controls
                   className="w-full h-full"
@@ -322,7 +322,7 @@ export function VideoPlayerDialog({
               </div>
             )}
 
-            {!day.video_url && !day.video_file && !day.video_nas_path && (
+            {!stream.video_url && !stream.video_file && !stream.video_nas_path && (
               <div className="w-full h-full flex items-center justify-center">
                 <p className="text-body text-muted-foreground">
                   영상을 사용할 수 없습니다.

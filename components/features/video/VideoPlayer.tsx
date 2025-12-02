@@ -10,12 +10,12 @@ type Stream = {
 }
 
 interface VideoPlayerProps {
-  day: Stream | null
+  stream: Stream | null
   onTimeUpdate?: (time: number) => void
   seekTime?: number | null
 }
 
-export function VideoPlayer({ day, onTimeUpdate, seekTime }: VideoPlayerProps) {
+export function VideoPlayer({ stream, onTimeUpdate, seekTime }: VideoPlayerProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
   const playerRef = useRef<any>(null)
@@ -27,8 +27,8 @@ export function VideoPlayer({ day, onTimeUpdate, seekTime }: VideoPlayerProps) {
     return match && match[2].length === 11 ? match[2] : null
   }
 
-  const videoId = day?.video_source === 'youtube' && day?.video_url
-    ? getYouTubeId(day.video_url)
+  const videoId = stream?.video_source === 'youtube' && stream?.video_url
+    ? getYouTubeId(stream.video_url)
     : null
 
   // YouTube IFrame API 초기화 (항상 실행)
@@ -67,7 +67,7 @@ export function VideoPlayer({ day, onTimeUpdate, seekTime }: VideoPlayerProps) {
   useEffect(() => {
     const video = videoRef.current
     if (!video || !onTimeUpdate) return
-    if (!day || (day.video_source !== 'upload' && day.video_source !== 'nas')) return
+    if (!stream || (stream.video_source !== 'upload' && stream.video_source !== 'nas')) return
 
     const handleTimeUpdate = () => {
       onTimeUpdate(video.currentTime)
@@ -75,31 +75,31 @@ export function VideoPlayer({ day, onTimeUpdate, seekTime }: VideoPlayerProps) {
 
     video.addEventListener('timeupdate', handleTimeUpdate)
     return () => video.removeEventListener('timeupdate', handleTimeUpdate)
-  }, [day, onTimeUpdate])
+  }, [stream, onTimeUpdate])
 
   // Seek to specific time when seekTime changes
   useEffect(() => {
     if (seekTime === null || seekTime === undefined) return
 
     // YouTube video
-    if (day?.video_source === 'youtube' && playerRef.current && playerRef.current.seekTo) {
+    if (stream?.video_source === 'youtube' && playerRef.current && playerRef.current.seekTo) {
       playerRef.current.seekTo(seekTime, true)
     }
 
     // Upload/NAS video
-    if ((day?.video_source === 'upload' || day?.video_source === 'nas') && videoRef.current) {
+    if ((stream?.video_source === 'upload' || stream?.video_source === 'nas') && videoRef.current) {
       videoRef.current.currentTime = seekTime
       videoRef.current.play()
     }
-  }, [seekTime, day])
+  }, [seekTime, stream])
 
   // Early return은 모든 hooks 다음에
-  if (!day) {
+  if (!stream) {
     return (
       <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
         <div className="text-center">
           <p className="text-body-lg text-muted-foreground">
-            Select a day to view video
+            Select a stream to view video
           </p>
         </div>
       </div>
@@ -107,7 +107,7 @@ export function VideoPlayer({ day, onTimeUpdate, seekTime }: VideoPlayerProps) {
   }
 
   // YouTube video
-  if (day.video_source === 'youtube' && day.video_url && videoId) {
+  if (stream.video_source === 'youtube' && stream.video_url && videoId) {
     return (
       <div className="aspect-video rounded-lg overflow-hidden">
         <iframe
@@ -126,12 +126,12 @@ export function VideoPlayer({ day, onTimeUpdate, seekTime }: VideoPlayerProps) {
   }
 
   // Uploaded file (Supabase Storage)
-  if (day.video_source === 'upload' && day.video_file) {
+  if (stream.video_source === 'upload' && stream.video_file) {
     return (
       <div className="aspect-video rounded-lg overflow-hidden bg-black">
         <video
           ref={videoRef}
-          src={day.video_file}
+          src={stream.video_file}
           controls
           className="w-full h-full"
           controlsList="nodownload"
@@ -143,12 +143,12 @@ export function VideoPlayer({ day, onTimeUpdate, seekTime }: VideoPlayerProps) {
   }
 
   // NAS file
-  if (day.video_source === 'nas' && day.video_nas_path) {
+  if (stream.video_source === 'nas' && stream.video_nas_path) {
     return (
       <div className="aspect-video rounded-lg overflow-hidden bg-black">
         <video
           ref={videoRef}
-          src={`/api/nas-video?path=${encodeURIComponent(day.video_nas_path)}`}
+          src={`/api/nas-video?path=${encodeURIComponent(stream.video_nas_path)}`}
           controls
           className="w-full h-full"
           controlsList="nodownload"

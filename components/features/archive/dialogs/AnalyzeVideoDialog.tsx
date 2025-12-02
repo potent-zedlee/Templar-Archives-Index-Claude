@@ -57,7 +57,7 @@ import { useGcsUpload } from "@/lib/hooks/use-gcs-upload"
 interface AnalyzeVideoDialogProps {
   isOpen: boolean
   onOpenChange: (open: boolean) => void
-  day: StreamWithIds | null
+  stream: StreamWithIds | null
   onSuccess?: (hands: any[]) => void
 }
 
@@ -92,7 +92,7 @@ const AUTO_CLOSE_DELAY_MS = 3000
 export function AnalyzeVideoDialog({
   isOpen,
   onOpenChange,
-  day,
+  stream,
   onSuccess
 }: AnalyzeVideoDialogProps) {
   const [platform, setPlatform] = useState<Platform>("ept")
@@ -108,7 +108,7 @@ export function AnalyzeVideoDialog({
 
   // YouTube URL 입력 상태
   const [youtubeInput, setYoutubeInput] = useState('')
-  const [youtubeUrl, setYoutubeUrl] = useState(day?.videoUrl || '')
+  const [youtubeUrl, setYoutubeUrl] = useState(stream?.videoUrl || '')
   const [isYoutubeEditing, setIsYoutubeEditing] = useState(false)
   const [isSavingYoutube, setIsSavingYoutube] = useState(false)
 
@@ -135,9 +135,9 @@ export function AnalyzeVideoDialog({
     uploadSpeed,
     remainingTime: uploadRemainingTime,
   } = useGcsUpload({
-    streamId: day?.id || '',
-    tournamentId: day?.tournamentId || '',
-    eventId: day?.eventId || '',
+    streamId: stream?.id || '',
+    tournamentId: stream?.tournamentId || '',
+    eventId: stream?.eventId || '',
     onComplete: (gcsUri) => {
       console.log('[AnalyzeVideoDialog] Upload completed:', gcsUri)
       toast.success('업로드가 완료되었습니다!')
@@ -161,10 +161,10 @@ export function AnalyzeVideoDialog({
     console.log('============================================')
     console.log('[AnalyzeVideoDialog] Props changed')
     console.log('[AnalyzeVideoDialog] isOpen:', isOpen)
-    console.log('[AnalyzeVideoDialog] day:', day)
-    console.log('[AnalyzeVideoDialog] day?.videoUrl:', day?.videoUrl)
+    console.log('[AnalyzeVideoDialog] stream:', stream)
+    console.log('[AnalyzeVideoDialog] stream?.videoUrl:', stream?.videoUrl)
     console.log('============================================')
-  }, [isOpen, day])
+  }, [isOpen, stream])
 
   // 다이얼로그가 열릴 때 상태 초기화
   useEffect(() => {
@@ -173,34 +173,34 @@ export function AnalyzeVideoDialog({
       resetDialog()
       uploadCleanup()
       // YouTube URL 초기화
-      setYoutubeUrl(day?.videoUrl || '')
+      setYoutubeUrl(stream?.videoUrl || '')
       setYoutubeInput('')
       setIsYoutubeEditing(false)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, day?.videoUrl])
+  }, [isOpen, stream?.videoUrl])
 
-  // day가 바뀌면 업로드 상태 정리
+  // stream이 바뀌면 업로드 상태 정리
   useEffect(() => {
-    if (day?.id) {
-      console.log('[AnalyzeVideoDialog] Day changed - cleaning up upload state')
+    if (stream?.id) {
+      console.log('[AnalyzeVideoDialog] Stream changed - cleaning up upload state')
       uploadCleanup()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [day?.id])
+  }, [stream?.id])
 
   // DB 상태와 LocalStorage 상태 동기화
   useEffect(() => {
-    if (!isOpen || !day?.id) return
+    if (!isOpen || !stream?.id) return
 
     // DB는 'none'인데 LocalStorage에 상태가 있으면 정리
-    const savedState = localStorage.getItem(`gcs_upload_${day.id}`)
+    const savedState = localStorage.getItem(`gcs_upload_${stream.id}`)
 
-    if (day.uploadStatus === 'none' && savedState) {
-      localStorage.removeItem(`gcs_upload_${day.id}`)
+    if (stream.uploadStatus === 'none' && savedState) {
+      localStorage.removeItem(`gcs_upload_${stream.id}`)
       console.log('[AnalyzeVideoDialog] Cleared stale LocalStorage state')
     }
-  }, [isOpen, day?.id, day?.uploadStatus])
+  }, [isOpen, stream?.id, stream?.uploadStatus])
 
   // Cloud Run 작업 상태 폴링 (React Query 기반)
   const { data: cloudRunJobData } = useCloudRunJob(jobId, {
@@ -339,13 +339,13 @@ export function AnalyzeVideoDialog({
     setIsYoutubeEditing(false)
 
     // DB 업데이트 (Server Action)
-    if (day?.id && day?.tournamentId && day?.eventId) {
+    if (stream?.id && stream?.tournamentId && stream?.eventId) {
       setIsSavingYoutube(true)
       try {
         const result = await updateStreamVideoUrl(
-          day.tournamentId,
-          day.eventId,
-          day.id,
+          stream.tournamentId,
+          stream.eventId,
+          stream.id,
           trimmed
         )
         if (result.success) {
@@ -404,12 +404,12 @@ export function AnalyzeVideoDialog({
     console.log('============================================')
     console.log('[AnalyzeVideoDialog] handleAnalyze called')
     console.log('[AnalyzeVideoDialog] Timestamp:', new Date().toISOString())
-    console.log('[AnalyzeVideoDialog] day:', day)
+    console.log('[AnalyzeVideoDialog] stream:', stream)
     console.log('============================================')
 
     toast.info("분석 요청을 처리하고 있습니다...")
 
-    if (!day?.gcsUri) {
+    if (!stream?.gcsUri) {
       console.error('[AnalyzeVideoDialog] No GCS URI')
       setStatus("error")
       setError("GCS URI가 없습니다")
@@ -418,7 +418,7 @@ export function AnalyzeVideoDialog({
     }
 
     // gcsUri가 있으면 uploadStatus와 관계없이 분석 허용
-    if (day.uploadStatus !== 'uploaded' && !day.gcsUri) {
+    if (stream.uploadStatus !== 'uploaded' && !stream.gcsUri) {
       console.error('[AnalyzeVideoDialog] Video not uploaded')
       setStatus("error")
       setError("영상이 업로드되지 않았습니다")
@@ -485,12 +485,12 @@ export function AnalyzeVideoDialog({
 
       // Use Cloud Run for GCS-based analysis (검증된 세그먼트 사용)
       const result = await startKanAnalysis({
-        videoUrl: day.gcsUri,
+        videoUrl: stream.gcsUri,
         segments: validatedSegments,
         platform: platform as 'ept' | 'triton' | 'wsop',
-        streamId: day.id,
-        tournamentId: day.tournamentId,
-        eventId: day.eventId,
+        streamId: stream.id,
+        tournamentId: stream.tournamentId,
+        eventId: stream.eventId,
       })
 
       console.log('[AnalyzeVideoDialog] startKanAnalysis result:', result)
@@ -596,9 +596,9 @@ export function AnalyzeVideoDialog({
             {/* Left Column: Video Player + Timeline */}
             <div className="flex-1 md:flex-[3] space-y-4 overflow-y-auto">
               <VideoPlayerWithTimestamp
-                videoUrl={youtubeUrl || day?.videoUrl}
-                videoSource={youtubeUrl ? 'youtube' : day?.videoSource}
-                videoFile={day?.videoFile}
+                videoUrl={youtubeUrl || stream?.videoUrl}
+                videoSource={youtubeUrl ? 'youtube' : stream?.videoSource}
+                videoFile={stream?.videoFile}
                 onTimeUpdate={setCurrentVideoTime}
                 onDurationUpdate={setVideoDuration}
               />
@@ -687,7 +687,7 @@ export function AnalyzeVideoDialog({
               <Label>영상 업로드 (필수)</Label>
 
               {/* 업로드 가능 상태: DB가 none이고 gcsUri가 없고 훅도 idle일 때 */}
-              {day?.uploadStatus === 'none' && !day?.gcsUri && uploadStatus === 'idle' && (
+              {stream?.uploadStatus === 'none' && !stream?.gcsUri && uploadStatus === 'idle' && (
                 <VideoUploader
                   onFileSelect={(file) => {
                     console.log('[AnalyzeVideoDialog] File selected:', file.name)
@@ -698,9 +698,9 @@ export function AnalyzeVideoDialog({
               )}
 
               {/* 업로드 진행 중: 훅 상태가 uploading이거나 DB가 uploading일 때 */}
-              {(uploadStatus === 'uploading' || uploadStatus === 'paused' || day?.uploadStatus === 'uploading') && (
+              {(uploadStatus === 'uploading' || uploadStatus === 'paused' || stream?.uploadStatus === 'uploading') && (
                 <UploadProgress
-                  fileName={selectedFile?.name || day?.videoFile || '업로드 중...'}
+                  fileName={selectedFile?.name || stream?.videoFile || '업로드 중...'}
                   fileSize={selectedFile?.size || 0}
                   progress={uploadProgress}
                   status={uploadStatus === 'idle' ? 'uploading' : uploadStatus}
@@ -713,7 +713,7 @@ export function AnalyzeVideoDialog({
                 />
               )}
 
-              {(day?.uploadStatus === 'uploaded' || day?.gcsUri || uploadStatus === 'completed') && (
+              {(stream?.uploadStatus === 'uploaded' || stream?.gcsUri || uploadStatus === 'completed') && (
                 <div className="flex items-center gap-2 rounded-lg border border-green-500/20 bg-green-500/10 px-4 py-3">
                   <CheckCircle2 className="h-5 w-5 text-green-500" />
                   <span className="text-sm font-medium text-green-400">
@@ -722,7 +722,7 @@ export function AnalyzeVideoDialog({
                 </div>
               )}
 
-              {(day?.uploadStatus === 'failed' || uploadStatus === 'error') && (
+              {(stream?.uploadStatus === 'failed' || uploadStatus === 'error') && (
                 <div className="flex items-center gap-2 rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3">
                   <AlertCircle className="h-5 w-5 text-red-500" />
                   <div>
@@ -864,7 +864,7 @@ export function AnalyzeVideoDialog({
               </Button>
               <Button
                 onClick={handleAnalyze}
-                disabled={!day?.gcsUri && day?.uploadStatus !== 'uploaded' && uploadStatus !== 'completed'}
+                disabled={!stream?.gcsUri && stream?.uploadStatus !== 'uploaded' && uploadStatus !== 'completed'}
                 data-testid="start-analysis-button"
               >
                 <Sparkles className="h-4 w-4 mr-2" />
@@ -1061,7 +1061,7 @@ export function AnalyzeVideoDialog({
 
             <Card className="p-4 bg-green-500/10 border-green-500/20 space-y-3">
               <p className="text-sm text-muted-foreground text-center leading-relaxed">
-                핸드 추출이 완료되면 해당 Day의 핸드 목록이 자동으로 갱신됩니다.
+                핸드 추출이 완료되면 해당 스트림의 핸드 목록이 자동으로 갱신됩니다.
                 분석이 길어질 경우 2~3분 정도 소요될 수 있습니다.
               </p>
               {jobId && (

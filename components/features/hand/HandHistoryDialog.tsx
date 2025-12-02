@@ -106,7 +106,7 @@ interface HandHistoryDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   hand: HandData
-  day: FirestoreStream
+  stream: FirestoreStream
   tournament?: {
     name: string
     category?: string
@@ -120,7 +120,7 @@ export function HandHistoryDialog({
   open,
   onOpenChange,
   hand,
-  day,
+  stream,
   tournament,
   allHands = [],
   currentHandIndex = 0,
@@ -135,12 +135,12 @@ export function HandHistoryDialog({
   const seekTime = null
 
   // Transform FirestoreStream to VideoPlayer format
-  const videoPlayerDay = useMemo(() => ({
-    video_source: day.videoSource,
-    video_url: day.videoUrl,
-    video_file: day.videoFile,
+  const videoPlayerStream = useMemo(() => ({
+    video_source: stream.videoSource,
+    video_url: stream.videoUrl,
+    video_file: stream.videoFile,
     video_nas_path: undefined
-  }), [day])
+  }), [stream])
 
   // Transform hand data for PokerTable
   const tableData = useMemo(() => {
@@ -245,7 +245,7 @@ export function HandHistoryDialog({
                   {tournament?.name || "Tournament"}
                 </DialogTitle>
                 <p className="text-sm text-muted-foreground">
-                  {day.name}
+                  {stream.name}
                 </p>
               </div>
             </div>
@@ -314,7 +314,7 @@ export function HandHistoryDialog({
               <div className="p-4 space-y-4">
                 {/* Video Player */}
                 <div className="aspect-video bg-black rounded-lg overflow-hidden">
-                  <VideoPlayer day={videoPlayerDay} seekTime={seekTime} />
+                  <VideoPlayer stream={videoPlayerStream} seekTime={seekTime} />
                 </div>
 
                 {/* Hand Navigator */}

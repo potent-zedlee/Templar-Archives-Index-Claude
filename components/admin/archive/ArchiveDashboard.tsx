@@ -317,7 +317,7 @@ function DashboardContent() {
       <AnalyzeVideoDialog
         isOpen={analyzeDialogOpen}
         onOpenChange={setAnalyzeDialogOpen}
-        day={analyzeStream}
+        stream={analyzeStream}
         onSuccess={() => {
           refetch()
           setAnalyzeDialogOpen(false)

@@ -62,7 +62,7 @@ export function ArchiveInfoDialog({
           <DialogTitle className="flex items-center gap-2">
             {item.type === 'tournament' && '🏆 Tournament Details'}
             {item.type === 'event' && '📋 Event Details'}
-            {item.type === 'day' && '📅 Day Details'}
+            {item.type === 'day' && '📺 Stream Details'}
           </DialogTitle>
           <DialogDescription>
             View detailed information about this {item.type}
@@ -82,7 +82,7 @@ export function ArchiveInfoDialog({
 
           {/* Stream Information */}
           {item.type === 'day' && item.data && 'videoUrl' in item.data && (
-            <StreamInfo day={item.data as Stream} />
+            <StreamInfo stream={item.data as Stream} />
           )}
 
           {/* Common Info: Item Count */}
@@ -93,7 +93,7 @@ export function ArchiveInfoDialog({
                 <Hash className="h-4 w-4 text-muted-foreground" />
                 <span className="text-sm font-medium">Contains:</span>
                 <Badge variant="secondary">
-                  {item.itemCount} {item.type === 'tournament' ? 'events' : item.type === 'event' ? 'days' : 'hands'}
+                  {item.itemCount} {item.type === 'tournament' ? 'events' : item.type === 'event' ? 'streams' : 'hands'}
                 </Badge>
               </div>
             </>
@@ -258,12 +258,12 @@ function EventInfo({ event }: { event: Event }) {
 }
 
 // ==================== Stream Info ====================
-function StreamInfo({ day }: { day: Stream }) {
+function StreamInfo({ stream }: { stream: Stream }) {
   return (
     <div className="space-y-4">
       {/* Title */}
       <div>
-        <h3 className="text-lg font-bold">{day.name}</h3>
+        <h3 className="text-lg font-bold">{stream.name}</h3>
       </div>
 
       <Separator />
@@ -274,45 +274,45 @@ function StreamInfo({ day }: { day: Stream }) {
           icon={<Video className="h-4 w-4" />}
           label="Video Source"
           value={
-            <Badge variant={day.videoSource === 'youtube' ? 'default' : 'secondary'}>
-              {day.videoSource === 'youtube' ? 'YouTube' : 'Uploaded'}
+            <Badge variant={stream.videoSource === 'youtube' ? 'default' : 'secondary'}>
+              {stream.videoSource === 'youtube' ? 'YouTube' : 'Uploaded'}
             </Badge>
           }
         />
 
-        {day.videoUrl && (
+        {stream.videoUrl && (
           <div className="flex items-start gap-2">
             <ExternalLink className="h-4 w-4 text-muted-foreground mt-0.5" />
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium mb-1">Video URL</p>
               <a
-                href={day.videoUrl}
+                href={stream.videoUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-sm text-blue-500 hover:underline break-all"
               >
-                {day.videoUrl}
+                {stream.videoUrl}
               </a>
             </div>
           </div>
         )}
 
-        {day.videoFile && (
+        {stream.videoFile && (
           <InfoItem
             icon={<Video className="h-4 w-4" />}
             label="Video File"
-            value={day.videoFile}
+            value={stream.videoFile}
           />
         )}
       </div>
 
-      {day.createdAt && (
+      {stream.createdAt && (
         <>
           <Separator />
           <InfoItem
             icon={<Calendar className="h-4 w-4" />}
             label="Created"
-            value={format(new Date(day.createdAt), "MMM dd, yyyy 'at' HH:mm")}
+            value={format(new Date(stream.createdAt), "MMM dd, yyyy 'at' HH:mm")}
           />
         </>
       )}
