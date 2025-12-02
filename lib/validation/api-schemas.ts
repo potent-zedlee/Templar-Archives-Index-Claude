@@ -8,6 +8,56 @@
 
 import { z } from "zod"
 
+// ==================== Video Segment Schemas ====================
+
+/**
+ * 세그먼트 타입 스키마
+ */
+export const segmentTypeSchema = z.enum([
+  'countdown', 'opening', 'gameplay', 'break', 'ending'
+])
+
+/**
+ * 시간 문자열 정규식 (HH:MM:SS 또는 MM:SS)
+ */
+const timeStringRegex = /^(?:(\d{1,2}):)?(\d{1,2}):(\d{2})$/
+
+/**
+ * Video Segment 스키마 (UI 입력용)
+ */
+export const videoSegmentSchema = z.object({
+  id: z.string().min(1, "세그먼트 ID가 필요합니다"),
+  type: segmentTypeSchema,
+  startTime: z.string()
+    .min(1, "시작 시간을 입력해주세요")
+    .regex(timeStringRegex, "시간 형식: HH:MM:SS 또는 MM:SS"),
+  endTime: z.string()
+    .min(1, "종료 시간을 입력해주세요")
+    .regex(timeStringRegex, "시간 형식: HH:MM:SS 또는 MM:SS"),
+  label: z.string().max(200).optional(),
+})
+
+/**
+ * TimeSegment 스키마 (API 전송용 - 초 단위)
+ */
+export const timeSegmentSchema = z.object({
+  id: z.string().min(1),
+  type: segmentTypeSchema,
+  start: z.number().min(0, "시작 시간은 0 이상이어야 합니다"),
+  end: z.number().min(0, "종료 시간은 0 이상이어야 합니다"),
+  label: z.string().optional(),
+}).refine(data => data.end > data.start, {
+  message: "종료 시간은 시작 시간보다 커야 합니다",
+  path: ["end"],
+})
+
+/**
+ * TimeSegment 배열 스키마 (분석 요청용)
+ */
+export const timeSegmentsSchema = z.array(timeSegmentSchema)
+  .min(1, "최소 1개의 분석 구간이 필요합니다")
+  .max(20, "최대 20개의 분석 구간만 허용됩니다")
+
 // ==================== Enum Schemas ====================
 
 /**
@@ -313,3 +363,15 @@ export type CreateBookmarkInput = z.infer<typeof createBookmarkSchema>
 
 /** 프로필 업데이트 입력 */
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>
+
+/** 세그먼트 타입 */
+export type SegmentTypeInput = z.infer<typeof segmentTypeSchema>
+
+/** Video Segment (UI 입력용) */
+export type VideoSegmentInput = z.infer<typeof videoSegmentSchema>
+
+/** TimeSegment (API 전송용) */
+export type TimeSegmentInput = z.infer<typeof timeSegmentSchema>
+
+/** TimeSegment 배열 (분석 요청용) */
+export type TimeSegmentsInput = z.infer<typeof timeSegmentsSchema>

@@ -36,14 +36,41 @@ export interface VideoSegments {
 }
 
 /**
- * 시간 문자열을 초로 변환
- * "HH:MM:SS" → 초 또는 "MM:SS" → 초
+ * 시간 문자열을 초로 변환 (타입 안전)
+ *
+ * @param timeStr - "HH:MM:SS" 또는 "MM:SS" 형식
+ * @returns 초 단위 숫자, 유효하지 않으면 0
  */
 export function timeStringToSeconds(timeStr: string | undefined | null): number {
-  if (!timeStr || typeof timeStr !== 'string') {
+  // 1. Null/Undefined 체크
+  if (timeStr == null || typeof timeStr !== 'string') {
+    console.warn('[timeStringToSeconds] Invalid input:', timeStr)
     return 0
   }
-  const parts = timeStr.split(':').map((p) => parseInt(p, 10))
+
+  // 2. 빈 문자열 체크
+  const trimmed = timeStr.trim()
+  if (trimmed === '') {
+    console.warn('[timeStringToSeconds] Empty string input')
+    return 0
+  }
+
+  // 3. 정규식 검증 (HH:MM:SS 또는 MM:SS)
+  const timeRegex = /^(?:(\d{1,2}):)?(\d{1,2}):(\d{2})$/
+  const match = trimmed.match(timeRegex)
+  if (!match) {
+    console.warn('[timeStringToSeconds] Invalid format:', timeStr)
+    return 0
+  }
+
+  // 4. 파싱
+  const parts = trimmed.split(':').map((p) => parseInt(p, 10))
+
+  // NaN 체크
+  if (parts.some(isNaN)) {
+    console.warn('[timeStringToSeconds] NaN detected in parts:', parts)
+    return 0
+  }
 
   if (parts.length === 3) {
     // HH:MM:SS

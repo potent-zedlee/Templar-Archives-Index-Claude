@@ -42,6 +42,7 @@ export interface StreamWithIds {
 import { InteractiveVideoTimeline } from "@/components/features/video/InteractiveVideoTimeline"
 import type { VideoSegment } from "@/lib/types/video-segments"
 import { timeStringToSeconds } from "@/lib/types/video-segments"
+import { timeSegmentsSchema, validateInput, formatValidationErrors } from "@/lib/validation/api-schemas"
 import { PlayerMatchResults } from "@/components/features/player/PlayerMatchResults"
 import { VideoPlayerWithTimestamp } from "@/components/features/video/VideoPlayerWithTimestamp"
 import { startKanAnalysis } from "@/app/actions/kan-analysis"
@@ -466,13 +467,26 @@ export function AnalyzeVideoDialog({
         }))
       }
 
-      console.log('[AnalyzeVideoDialog] Time segments:', timeSegments)
+      // Zod 검증: 세그먼트 데이터 유효성 검사
+      const validation = validateInput(timeSegmentsSchema, timeSegments)
+      if (!validation.success) {
+        const errors = formatValidationErrors(validation.errors!)
+        console.error('[AnalyzeVideoDialog] Segment validation failed:', errors)
+        setStatus("error")
+        setError(errors[0] || "세그먼트 입력이 올바르지 않습니다")
+        toast.error(errors[0] || "세그먼트 입력이 올바르지 않습니다")
+        return
+      }
+
+      // 검증된 데이터 사용
+      const validatedSegments = validation.data!
+      console.log('[AnalyzeVideoDialog] Validated segments:', validatedSegments)
       console.log('[AnalyzeVideoDialog] Calling startKanAnalysis (Cloud Run)...')
 
-      // Use Cloud Run for GCS-based analysis
+      // Use Cloud Run for GCS-based analysis (검증된 세그먼트 사용)
       const result = await startKanAnalysis({
         videoUrl: day.gcsUri,
-        segments: timeSegments,
+        segments: validatedSegments,
         platform: platform as 'ept' | 'triton' | 'wsop',
         streamId: day.id,
         tournamentId: day.tournamentId,

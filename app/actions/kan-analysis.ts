@@ -43,8 +43,8 @@ export interface TriggerKanAnalysisResult {
   error?: string
 }
 
-// Cloud Run 서비스 URL
-const CLOUD_RUN_URL = process.env.CLOUD_RUN_URL || 'https://video-orchestrator-700566907563.asia-northeast3.run.app'
+// Cloud Run Orchestrator URL (환경변수 통일)
+const ORCHESTRATOR_URL = process.env.CLOUD_RUN_ORCHESTRATOR_URL
 
 /**
  * Cloud Run으로 KAN 분석 시작
@@ -56,10 +56,20 @@ export async function startKanAnalysis(
   input: TriggerKanAnalysisInput
 ): Promise<TriggerKanAnalysisResult> {
   try {
+    // 환경변수 검증 (필수)
+    if (!ORCHESTRATOR_URL) {
+      console.error('[KAN-CloudRun] CLOUD_RUN_ORCHESTRATOR_URL is not configured')
+      return {
+        success: false,
+        error: 'Cloud Run Orchestrator URL이 설정되지 않았습니다. 관리자에게 문의하세요.',
+      }
+    }
+
     const { videoUrl, segments, platform = 'ept', streamId, tournamentId, eventId } = input
 
     console.log('[KAN-CloudRun] Starting analysis with Cloud Run')
-    console.log(`[KAN-CloudRun] URL: ${videoUrl}`)
+    console.log(`[KAN-CloudRun] Orchestrator URL: ${ORCHESTRATOR_URL}`)
+    console.log(`[KAN-CloudRun] Video URL: ${videoUrl}`)
     console.log(`[KAN-CloudRun] Segments: ${segments.length}`)
     console.log(`[KAN-CloudRun] Platform: ${platform}`)
 
@@ -105,11 +115,11 @@ export async function startKanAnalysis(
       end: seg.end,
     }))
 
-    console.log(`[KAN-CloudRun] Calling Cloud Run: ${CLOUD_RUN_URL}/analyze`)
+    console.log(`[KAN-CloudRun] Calling Cloud Run: ${ORCHESTRATOR_URL}/analyze`)
     console.log(`[KAN-CloudRun] GCS URI: ${stream.gcsUri}`)
 
     // Cloud Run API 호출
-    const response = await fetch(`${CLOUD_RUN_URL}/analyze`, {
+    const response = await fetch(`${ORCHESTRATOR_URL}/analyze`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -122,13 +132,25 @@ export async function startKanAnalysis(
       }),
     })
 
+    // 상세 에러 처리
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}))
-      console.error('[KAN-CloudRun] API error:', errorData)
-      return {
-        success: false,
-        error: errorData.error || `Cloud Run API error: ${response.status}`,
+      let errorMessage = `Cloud Run API 오류: ${response.status}`
+
+      try {
+        const errorData = await response.json()
+        errorMessage = errorData.error || errorData.message || errorMessage
+      } catch {
+        // JSON 파싱 실패 시 텍스트로 시도
+        try {
+          const errorText = await response.text()
+          if (errorText) errorMessage = errorText
+        } catch {
+          // 무시
+        }
       }
+
+      console.error('[KAN-CloudRun] API error:', { status: response.status, error: errorMessage })
+      return { success: false, error: errorMessage }
     }
 
     const result = await response.json()
@@ -167,7 +189,11 @@ export async function startKanAnalysis(
  */
 export async function getTriggerJobStatus(jobId: string) {
   try {
-    const response = await fetch(`${CLOUD_RUN_URL}/status/${jobId}`)
+    if (!ORCHESTRATOR_URL) {
+      throw new Error('CLOUD_RUN_ORCHESTRATOR_URL이 설정되지 않았습니다')
+    }
+
+    const response = await fetch(`${ORCHESTRATOR_URL}/status/${jobId}`)
 
     if (!response.ok) {
       throw new Error(`Failed to get job status: ${response.status}`)
