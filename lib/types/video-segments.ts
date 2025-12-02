@@ -39,7 +39,10 @@ export interface VideoSegments {
  * 시간 문자열을 초로 변환
  * "HH:MM:SS" → 초 또는 "MM:SS" → 초
  */
-export function timeStringToSeconds(timeStr: string): number {
+export function timeStringToSeconds(timeStr: string | undefined | null): number {
+  if (!timeStr || typeof timeStr !== 'string') {
+    return 0
+  }
   const parts = timeStr.split(':').map((p) => parseInt(p, 10))
 
   if (parts.length === 3) {
