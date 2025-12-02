@@ -27,7 +27,7 @@ import {
 // ==================== 타입 정의 ====================
 
 export const AnalysisInputSchema = z.object({
-  streamId: z.string().uuid(),
+  streamId: z.string().min(1),  // Firestore document ID (not necessarily UUID)
   gcsUri: z.string().startsWith('gs://'),
   segments: z.array(
     z.object({
