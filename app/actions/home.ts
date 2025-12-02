@@ -106,7 +106,7 @@ export async function getWeeklyHighlights(): Promise<WeeklyHighlight[]> {
         likes_count: data.engagement?.likesCount || 0,
         video_url: videoUrl,
         tournament_name: tournamentName,
-        day_name: streamName,
+        stream_name: streamName,
       })
     }
 

@@ -10,7 +10,7 @@ export interface HandWithDetails {
   number: string
   finalPot?: number
   tournamentName?: string
-  dayName?: string
+  streamName?: string
   playerNames?: string[]
   description?: string
   createdAt?: string
@@ -77,12 +77,12 @@ export function SearchResultsList({
                   )}
                 </div>
 
-                {/* Tournament & Day */}
-                {(hand.tournamentName || hand.dayName) && (
+                {/* Tournament & Stream */}
+                {(hand.tournamentName || hand.streamName) && (
                   <div className="text-sm text-muted-foreground mb-2">
                     {hand.tournamentName}
-                    {hand.tournamentName && hand.dayName && " • "}
-                    {hand.dayName}
+                    {hand.tournamentName && hand.streamName && " • "}
+                    {hand.streamName}
                   </div>
                 )}
 

@@ -49,7 +49,7 @@ export interface EnrichedHand {
   tournamentName?: string
   tournamentCategory?: string
   eventName?: string
-  dayName?: string
+  streamName?: string
   playerNames: string[]
   playerCount: number
 }
@@ -218,7 +218,7 @@ async function enrichHand(
     tournamentName: streamInfo?.tournament.name,
     tournamentCategory: streamInfo?.tournament.category,
     eventName: streamInfo?.event.name,
-    dayName: streamInfo?.stream.name,
+    streamName: streamInfo?.stream.name,
     playerNames: playerNames,
     playerCount: playerNames.length,
   }

@@ -76,7 +76,7 @@ function HighlightCard({ hand }: { hand: WeeklyHighlight }) {
           <p className="text-xs text-muted-foreground uppercase tracking-wider">
             {hand.tournament_name}
           </p>
-          <p className="text-sm text-muted-foreground">{hand.day_name}</p>
+          <p className="text-sm text-muted-foreground">{hand.stream_name}</p>
         </div>
 
         {/* Description */}

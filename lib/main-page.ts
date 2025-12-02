@@ -23,7 +23,7 @@ export type WeeklyHighlight = {
   likes_count: number
   video_url: string
   tournament_name: string
-  day_name: string
+  stream_name: string
 }
 
 export type TopPlayer = {
@@ -90,7 +90,7 @@ export async function getWeeklyHighlights(limitCount: number = 3): Promise<Weekl
         likes_count: data.engagement?.likes_count || 0,
         video_url: data.refData?.streamVideoUrl || '',
         tournament_name: data.refData?.tournamentName || 'Unknown',
-        day_name: data.refData?.streamName || 'Unknown'
+        stream_name: data.refData?.streamName || 'Unknown'
       }
     })
   } catch (error) {

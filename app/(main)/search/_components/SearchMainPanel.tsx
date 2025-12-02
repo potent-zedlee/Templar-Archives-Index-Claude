@@ -19,7 +19,7 @@ import { cn } from "@/lib/utils"
 type HandWithDetails = Hand & {
   tournament_name?: string
   player_names?: string[]
-  day_name?: string
+  stream_name?: string
   pot_size?: number
 }
 
@@ -147,7 +147,7 @@ export function SearchMainPanel({
                         {hand.number || "N/A"}
                       </TableCell>
                       <TableCell className="text-text-secondary">{hand.tournament_name || "N/A"}</TableCell>
-                      <TableCell className="text-text-secondary">{hand.day_name || "N/A"}</TableCell>
+                      <TableCell className="text-text-secondary">{hand.stream_name || "N/A"}</TableCell>
                       <TableCell>
                         <div className="flex flex-wrap gap-1">
                           {hand.player_names?.slice(0, 3).map((name, idx) => (
