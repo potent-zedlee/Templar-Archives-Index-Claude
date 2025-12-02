@@ -44,7 +44,7 @@ export interface TriggerKanAnalysisResult {
 }
 
 // Cloud Run 서비스 URL
-const CLOUD_RUN_URL = process.env.CLOUD_RUN_URL || 'https://video-analyzer-700566907563.asia-northeast3.run.app'
+const CLOUD_RUN_URL = process.env.CLOUD_RUN_URL || 'https://video-orchestrator-700566907563.asia-northeast3.run.app'
 
 /**
  * Cloud Run으로 KAN 분석 시작
