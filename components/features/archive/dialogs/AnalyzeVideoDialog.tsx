@@ -537,16 +537,20 @@ export function AnalyzeVideoDialog({
   }
 
   // Handle close with force close option
+  // INP 최적화: UI 업데이트(다이얼로그 닫기)를 먼저 처리하고 cleanup은 비동기로
   const handleClose = () => {
-    // 진행 중인 업로드가 있으면 정리
-    if (uploadStatus === 'uploading' || uploadStatus === 'paused') {
-      uploadCleanup()
-    }
-
     // Allow close if not in active processing state
     if (status !== "analyzing" && status !== "processing") {
+      // 먼저 다이얼로그를 닫아 UI 응답성 확보
       onOpenChange(false)
-      resetDialog()
+
+      // 무거운 cleanup 작업은 다음 프레임에서 비동기로 처리
+      requestAnimationFrame(() => {
+        if (uploadStatus === 'uploading' || uploadStatus === 'paused') {
+          uploadCleanup()
+        }
+        resetDialog()
+      })
       return
     }
 
@@ -559,8 +563,17 @@ export function AnalyzeVideoDialog({
     if (confirmed) {
       console.log('[AnalyzeVideoDialog] Force close confirmed')
       toast.info('분석은 백그라운드에서 계속 진행됩니다.')
+
+      // 먼저 다이얼로그를 닫아 UI 응답성 확보
       onOpenChange(false)
-      resetDialog()
+
+      // cleanup은 다음 프레임에서 비동기로 처리
+      requestAnimationFrame(() => {
+        if (uploadStatus === 'uploading' || uploadStatus === 'paused') {
+          uploadCleanup()
+        }
+        resetDialog()
+      })
     }
   }
 
