@@ -2,6 +2,15 @@
  * Vertex AI Gemini Phase 2 분석기
  *
  * 단일 핸드에 대한 상세 분석 + 시맨틱 태깅
+ *
+ * @google/genai SDK 사용 (Google 공식 권장)
+ * - @google-cloud/vertexai는 2025-06-24 deprecated
+ * - 환경변수 기반 자동 초기화 지원
+ *
+ * 필수 환경변수:
+ * - GOOGLE_GENAI_USE_VERTEXAI=true
+ * - GOOGLE_CLOUD_PROJECT=templar-archives-index
+ * - GOOGLE_CLOUD_LOCATION=global
  */
 
 import { GoogleGenAI } from '@google/genai'
@@ -10,6 +19,9 @@ import { gcsSegmentExtractor } from './gcs-segment-extractor'
 import type { Phase2Result } from '../types'
 
 export type Platform = 'ept' | 'triton' | 'wsop'
+
+// Gemini 2.5 Flash - Phase 2 상세 분석용
+const MODEL_NAME = 'gemini-2.5-flash'
 
 export interface HandTimestamp {
   handNumber: number
@@ -40,53 +52,25 @@ function parseTimestampToSeconds(timestamp: string): number {
 
 export class VertexAnalyzerPhase2 {
   private ai: GoogleGenAI
-  // Phase 2도 Gemini 2.5 Flash 사용
-  private modelName = 'gemini-2.5-flash'
 
   constructor() {
-    const projectId = process.env.GCS_PROJECT_ID || process.env.GOOGLE_CLOUD_PROJECT
-    const location = process.env.VERTEX_AI_LOCATION || 'global'
-    const clientEmail = process.env.GCS_CLIENT_EMAIL
-    const privateKey = process.env.GCS_PRIVATE_KEY
+    // 환경변수 기반 자동 초기화
+    // Cloud Run에서는 ADC(Application Default Credentials) 자동 사용
+    const projectId = process.env.GOOGLE_CLOUD_PROJECT
+    const location = process.env.GOOGLE_CLOUD_LOCATION || process.env.VERTEX_AI_LOCATION || 'global'
 
     if (!projectId) {
-      throw new Error('GCS_PROJECT_ID 또는 GOOGLE_CLOUD_PROJECT 환경 변수가 필요합니다')
+      throw new Error('GOOGLE_CLOUD_PROJECT 환경 변수가 필요합니다')
     }
 
-    const aiOptions: {
-      vertexai: boolean
-      project: string
-      location: string
-      googleAuthOptions?: {
-        credentials: {
-          client_email: string
-          private_key: string
-        }
-      }
-    } = {
+    // @google/genai SDK - Vertex AI 모드로 초기화
+    this.ai = new GoogleGenAI({
       vertexai: true,
       project: projectId,
       location,
-    }
+    })
 
-    // 서비스 계정 credentials
-    if (clientEmail && privateKey) {
-      aiOptions.googleAuthOptions = {
-        credentials: {
-          client_email: clientEmail,
-          private_key: privateKey.replace(/\\n/g, '\n'),
-        },
-      }
-      console.log(`[VertexAnalyzerPhase2] 서비스 계정 인증 사용: ${clientEmail}`)
-    } else {
-      console.log('[VertexAnalyzerPhase2] ADC(Application Default Credentials) 사용')
-    }
-
-    this.ai = new GoogleGenAI(aiOptions)
-
-    console.log(
-      `[VertexAnalyzerPhase2] 초기화 완료: ${projectId} / ${location} / ${this.modelName}`
-    )
+    console.log(`[VertexAnalyzerPhase2] 초기화 완료: ${projectId} / ${location} / ${MODEL_NAME}`)
   }
 
   /**
@@ -130,7 +114,7 @@ export class VertexAnalyzerPhase2 {
         console.log(`[Phase2] Gemini 분석 시도 ${attempt}/${maxRetries}`)
 
         const response = await this.ai.models.generateContent({
-          model: this.modelName,
+          model: MODEL_NAME,
           contents: [
             {
               role: 'user',
