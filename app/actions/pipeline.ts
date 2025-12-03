@@ -353,10 +353,10 @@ export async function resetStreamAnalysis(
     }
 
     const currentStatus = streamDoc.data()?.pipelineStatus
-    if (!['analyzing', 'failed'].includes(currentStatus)) {
+    if (!['analyzing', 'failed', 'completed', 'needs_review'].includes(currentStatus)) {
       return {
         success: false,
-        error: `Cannot reset stream with status: ${currentStatus}. Only 'analyzing' or 'failed' streams can be reset.`
+        error: `Cannot reset stream with status: ${currentStatus}. Only 'analyzing', 'failed', 'completed', or 'needs_review' streams can be reset.`
       }
     }
 

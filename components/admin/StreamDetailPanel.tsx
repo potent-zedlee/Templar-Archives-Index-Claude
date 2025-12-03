@@ -273,11 +273,21 @@ export function StreamDetailPanel({
           </Button>
         )}
 
-        {stream.pipelineStatus === 'completed' && onReview && (
-          <Button className="w-full" onClick={() => onReview(stream.id)}>
-            <CheckCircle className="h-4 w-4 mr-2" />
-            검토하기
-          </Button>
+        {stream.pipelineStatus === 'completed' && (
+          <>
+            {onReview && (
+              <Button className="w-full" onClick={() => onReview(stream.id)}>
+                <CheckCircle className="h-4 w-4 mr-2" />
+                검토하기
+              </Button>
+            )}
+            {onRetry && (
+              <Button variant="outline" className="w-full" onClick={() => onRetry(stream.id)}>
+                <RefreshCw className="h-4 w-4 mr-2" />
+                재분석하기
+              </Button>
+            )}
+          </>
         )}
 
         {stream.pipelineStatus === 'needs_review' && onPublish && (
