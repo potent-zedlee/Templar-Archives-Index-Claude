@@ -174,7 +174,7 @@ export class VertexAnalyzerPhase2 {
         // 3. 임시 세그먼트 정리
         await gcsSegmentExtractor.cleanupSegments(extractionResult.extractedSegments)
 
-        console.log(`[Phase2] 분석 완료. Hand #${result.handNumber}`)
+        console.log(`[Phase2] 분석 완료. Hand #${result.handNumber || '(임시)'} - players: ${result.players?.length || 0}`)
 
         return result
 
@@ -236,21 +236,32 @@ export class VertexAnalyzerPhase2 {
       }
     }
 
-    // 필수 필드 검증
+    // 필수 필드 검증 (handNumber는 나중에 타임코드 기반으로 재할당되므로 선택적)
     if (!parsed.handNumber) {
-      throw new Error('handNumber 필드 누락')
+      // Gemini가 handNumber를 반환하지 않으면 임시로 0 설정
+      // 분석 완료 후 normalizeHandNumbers에서 타임코드 순으로 재할당됨
+      parsed.handNumber = 0
+      console.log('[Phase2] handNumber 누락 - 임시값 0 설정 (나중에 정규화됨)')
     }
     if (!parsed.players || !Array.isArray(parsed.players)) {
       throw new Error('players 배열 누락')
     }
     if (!parsed.board) {
-      throw new Error('board 필드 누락')
+      // board도 빈 객체로 기본값 설정
+      parsed.board = { flop: [], turn: null, river: null }
+      console.log('[Phase2] board 누락 - 빈 보드 설정')
     }
     if (!parsed.semanticTags || !Array.isArray(parsed.semanticTags)) {
       parsed.semanticTags = []
     }
     if (!parsed.aiAnalysis) {
-      throw new Error('aiAnalysis 필드 누락')
+      // aiAnalysis 기본값 설정
+      parsed.aiAnalysis = {
+        summary: '분석 데이터 없음',
+        keyMoments: [],
+        psychologicalInsights: []
+      }
+      console.log('[Phase2] aiAnalysis 누락 - 기본값 설정')
     }
 
     return parsed
