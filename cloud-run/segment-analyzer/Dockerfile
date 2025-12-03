@@ -1,8 +1,11 @@
 # Segment Analyzer Service Dockerfile
 # FFmpeg 포함 Node.js 환경
-# Updated: 2025-12-03 - Fix TypeScript build
+# Updated: 2025-12-03 - Fix TypeScript build v2
 
 FROM node:22-slim
+
+# 캐시 무효화용 ARG (빌드 시 자동으로 다른 값이 들어감)
+ARG CACHEBUST=1
 
 # FFmpeg 설치
 RUN apt-get update && apt-get install -y \

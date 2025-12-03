@@ -1,0 +1,8 @@
+# Ignore everything except what's needed for build
+node_modules/
+dist/
+.git/
+.gitignore
+*.log
+*.md
+.DS_Store
