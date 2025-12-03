@@ -517,8 +517,8 @@ export function useStreamsQuery(
 async function fetchHandsByStreamFirestore(streamId: string): Promise<Hand[]> {
   try {
     const handsRef = collection(db, COLLECTION_PATHS.HANDS)
-    // videoTimestampStart로 정렬: 영상 내 실제 핸드 순서 보장
-    const handsQuery = query(handsRef, where('streamId', '==', streamId), orderBy('videoTimestampStart', 'asc'))
+    // number 필드로 정렬: 핸드 번호 순서 보장 (#1, #2, #3...)
+    const handsQuery = query(handsRef, where('streamId', '==', streamId), orderBy('number', 'asc'))
     const handsSnapshot = await getDocs(handsQuery)
 
     return handsSnapshot.docs.map(mapFirestoreHand)
@@ -562,12 +562,12 @@ export function useHandsInfiniteQuery(streamId: string | null) {
       if (!streamId) return { hands: [], nextCursor: null }
 
       // Firestore 페이지네이션: startAfter 사용
-      // videoTimestampStart로 정렬: 영상 내 실제 핸드 순서 보장
+      // number 필드로 정렬: 핸드 번호 순서 보장 (#1, #2, #3...)
       const handsRef = collection(db, COLLECTION_PATHS.HANDS)
       let handsQuery = query(
         handsRef,
         where('streamId', '==', streamId),
-        orderBy('videoTimestampStart', 'asc'),
+        orderBy('number', 'asc'),
         limit(HANDS_PER_PAGE)
       )
 
@@ -579,7 +579,7 @@ export function useHandsInfiniteQuery(streamId: string | null) {
           handsQuery = query(
             handsRef,
             where('streamId', '==', streamId),
-            orderBy('videoTimestampStart', 'asc'),
+            orderBy('number', 'asc'),
             startAfter(lastDocSnap),
             limit(HANDS_PER_PAGE)
           )

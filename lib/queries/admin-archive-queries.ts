@@ -668,12 +668,11 @@ export function useStreamHands(streamId: string) {
     queryKey: adminArchiveQueryKeys.hands(streamId),
     queryFn: async () => {
       const handsRef = collection(firestore, 'hands')
-      // videoTimestampStart로 정렬: 영상 내 실제 핸드 순서 보장
-      // (number 필드는 정규화 전 임시값일 수 있음)
+      // number 필드로 정렬: 핸드 번호 순서 보장 (#1, #2, #3...)
       const q = query(
         handsRef,
         where('streamId', '==', streamId),
-        orderBy('videoTimestampStart', 'asc')
+        orderBy('number', 'asc')
       )
       const snapshot = await getDocs(q)
 
