@@ -130,9 +130,39 @@ const playerConverter = {
 
 // ==================== Query Keys ====================
 
+/**
+ * 검색 필터 타입 정의
+ */
+export interface SearchFilter {
+  limit?: number
+  offset?: number
+  favoriteOnly?: boolean
+  streamId?: string
+  playerId?: string
+}
+
+/**
+ * 필터를 정규화된 캐시 키로 변환
+ * - undefined 값 제거
+ * - 키 정렬
+ */
+function normalizeFilter(filter?: SearchFilter): string {
+  if (!filter) return ''
+  const normalized: Record<string, unknown> = {}
+  const keys = Object.keys(filter).sort()
+  for (const key of keys) {
+    const value = filter[key as keyof SearchFilter]
+    if (value !== undefined) {
+      normalized[key] = value
+    }
+  }
+  return JSON.stringify(normalized)
+}
+
 export const searchKeys = {
   all: ['search'] as const,
-  hands: (filters?: any) => [...searchKeys.all, 'hands', filters] as const,
+  hands: (filters?: SearchFilter) =>
+    [...searchKeys.all, 'hands', normalizeFilter(filters)] as const,
   tournaments: () => [...searchKeys.all, 'tournaments'] as const,
   players: () => [...searchKeys.all, 'players'] as const,
 }

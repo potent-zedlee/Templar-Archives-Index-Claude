@@ -14,6 +14,7 @@
 
 import { useSearchParams, useRouter } from 'next/navigation'
 import { useCallback, useMemo, useState, Suspense } from 'react'
+import dynamic from 'next/dynamic'
 import {
   ResizableHandle,
   ResizablePanel,
@@ -30,7 +31,13 @@ import { Plus } from 'lucide-react'
 import { useAdminArchiveStore } from '@/stores/admin-archive-store'
 import { UploadDialog } from '@/components/features/admin/upload/UploadDialog'
 import { TournamentDialog } from '@/components/features/archive/TournamentDialog'
-import { AnalyzeVideoDialog, type StreamWithIds } from '@/components/features/archive/dialogs/AnalyzeVideoDialog'
+import type { StreamWithIds } from '@/components/features/archive/dialogs/AnalyzeVideoDialog'
+
+// 대형 Dialog 컴포넌트는 동적 로드 (초기 번들 크기 감소)
+const AnalyzeVideoDialog = dynamic(
+  () => import('@/components/features/archive/dialogs/AnalyzeVideoDialog').then((mod) => mod.AnalyzeVideoDialog),
+  { ssr: false }
+)
 import type { TournamentCategory } from '@/lib/firestore-types'
 import {
   useStreamsByPipelineStatus,

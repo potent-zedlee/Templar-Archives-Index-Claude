@@ -198,12 +198,23 @@ function mapFirestoreHand(docSnap: DocumentSnapshot | QueryDocumentSnapshot): Ha
 
 export const archiveKeys = {
   all: ['archive'] as const,
+  // 토너먼트 관련 (계층적 구조)
   tournaments: (gameType?: 'tournament' | 'cash-game', sortParams?: Partial<ServerSortParams>) =>
     gameType
       ? ([...archiveKeys.all, 'tournaments', gameType, sortParams] as const)
       : ([...archiveKeys.all, 'tournaments', sortParams] as const),
+  tournamentsShallow: (gameType?: 'tournament' | 'cash-game') =>
+    [...archiveKeys.all, 'tournaments-shallow', gameType] as const,
+  // 이벤트 관련 (토너먼트 하위)
+  events: (tournamentId: string) =>
+    [...archiveKeys.all, 'events', tournamentId] as const,
+  // 스트림 관련 (이벤트 하위)
+  streams: (tournamentId: string, eventId: string) =>
+    [...archiveKeys.all, 'streams', tournamentId, eventId] as const,
+  // 핸드 관련
   hands: (streamId: string) => [...archiveKeys.all, 'hands', streamId] as const,
   handsInfinite: (streamId: string) => [...archiveKeys.all, 'hands-infinite', streamId] as const,
+  // 기타
   unsortedVideos: (sortParams?: Partial<ServerSortParams>) =>
     [...archiveKeys.all, 'unsorted-videos', sortParams] as const,
   streamPlayers: (streamId: string) => [...archiveKeys.all, 'stream-players', streamId] as const,
@@ -212,15 +223,100 @@ export const archiveKeys = {
 // ==================== Tournaments Query ====================
 
 /**
- * Firestore에서 토너먼트 트리 구조를 가져옵니다
- * 서브컬렉션 (events, streams)을 포함한 계층 구조 반환
+ * Firestore에서 토너먼트 목록만 가져옵니다 (Shallow Load)
+ * N+1 쿼리 문제 해결: 이벤트/스트림은 필요 시 별도 조회
  *
  * @param gameType - 필터링할 게임 타입 (tournament | cash-game)
- * @returns Tournament[] with nested events and streams
+ * @returns Tournament[] (events는 빈 배열)
+ */
+async function fetchTournamentsShallow(
+  gameType?: 'tournament' | 'cash-game'
+): Promise<Tournament[]> {
+  try {
+    const tournamentsRef = collection(db, COLLECTION_PATHS.TOURNAMENTS)
+    const tournamentsQuery = gameType
+      ? query(tournamentsRef, where('gameType', '==', gameType), orderBy('startDate', 'desc'))
+      : query(tournamentsRef, orderBy('startDate', 'desc'))
+
+    const tournamentsSnapshot = await getDocs(tournamentsQuery)
+
+    return tournamentsSnapshot.docs
+      .map((tournamentDoc) => {
+        const tournamentData = tournamentDoc.data() as FirestoreTournament
+
+        // 상태 필터: published 또는 status가 없는 경우만 표시
+        if (tournamentData.status && tournamentData.status !== 'published') {
+          return null
+        }
+
+        // stats에서 이벤트/스트림 수 가져오기 (실제 조회 없이)
+        return mapFirestoreTournament(tournamentDoc, [])
+      })
+      .filter((t): t is Tournament => t !== null)
+  } catch (error) {
+    console.error('Error fetching tournaments from Firestore:', error)
+    throw error
+  }
+}
+
+/**
+ * 특정 토너먼트의 이벤트 목록 조회 (Lazy Load)
+ * 토너먼트 확장 시에만 호출
+ *
+ * @param tournamentId - 토너먼트 ID
+ * @returns Event[] (streams는 빈 배열)
+ */
+async function fetchEventsByTournament(tournamentId: string): Promise<Event[]> {
+  try {
+    const eventsRef = collection(db, COLLECTION_PATHS.EVENTS(tournamentId))
+    const eventsQuery = query(eventsRef, orderBy('date', 'desc'))
+    const eventsSnapshot = await getDocs(eventsQuery)
+
+    return eventsSnapshot.docs.map((eventDoc) =>
+      mapFirestoreEvent(eventDoc, tournamentId, [])
+    )
+  } catch (error) {
+    console.error('Error fetching events from Firestore:', error)
+    throw error
+  }
+}
+
+/**
+ * 특정 이벤트의 스트림 목록 조회 (Lazy Load)
+ * 이벤트 확장 시에만 호출
+ *
+ * @param tournamentId - 토너먼트 ID
+ * @param eventId - 이벤트 ID
+ * @returns Stream[]
+ */
+async function fetchStreamsByEvent(
+  tournamentId: string,
+  eventId: string
+): Promise<Stream[]> {
+  try {
+    const streamsRef = collection(db, COLLECTION_PATHS.STREAMS(tournamentId, eventId))
+    const streamsQuery = query(streamsRef, orderBy('publishedAt', 'desc'))
+    const streamsSnapshot = await getDocs(streamsQuery)
+
+    return streamsSnapshot.docs.map((streamDoc) =>
+      mapFirestoreStream(streamDoc, eventId)
+    )
+  } catch (error) {
+    console.error('Error fetching streams from Firestore:', error)
+    throw error
+  }
+}
+
+/**
+ * [DEPRECATED] 전체 트리 구조 로드 (N+1 문제 있음)
+ * 하위 호환성을 위해 유지하지만, 새 코드에서는 사용하지 않음
+ * 대신 fetchTournamentsShallow + useEventsQuery + useStreamsQuery 사용 권장
  */
 async function fetchTournamentsTreeFirestore(
   gameType?: 'tournament' | 'cash-game'
 ): Promise<Tournament[]> {
+  console.warn('[DEPRECATED] fetchTournamentsTreeFirestore: N+1 쿼리 문제. fetchTournamentsShallow 사용 권장')
+
   try {
     // 1. 토너먼트 목록 조회
     const tournamentsRef = collection(db, COLLECTION_PATHS.TOURNAMENTS)
@@ -342,6 +438,65 @@ export function useTournamentsQuery(
     },
     staleTime: 10 * 60 * 1000, // 10분 (토너먼트 계층 구조는 자주 변경되지 않음)
     gcTime: 30 * 60 * 1000, // 30분 (메모리에 더 오래 유지)
+  })
+}
+
+/**
+ * [OPTIMIZED] Shallow 토너먼트 조회 - N+1 문제 해결
+ * 토너먼트 목록만 가져오고, 이벤트/스트림은 확장 시 별도 조회
+ *
+ * @param gameType - 필터링할 게임 타입
+ */
+export function useTournamentsShallowQuery(
+  gameType?: 'tournament' | 'cash-game'
+) {
+  return useQuery({
+    queryKey: archiveKeys.tournamentsShallow(gameType),
+    queryFn: () => fetchTournamentsShallow(gameType),
+    staleTime: 10 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+  })
+}
+
+/**
+ * [OPTIMIZED] 토너먼트별 이벤트 조회 - Lazy Loading
+ * 토너먼트 확장 시에만 호출
+ *
+ * @param tournamentId - 토너먼트 ID
+ * @param enabled - 쿼리 활성화 여부 (확장 상태)
+ */
+export function useEventsQuery(
+  tournamentId: string | null,
+  enabled: boolean = true
+) {
+  return useQuery({
+    queryKey: archiveKeys.events(tournamentId || ''),
+    queryFn: () => fetchEventsByTournament(tournamentId!),
+    enabled: !!tournamentId && enabled,
+    staleTime: 10 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+  })
+}
+
+/**
+ * [OPTIMIZED] 이벤트별 스트림 조회 - Lazy Loading
+ * 이벤트 확장 시에만 호출
+ *
+ * @param tournamentId - 토너먼트 ID
+ * @param eventId - 이벤트 ID
+ * @param enabled - 쿼리 활성화 여부 (확장 상태)
+ */
+export function useStreamsQuery(
+  tournamentId: string | null,
+  eventId: string | null,
+  enabled: boolean = true
+) {
+  return useQuery({
+    queryKey: archiveKeys.streams(tournamentId || '', eventId || ''),
+    queryFn: () => fetchStreamsByEvent(tournamentId!, eventId!),
+    enabled: !!tournamentId && !!eventId && enabled,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
   })
 }
 
@@ -625,9 +780,11 @@ export function useCheckHandMutation(streamId: string | null) {
 // ==================== Stream Players Query ====================
 
 /**
- * Fetch players for a specific stream
- * Returns unique players who participated in any hand in the stream
- * Firestore 버전으로 전환됨
+ * [OPTIMIZED] Fetch players for a specific stream
+ * N+1 문제 해결: 핸드에 포함된 플레이어 정보 활용 + 배치 조회
+ *
+ * 최적화 전: N개 플레이어 = N개 getDoc 호출
+ * 최적화 후: 1개 핸드 쿼리 + 핸드 내 정보 활용 (추가 조회 최소화)
  *
  * @param streamId - 스트림 ID
  */
@@ -637,12 +794,12 @@ export function useStreamPlayersQuery(streamId: string | null) {
     queryFn: async () => {
       if (!streamId) return []
 
-      // 해당 스트림의 핸드 조회
+      // 1. 해당 스트림의 핸드 조회 (단일 쿼리)
       const handsRef = collection(db, COLLECTION_PATHS.HANDS)
       const handsQuery = query(handsRef, where('streamId', '==', streamId))
       const handsSnapshot = await getDocs(handsQuery)
 
-      // 플레이어 중복 제거 및 핸드 수 계산
+      // 2. 핸드에 포함된 플레이어 정보로 기본 데이터 수집
       const playerMap = new Map<
         string,
         {
@@ -654,7 +811,6 @@ export function useStreamPlayersQuery(streamId: string | null) {
         }
       >()
 
-      // 각 핸드의 플레이어 정보 수집
       for (const handDoc of handsSnapshot.docs) {
         const handData = handDoc.data() as FirestoreHand
         const players = handData.players || []
@@ -664,23 +820,47 @@ export function useStreamPlayersQuery(streamId: string | null) {
           if (existing) {
             existing.handCount++
           } else {
-            // 플레이어 상세 정보 조회
-            const playerRef = doc(db, COLLECTION_PATHS.PLAYERS, player.playerId)
-            const playerDoc = await getDoc(playerRef)
-
-            const playerData = playerDoc.data()
+            // 핸드에 포함된 플레이어 정보 사용 (N+1 쿼리 제거)
             playerMap.set(player.playerId, {
               id: player.playerId,
               name: player.name,
-              photoUrl: playerData?.photoUrl || null,
-              country: playerData?.country || null,
+              photoUrl: null, // 핸드에 포함 안 됨 - 필요시 배치 조회
+              country: null,  // 핸드에 포함 안 됨 - 필요시 배치 조회
               handCount: 1,
             })
           }
         }
       }
 
-      // 핸드 수 내림차순 정렬
+      // 3. 플레이어 상세 정보가 필요한 경우 배치 조회 (선택적)
+      // 상위 10명만 추가 정보 조회 (성능 최적화)
+      const topPlayerIds = Array.from(playerMap.entries())
+        .sort((a, b) => b[1].handCount - a[1].handCount)
+        .slice(0, 10)
+        .map(([id]) => id)
+
+      if (topPlayerIds.length > 0) {
+        // 배치 조회: Promise.all로 병렬 처리 (최대 10개)
+        const playerDocs = await Promise.all(
+          topPlayerIds.map((playerId) =>
+            getDoc(doc(db, COLLECTION_PATHS.PLAYERS, playerId))
+          )
+        )
+
+        // 상세 정보 업데이트
+        playerDocs.forEach((playerDoc) => {
+          if (playerDoc.exists()) {
+            const playerData = playerDoc.data()
+            const existing = playerMap.get(playerDoc.id)
+            if (existing) {
+              existing.photoUrl = playerData?.photoUrl || null
+              existing.country = playerData?.country || null
+            }
+          }
+        })
+      }
+
+      // 4. 핸드 수 내림차순 정렬
       return Array.from(playerMap.values()).sort((a, b) => b.handCount - a.handCount)
     },
     enabled: !!streamId,

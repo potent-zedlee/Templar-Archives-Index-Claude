@@ -6,10 +6,16 @@
  * - 네비게이션 상태
  * - 뷰 모드 (list/grid/timeline)
  * - 필터 및 정렬
+ *
+ * [OPTIMIZED] Zustand 5 최적화 적용:
+ * - shallow 비교로 불필요한 리렌더링 방지
+ * - Selector 함수 제공으로 세분화된 구독
+ * - persist 미들웨어 제거 (partialize가 빈 객체 반환했음)
  */
 
 import { create } from 'zustand'
-import { devtools, persist } from 'zustand/middleware'
+import { devtools } from 'zustand/middleware'
+import { useShallow } from 'zustand/react/shallow'
 import type {
   DialogState,
   VideoPlayerState,
@@ -102,8 +108,7 @@ interface ArchiveUIState {
 
 export const useArchiveUIStore = create<ArchiveUIState>()(
   devtools(
-    persist(
-      (set, _get) => ({
+    (set, _get) => ({
         // Initial State - Dialogs
         tournamentDialog: { isOpen: false, editingId: null },
         eventDialog: { isOpen: false, editingId: null },
@@ -283,11 +288,122 @@ export const useArchiveUIStore = create<ArchiveUIState>()(
         setLoadingViewingPayouts: (loading) => set({ loadingViewingPayouts: loading }),
         setIsEditingViewingPayouts: (editing) => set({ isEditingViewingPayouts: editing }),
       }),
-      {
-        name: 'ArchiveUIStore',
-        partialize: (_state) => ({}),
-      }
-    ),
     { name: 'ArchiveUIStore' }
   )
 )
+
+/**
+ * Selector Helpers - 불필요한 리렌더링 방지
+ * Zustand 5의 useShallow 훅을 사용하여 객체/배열 상태 구독 최적화
+ *
+ * @see https://zustand.docs.pmnd.rs/hooks/use-shallow
+ */
+
+// Dialog Selectors
+export const useTournamentDialog = () =>
+  useArchiveUIStore(useShallow((state) => state.tournamentDialog))
+export const useEventDialog = () =>
+  useArchiveUIStore(useShallow((state) => state.eventDialog))
+export const useEventInfoDialog = () =>
+  useArchiveUIStore(useShallow((state) => state.eventInfoDialog))
+export const useStreamDialog = () =>
+  useArchiveUIStore(useShallow((state) => state.streamDialog))
+export const useVideoDialog = () =>
+  useArchiveUIStore(useShallow((state) => state.videoDialog))
+export const useAnalyzeDialog = () =>
+  useArchiveUIStore(useShallow((state) => state.analyzeDialog))
+export const useRenameDialog = () =>
+  useArchiveUIStore(useShallow((state) => state.renameDialog))
+export const useDeleteDialog = () =>
+  useArchiveUIStore(useShallow((state) => state.deleteDialog))
+export const useEditEventDialog = () =>
+  useArchiveUIStore(useShallow((state) => state.editEventDialog))
+export const useMoveToEventDialog = () =>
+  useArchiveUIStore(useShallow((state) => state.moveToEventDialog))
+export const useMoveToNewEventDialog = () =>
+  useArchiveUIStore(useShallow((state) => state.moveToNewEventDialog))
+export const useInfoDialog = () =>
+  useArchiveUIStore(useShallow((state) => state.infoDialog))
+
+// Upload Selector
+export const useUploadState = () =>
+  useArchiveUIStore(useShallow((state) => state.uploadState))
+
+// Selection Selectors (primitive values - no shallow needed)
+export const useSelectedVideoIds = () =>
+  useArchiveUIStore((state) => state.selectedVideoIds)
+export const useAnalyzeStreamForDialog = () =>
+  useArchiveUIStore((state) => state.analyzeStreamForDialog)
+
+// Viewing Event Selectors
+export const useViewingEventData = () =>
+  useArchiveUIStore(
+    useShallow((state) => ({
+      viewingEventId: state.viewingEventId,
+      viewingEvent: state.viewingEvent,
+      viewingPayouts: state.viewingPayouts,
+      loadingViewingPayouts: state.loadingViewingPayouts,
+      isEditingViewingPayouts: state.isEditingViewingPayouts,
+    }))
+  )
+
+// Action Selectors (그룹화 - functions are stable references)
+export const useDialogActions = () =>
+  useArchiveUIStore(
+    useShallow((state) => ({
+      openTournamentDialog: state.openTournamentDialog,
+      closeTournamentDialog: state.closeTournamentDialog,
+      openEventDialog: state.openEventDialog,
+      closeEventDialog: state.closeEventDialog,
+      openEventInfoDialog: state.openEventInfoDialog,
+      closeEventInfoDialog: state.closeEventInfoDialog,
+      openStreamDialog: state.openStreamDialog,
+      closeStreamDialog: state.closeStreamDialog,
+      openVideoDialog: state.openVideoDialog,
+      closeVideoDialog: state.closeVideoDialog,
+      openAnalyzeDialog: state.openAnalyzeDialog,
+      closeAnalyzeDialog: state.closeAnalyzeDialog,
+      openRenameDialog: state.openRenameDialog,
+      closeRenameDialog: state.closeRenameDialog,
+      openDeleteDialog: state.openDeleteDialog,
+      closeDeleteDialog: state.closeDeleteDialog,
+      openEditEventDialog: state.openEditEventDialog,
+      closeEditEventDialog: state.closeEditEventDialog,
+      openMoveToEventDialog: state.openMoveToEventDialog,
+      closeMoveToEventDialog: state.closeMoveToEventDialog,
+      openMoveToNewEventDialog: state.openMoveToNewEventDialog,
+      closeMoveToNewEventDialog: state.closeMoveToNewEventDialog,
+      openInfoDialog: state.openInfoDialog,
+      closeInfoDialog: state.closeInfoDialog,
+    }))
+  )
+
+export const useUploadActions = () =>
+  useArchiveUIStore(
+    useShallow((state) => ({
+      setUploadFile: state.setUploadFile,
+      setUploading: state.setUploading,
+      setUploadProgress: state.setUploadProgress,
+      resetUploadState: state.resetUploadState,
+    }))
+  )
+
+export const useSelectionActions = () =>
+  useArchiveUIStore(
+    useShallow((state) => ({
+      toggleVideoSelection: state.toggleVideoSelection,
+      selectAllVideos: state.selectAllVideos,
+      clearSelection: state.clearSelection,
+    }))
+  )
+
+export const useViewingEventActions = () =>
+  useArchiveUIStore(
+    useShallow((state) => ({
+      setViewingEventId: state.setViewingEventId,
+      setViewingEvent: state.setViewingEvent,
+      setViewingPayouts: state.setViewingPayouts,
+      setLoadingViewingPayouts: state.setLoadingViewingPayouts,
+      setIsEditingViewingPayouts: state.setIsEditingViewingPayouts,
+    }))
+  )
