@@ -5,7 +5,7 @@
  */
 
 import { Firestore, FieldValue } from '@google-cloud/firestore'
-import type { ExtractedHand } from './vertex-analyzer'
+import type { ExtractedHand } from '../types'
 
 // Firestore 클라이언트 초기화
 let firestoreClient: Firestore | null = null

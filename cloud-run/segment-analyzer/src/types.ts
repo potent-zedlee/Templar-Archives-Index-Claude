@@ -169,3 +169,43 @@ export interface FinalizeRequest {
   jobId: string
   streamId: string
 }
+
+// ============================================
+// 핸드 데이터 타입
+// ============================================
+
+/**
+ * 추출된 핸드 데이터
+ */
+export interface ExtractedHand {
+  handNumber: string | number
+  stakes?: string
+  pot: number
+  board: {
+    flop: string[] | null
+    turn: string | null
+    river: string | null
+  }
+  players: Array<{
+    name: string
+    position: string
+    seat: number
+    stackSize: number
+    holeCards: string[] | null
+  }>
+  actions: Array<{
+    player: string
+    street: string
+    action: string
+    amount: number
+  }>
+  winners: Array<{
+    name: string
+    amount: number
+    hand?: string
+  }>
+  timestampStart?: string
+  timestampEnd?: string
+  absoluteTimestampStart?: number
+  absoluteTimestampEnd?: number
+}
