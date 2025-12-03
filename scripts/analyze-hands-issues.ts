@@ -100,7 +100,7 @@ async function main() {
   console.log("\n=== 4. 샘플 핸드 카드 데이터 ===");
 
   const sampleHands = hands.docs.slice(0, 5);
-  sampleHands.forEach((doc, i) => {
+  sampleHands.forEach((doc) => {
     const data = doc.data();
     console.log(`\n[Hand #${data.number}]`);
     console.log(`  시간: ${formatTime(data.videoTimestampStart)} - ${formatTime(data.videoTimestampEnd)}`);

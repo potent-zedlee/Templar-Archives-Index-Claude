@@ -58,12 +58,6 @@ async function main() {
   console.log(`완료: ${hands.size}개 핸드 삭제됨`);
 
   // 3. 스트림 stats 리셋
-  // 스트림 경로 찾기
-  const handsSnapshot = await db.collection("hands")
-    .where("streamId", "==", streamId)
-    .limit(1)
-    .get();
-
   // collectionGroup으로 스트림 찾기
   const streamsSnapshot = await db.collectionGroup("streams")
     .where(admin.firestore.FieldPath.documentId(), "==", streamId)
