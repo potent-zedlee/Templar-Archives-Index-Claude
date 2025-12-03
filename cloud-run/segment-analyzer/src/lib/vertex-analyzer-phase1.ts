@@ -98,10 +98,10 @@ export class VertexAnalyzerPhase1 {
             },
           ],
           config: {
-            temperature: 0.1,
+            temperature: 0.5,
             topP: 0.95,
             topK: 40,
-            maxOutputTokens: 8192,
+            maxOutputTokens: 65536,
             responseMimeType: 'application/json',
           },
         })

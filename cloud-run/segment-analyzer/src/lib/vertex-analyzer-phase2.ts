@@ -40,9 +40,8 @@ function parseTimestampToSeconds(timestamp: string): number {
 
 export class VertexAnalyzerPhase2 {
   private ai: GoogleGenAI
-  // Phase 2는 Deep Reasoning이 필요하므로 Gemini 3 Pro 사용
-  // gemini-3-pro-preview는 global endpoint에서만 사용 가능
-  private modelName = 'gemini-3-pro-preview'
+  // Phase 2도 Gemini 2.5 Flash 사용
+  private modelName = 'gemini-2.5-flash'
 
   constructor() {
     const projectId = process.env.GCS_PROJECT_ID || process.env.GOOGLE_CLOUD_PROJECT
@@ -149,14 +148,12 @@ export class VertexAnalyzerPhase2 {
             },
           ],
           config: {
-            // Gemini 3 Pro 추론 최적화 설정
-            temperature: 0.1, // 더 정확한 분석을 위해 낮춤
-            topP: 0.9,
-            topK: 32,
-            maxOutputTokens: 8192,
+            // Gemini 2.5 Flash 설정
+            temperature: 0.5,
+            topP: 0.95,
+            topK: 40,
+            maxOutputTokens: 65536,
             responseMimeType: 'application/json',
-            // Gemini 3 Pro의 adaptive thinking 활성화
-            // 복잡한 포커 핸드 분석에 적합한 설정
           },
         })
 
