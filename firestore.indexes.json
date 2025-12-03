@@ -29,6 +29,14 @@
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "streamId", "order": "ASCENDING" },
+        { "fieldPath": "videoTimestampStart", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "hands",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "streamId", "order": "ASCENDING" },
         { "fieldPath": "createdAt", "order": "ASCENDING" }
       ]
     },
