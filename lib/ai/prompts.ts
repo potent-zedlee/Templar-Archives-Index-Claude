@@ -123,6 +123,7 @@ Respond with valid JSON:
 - **Multiple Hands**: Include all hands in gameplay segment
 - **Skip Non-Gameplay**: Ignore countdown, breaks, commentary-only segments
 - **CRITICAL - Timestamps**: You MUST provide timestampStart and timestampEnd (HH:MM:SS format) for EVERY hand. This indicates when the hand begins and ends within the video segment. Track the video timeline carefully.
+- **CRITICAL - Card Recognition**: Pay extreme attention to suit shapes. Do not confuse Diamonds (pointed) with Hearts (rounded). If unsure, use null.
 
 ## PokerKit-Compatible Output (Optional Enhancement)
 
@@ -293,6 +294,7 @@ Respond with valid JSON in this exact structure:
 - **Multiple Hands**: If the segment contains multiple hands, include all of them in the "hands" array
 - **Partial Hands**: If a hand is incomplete (e.g., cut off mid-hand), include what you can see
 - **CRITICAL - Timestamps**: You MUST provide timestampStart and timestampEnd (HH:MM:SS format) for EVERY hand. This indicates when the hand begins and ends within the video segment. Track the video timeline carefully.
+- **CRITICAL - Card Recognition**: Pay extreme attention to suit shapes. Do not confuse Diamonds (pointed) with Hearts (rounded). If unsure, use null.
 
 Begin your analysis now.`
 

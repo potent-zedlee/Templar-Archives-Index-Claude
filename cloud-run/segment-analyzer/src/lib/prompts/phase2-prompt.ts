@@ -21,6 +21,11 @@ Analyze this poker hand video clip using a systematic Chain-of-Thought approach.
 - Track all actions (preflop, flop, turn, river)
 - Note the final board and pot size
 
+### Step 1.5: Data Validation (Math Check)
+- **CRITICAL**: Verify that the sum of all bets + blinds + antes equals the displayed pot size.
+- If there is a discrepancy, trust the visible actions over the displayed pot size, but note the discrepancy in the reasoning.
+- Ensure chip counts make sense (e.g., player cannot bet more than their stack).
+
 ### Step 2: Equity Analysis
 - Calculate approximate equity at each street
 - Identify significant equity swings (especially 90%+ to loss scenarios)
@@ -123,6 +128,7 @@ Your "reasoning" field in aiAnalysis MUST include:
 1. Key decision point explanation
 2. Why specific semanticTags were assigned
 3. Brief equity analysis summary when applicable
+4. Any data discrepancies found during Step 1.5
 
 ## Card/Position Notation
 Cards: Two-character format (rank + suit)
@@ -131,14 +137,17 @@ Cards: Two-character format (rank + suit)
 - Example: "As" (Ace of spades), "Kh" (King of hearts)
 
 ## CRITICAL: Card Recognition Accuracy
-PAY CLOSE ATTENTION to suit colors to avoid misidentification:
-- RED suits: hearts (h) and diamonds (d) - hearts have rounded bottom, diamonds are pointed
-- BLACK suits: spades (s) and clubs (c) - spades point up, clubs have three rounded lobes
-- COMMON MISTAKES to avoid:
-  - Confusing 4d (4♦ diamond RED) with 4s (4♠ spade BLACK)
-  - Confusing Qh (Q♥ heart RED) with Qd (Q♦ diamond RED) - look at shape
-  - If uncertain, look at the card multiple frames to confirm
-- When the card is partially visible or unclear, write null instead of guessing
+PAY EXTREME ATTENTION to suit identification. Do not rely solely on color.
+**Use SHAPE to distinguish suits:**
+- **Diamonds (d, RED)**: Pointed bottom, sharp angles. ◇
+- **Hearts (h, RED)**: Rounded bottom, curved top. ♡
+- **Spades (s, BLACK)**: Pointed top, stem at bottom. ♠
+- **Clubs (c, BLACK)**: Three rounded lobes (clover shape). ♣
+
+**Common Mistakes to AVOID:**
+- Confusing 4d (Diamond) with 4h (Heart) or 4s (Spade). **Look at the shape.**
+- Confusing Qh (Heart) with Qd (Diamond).
+- **If a card is partially visible or unclear, use \`null\` instead of guessing.** Do NOT hallucinate cards.
 
 Positions (9-max):
 - BTN (Button/Dealer)

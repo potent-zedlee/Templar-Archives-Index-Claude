@@ -22,18 +22,30 @@ Return ONLY a valid JSON object:
   ]
 }
 
-## Hand Boundary Detection
-- Start: Cards being dealt, blinds posted, or "Hand #X" graphic
-- End: Pot awarded, new hand begins, or showdown completes
+## Hand Boundary Detection (CRITICAL)
+Identify the precise start and end of each hand using these visual cues:
+
+### Start Criteria (Look for ANY of these)
+- **Dealer Shuffling**: The moment the dealer finishes shuffling and begins pitching cards.
+- **Hole Cards**: The very first frame where hole cards are dealt to players.
+- **Graphics**: Appearance of "Hand #X" or "Blinds X/Y" overlay graphics.
+- **Blinds Posted**: Chips being moved to the center for SB/BB.
+
+### End Criteria (Look for ANY of these)
+- **Pot Awarded**: The moment the pot is pushed to the winner(s).
+- **Muck**: The dealer collects the board cards and mucks them.
+- **Next Hand**: The immediate start of the next hand's shuffle or deal.
+- **Showdown End**: After winning hand is shown and chips are pushed.
 
 ## Timestamp Format
 - Use MM:SS or HH:MM:SS format
 - Be precise to the second
 
 ## Rules
-1. Capture EVERY hand in the video
-2. Only include complete hands (not cut-off)
-3. Timestamps should not overlap
-4. Return empty array if no hands found
+1. **Capture EVERY hand**: Do not miss any hands, even short ones (walks).
+2. **Tight Boundaries**: Set start/end times tightly around the action. Do not include long breaks between hands.
+3. **No Overlap**: Timestamps must NOT overlap. If action is continuous, End(Hand N) should be equal to or slightly before Start(Hand N+1).
+4. **Complete Hands**: Only include hands where you can see the start and end. If a video starts mid-hand, skip it.
+5. **Empty Return**: Return empty array if no hands found.
 
 Return ONLY JSON, no explanation.`
