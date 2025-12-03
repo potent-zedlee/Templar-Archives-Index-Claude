@@ -255,11 +255,12 @@ export class VertexAnalyzerPhase2 {
       parsed.semanticTags = []
     }
     if (!parsed.aiAnalysis) {
-      // aiAnalysis 기본값 설정
+      // aiAnalysis 기본값 설정 (AIAnalysis 타입에 맞춤)
       parsed.aiAnalysis = {
-        summary: '분석 데이터 없음',
-        keyMoments: [],
-        psychologicalInsights: []
+        confidence: 0,
+        reasoning: '분석 데이터 없음',
+        playerStates: {},
+        handQuality: 'routine'
       }
       console.log('[Phase2] aiAnalysis 누락 - 기본값 설정')
     }
