@@ -144,11 +144,20 @@ service cloud.firestore {
     // ==================== Analysis Jobs Collection ====================
 
     /**
-     * 분석 작업: 모두 읽기 가능, 인증된 사용자만 생성/수정
+     * 분석 작업: 소유자/Admin만 읽기, 소유자만 생성, Admin만 수정
+     *
+     * 보안 강화:
+     * - 읽기: 본인 작업 또는 Admin만 가능
+     * - 생성: 인증된 사용자가 본인 ID로만 생성 가능
+     * - 수정: Admin만 가능 (시스템/Cloud Run에서 업데이트)
+     * - 삭제: Admin만 가능
      */
     match /analysisJobs/{jobId} {
-      allow read: if true;
-      allow create, update: if isAuthenticated();
+      allow read: if isAuthenticated() &&
+        (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() &&
+        request.resource.data.userId == request.auth.uid;
+      allow update: if isAdmin();
       allow delete: if isAdmin();
     }
 
@@ -231,13 +240,32 @@ service cloud.firestore {
     // ==================== Collection Group Queries ====================
     // collectionGroup 쿼리는 별도의 규칙이 필요함
     // 일반 서브컬렉션 규칙과 별개로 와일드카드 패턴 사용
+    //
+    // 참고: 최상위 컬렉션과 서브컬렉션은 별도 규칙이 적용됨
+    // - /streams/{id} → match /streams/{streamId} 규칙 적용
+    // - /tournaments/{tid}/events/{eid}/streams/{sid} → 아래 규칙 적용
 
     /**
      * streams collectionGroup 쿼리: Admin만 접근 가능
      * Pipeline 대시보드에서 모든 스트림을 조회하기 위해 필요
+     *
+     * 적용 대상: /tournaments/{tid}/events/{eid}/streams/{sid}
+     * 제외 대상: /streams/{sid} (별도 규칙)
      */
     match /{path=**}/streams/{streamId} {
       allow read: if isAdmin();
+      allow write: if isAdmin();
+    }
+
+    /**
+     * events collectionGroup 쿼리: 모두 읽기 가능
+     * Archive 트리에서 이벤트 조회 시 필요
+     *
+     * 적용 대상: /tournaments/{tid}/events/{eid}
+     */
+    match /{path=**}/events/{eventId} {
+      allow read: if true;
+      allow write: if isAdmin();
     }
 
     /**
@@ -254,14 +282,6 @@ service cloud.firestore {
      */
     match /{path=**}/tags/{tagId} {
       allow read: if isAuthenticated();
-    }
-
-    /**
-     * events collectionGroup 쿼리: 모두 읽기 가능
-     * 서버 사이드에서 주로 사용하지만 클라이언트 접근 시 필요
-     */
-    match /{path=**}/events/{eventId} {
-      allow read: if true;
     }
   }
 }

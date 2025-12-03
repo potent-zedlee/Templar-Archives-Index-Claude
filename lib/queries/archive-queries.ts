@@ -308,15 +308,21 @@ async function fetchStreamsByEvent(
 }
 
 /**
- * [DEPRECATED] 전체 트리 구조 로드 (N+1 문제 있음)
- * 하위 호환성을 위해 유지하지만, 새 코드에서는 사용하지 않음
- * 대신 fetchTournamentsShallow + useEventsQuery + useStreamsQuery 사용 권장
+ * [OPTIMIZED] 전체 트리 구조 로드
+ * 병렬 처리로 성능 최적화됨 - 이벤트/스트림을 동시에 조회
+ *
+ * 최적화 내용:
+ * 1. 모든 이벤트 조회를 Promise.all로 병렬 처리
+ * 2. 각 이벤트의 스트림 조회도 Promise.all로 병렬 처리
+ * 3. 순차 for 루프 → 병렬 Promise.all로 변경
+ *
+ * 쿼리 비용: O(1 + N + M) 시간 → O(1 + max(N) + max(M)) 시간
+ *
+ * 참고: 대규모 데이터에서는 fetchTournamentsShallow + useEventsQuery 권장
  */
 async function fetchTournamentsTreeFirestore(
   gameType?: 'tournament' | 'cash-game'
 ): Promise<Tournament[]> {
-  console.warn('[DEPRECATED] fetchTournamentsTreeFirestore: N+1 쿼리 문제. fetchTournamentsShallow 사용 권장')
-
   try {
     // 1. 토너먼트 목록 조회
     const tournamentsRef = collection(db, COLLECTION_PATHS.TOURNAMENTS)
@@ -326,7 +332,7 @@ async function fetchTournamentsTreeFirestore(
 
     const tournamentsSnapshot = await getDocs(tournamentsQuery)
 
-    // 2. 각 토너먼트의 이벤트와 스트림을 병렬로 조회
+    // 2. 각 토너먼트의 이벤트를 병렬로 조회
     const tournamentPromises = tournamentsSnapshot.docs.map(async (tournamentDoc) => {
       const tournamentData = tournamentDoc.data() as FirestoreTournament
 
@@ -340,24 +346,20 @@ async function fetchTournamentsTreeFirestore(
       const eventsQuery = query(eventsRef, orderBy('date', 'desc'))
       const eventsSnapshot = await getDocs(eventsQuery)
 
-      const events: Event[] = []
-
-      // 각 이벤트의 스트림 조회
-      for (const eventDoc of eventsSnapshot.docs) {
-        // 모든 이벤트 표시 (status 필터 제거 - Admin Archive에서 전체 관리 가능)
-
-        // 스트림 조회
+      // 3. 모든 이벤트의 스트림을 병렬로 조회 (N+1 → 병렬화)
+      const eventPromises = eventsSnapshot.docs.map(async (eventDoc) => {
         const streamsRef = collection(db, COLLECTION_PATHS.STREAMS(tournamentDoc.id, eventDoc.id))
         const streamsQuery = query(streamsRef, orderBy('publishedAt', 'desc'))
         const streamsSnapshot = await getDocs(streamsQuery)
 
-        // 모든 스트림 표시 (status 필터 제거 - Admin Archive에서 전체 관리 가능)
         const streams: Stream[] = streamsSnapshot.docs
           .map((streamDoc) => mapFirestoreStream(streamDoc, eventDoc.id))
 
-        events.push(mapFirestoreEvent(eventDoc, tournamentDoc.id, streams))
-      }
+        return mapFirestoreEvent(eventDoc, tournamentDoc.id, streams)
+      })
 
+      // 모든 이벤트 병렬 처리
+      const events = await Promise.all(eventPromises)
       return mapFirestoreTournament(tournamentDoc, events)
     })
 

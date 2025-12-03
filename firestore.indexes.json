@@ -17,6 +17,30 @@
       ]
     },
     {
+      "collectionGroup": "events",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "tournamentId", "order": "ASCENDING" },
+        { "fieldPath": "date", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "events",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "date", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "streams",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "eventId", "order": "ASCENDING" },
+        { "fieldPath": "publishedAt", "order": "DESCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "hands",
       "queryScope": "COLLECTION",
       "fields": [
