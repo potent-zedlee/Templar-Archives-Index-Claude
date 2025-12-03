@@ -323,16 +323,18 @@ export async function updateStreamPipelineStatus(
 }
 
 /**
- * 스트림 분석 리셋 (analyzing/failed → pending)
+ * 스트림 분석 리셋 (analyzing/failed/completed → pending)
  *
  * 분석이 멈추거나 실패한 스트림을 pending 상태로 리셋하여
  * 다시 분석 요청할 수 있게 합니다.
+ *
+ * 중요: 재분석 시 기존 핸드를 삭제하여 중복을 방지합니다.
  */
 export async function resetStreamAnalysis(
   streamId: string,
   tournamentId: string,
   eventId: string
-): Promise<{ success: boolean; error?: string }> {
+): Promise<{ success: boolean; deletedHandsCount?: number; error?: string }> {
   try {
     const auth = await verifyAdmin()
     if (!auth.authorized) {
@@ -360,16 +362,57 @@ export async function resetStreamAnalysis(
       }
     }
 
+    // 1. 기존 핸드 삭제 (중복 방지)
+    let deletedHandsCount = 0
+    const handsSnapshot = await adminFirestore
+      .collection('hands')
+      .where('streamId', '==', streamId)
+      .get()
+
+    if (handsSnapshot.size > 0) {
+      console.log(`[resetStreamAnalysis] Deleting ${handsSnapshot.size} existing hands for stream ${streamId}`)
+
+      // Firestore batch는 500개 제한이므로 청크로 나눠서 처리
+      const BATCH_SIZE = 500
+      const batches: FirebaseFirestore.WriteBatch[] = []
+      let batch = adminFirestore.batch()
+      let batchCount = 0
+
+      for (const handDoc of handsSnapshot.docs) {
+        batch.delete(handDoc.ref)
+        batchCount++
+        deletedHandsCount++
+
+        if (batchCount >= BATCH_SIZE) {
+          batches.push(batch)
+          batch = adminFirestore.batch()
+          batchCount = 0
+        }
+      }
+
+      // 마지막 batch 추가
+      if (batchCount > 0) {
+        batches.push(batch)
+      }
+
+      // 모든 batch 커밋
+      await Promise.all(batches.map(b => b.commit()))
+      console.log(`[resetStreamAnalysis] Deleted ${deletedHandsCount} hands`)
+    }
+
+    // 2. 스트림 상태 리셋
     await streamRef.update({
       pipelineStatus: 'pending',
       pipelineProgress: 0,
       pipelineError: null,
       currentJobId: null,
       pipelineUpdatedAt: new Date(),
+      'stats.handsCount': 0,
+      'stats.playersCount': 0,
     })
 
-    console.log(`[resetStreamAnalysis] Stream ${streamId} reset to pending`)
-    return { success: true }
+    console.log(`[resetStreamAnalysis] Stream ${streamId} reset to pending (deleted ${deletedHandsCount} hands)`)
+    return { success: true, deletedHandsCount }
   } catch (error: any) {
     console.error('[resetStreamAnalysis] Error:', error)
     return { success: false, error: error.message }

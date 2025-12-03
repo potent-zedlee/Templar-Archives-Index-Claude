@@ -550,6 +550,8 @@ export function useUpdatePipelineStatus() {
  *
  * subcollection 구조 (tournaments/{id}/events/{id}/streams/{id})를
  * 지원하기 위해 Server Action 사용
+ *
+ * 중요: 재분석 시 기존 핸드가 자동으로 삭제됩니다.
  */
 export function useRetryAnalysis() {
   const queryClient = useQueryClient()
@@ -570,11 +572,15 @@ export function useRetryAnalysis() {
         throw new Error(result.error || '분석 리셋 실패')
       }
 
-      return { streamId }
+      return { streamId, deletedHandsCount: result.deletedHandsCount || 0 }
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: adminArchiveQueryKeys.all })
-      toast.success('분석이 리셋되었습니다. Pending 탭에서 다시 시작하세요.')
+      if (data.deletedHandsCount > 0) {
+        toast.success(`분석이 리셋되었습니다. (기존 ${data.deletedHandsCount}개 핸드 삭제됨) Pending 탭에서 다시 시작하세요.`)
+      } else {
+        toast.success('분석이 리셋되었습니다. Pending 탭에서 다시 시작하세요.')
+      }
     },
     onError: (error) => {
       console.error('[useRetryAnalysis] Error:', error)
