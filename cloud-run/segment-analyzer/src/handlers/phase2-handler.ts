@@ -130,6 +130,21 @@ export async function phase2Handler(c: Context) {
         updates.status = 'completed'
         updates.completedAt = new Date()
         console.log(`[Phase2] Job ${body.jobId} completed - all ${totalHands} hands processed`)
+
+        // 스트림 상태 업데이트 (서브컬렉션 경로)
+        if (body.tournamentId && body.eventId && body.streamId) {
+          const streamRef = firestore.doc(
+            `tournaments/${body.tournamentId}/events/${body.eventId}/streams/${body.streamId}`
+          )
+          tx.update(streamRef, {
+            pipelineStatus: 'completed',
+            pipelineProgress: 100,
+            'stats.handsCount': totalHands,
+            currentJobId: body.jobId,
+            updatedAt: new Date(),
+          })
+          console.log(`[Phase2] Updated stream ${body.streamId} status to completed`)
+        }
       }
 
       tx.update(jobRef, updates)

@@ -375,3 +375,57 @@ export async function resetStreamAnalysis(
     return { success: false, error: error.message }
   }
 }
+
+/**
+ * 스트림 핸드 수 동기화
+ *
+ * hands 컬렉션에서 해당 스트림의 핸드 수를 계산하여
+ * 스트림의 stats.handsCount를 업데이트합니다.
+ */
+export async function syncStreamHandsCount(
+  streamId: string,
+  tournamentId: string,
+  eventId: string
+): Promise<{ success: boolean; handsCount?: number; error?: string }> {
+  try {
+    const auth = await verifyAdmin()
+    if (!auth.authorized) {
+      return { success: false, error: auth.error }
+    }
+
+    // 1. 핸드 수 계산
+    const handsSnapshot = await adminFirestore
+      .collection('hands')
+      .where('streamId', '==', streamId)
+      .get()
+
+    const handsCount = handsSnapshot.size
+
+    // 2. 스트림 업데이트
+    const streamRef = adminFirestore
+      .collection('tournaments')
+      .doc(tournamentId)
+      .collection('events')
+      .doc(eventId)
+      .collection('streams')
+      .doc(streamId)
+
+    const streamDoc = await streamRef.get()
+    if (!streamDoc.exists) {
+      return { success: false, error: 'Stream not found' }
+    }
+
+    await streamRef.update({
+      'stats.handsCount': handsCount,
+      pipelineStatus: handsCount > 0 ? 'completed' : streamDoc.data()?.pipelineStatus,
+      pipelineProgress: handsCount > 0 ? 100 : streamDoc.data()?.pipelineProgress || 0,
+      updatedAt: new Date(),
+    })
+
+    console.log(`[syncStreamHandsCount] Stream ${streamId} updated with ${handsCount} hands`)
+    return { success: true, handsCount }
+  } catch (error: any) {
+    console.error('[syncStreamHandsCount] Error:', error)
+    return { success: false, error: error.message }
+  }
+}
