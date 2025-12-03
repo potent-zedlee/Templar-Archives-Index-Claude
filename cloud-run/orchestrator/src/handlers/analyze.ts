@@ -168,8 +168,11 @@ function parseTimestampToSeconds(timestamp: string): number {
 }
 
 /**
- * 중복 핸드 제거 (타임스탬프 기반)
- * - 5초 이내 시작 시간은 동일 핸드로 간주
+ * 중복 핸드 제거 및 병합 (타임스탬프 기반)
+ *
+ * 세그먼트 오버랩으로 인한 중복 핸드 처리:
+ * - 30초 이내 시작 시간은 동일 핸드로 간주 (5분 오버랩 대응)
+ * - 종료 시간이 더 긴 것을 선택 (완전한 핸드 우선)
  * - 타임스탬프 순서대로 정렬 후 1부터 핸드 번호 재할당
  */
 function deduplicateAndSortHands(hands: Phase1Result['hands']): Phase1Result['hands'] {
@@ -182,12 +185,13 @@ function deduplicateAndSortHands(hands: Phase1Result['hands']): Phase1Result['ha
     return aStart - bStart
   })
 
-  // 2. 중복 제거 (5초 이내 시작 시간은 동일 핸드)
+  // 2. 중복 제거 (30초 이내 시작 시간은 동일 핸드로 간주)
   const deduped: Phase1Result['hands'] = []
-  const DEDUP_THRESHOLD = 5 // 5초
+  const DEDUP_THRESHOLD = 30 // 30초 - 세그먼트 오버랩 대응
 
   for (const hand of sorted) {
     const startSeconds = parseTimestampToSeconds(hand.start)
+    const endSeconds = parseTimestampToSeconds(hand.end)
     const lastHand = deduped[deduped.length - 1]
 
     if (!lastHand) {
@@ -196,20 +200,26 @@ function deduplicateAndSortHands(hands: Phase1Result['hands']): Phase1Result['ha
     }
 
     const lastStartSeconds = parseTimestampToSeconds(lastHand.start)
+    const lastEndSeconds = parseTimestampToSeconds(lastHand.end)
 
-    // 5초 이상 차이나면 새로운 핸드
+    // 30초 이상 차이나면 새로운 핸드
     if (startSeconds - lastStartSeconds > DEDUP_THRESHOLD) {
       deduped.push(hand)
     }
-    // 5초 이내면 중복 - 더 긴 종료 시간 선택
+    // 30초 이내면 중복 - 더 완전한 핸드 정보 병합
     else {
-      const lastEndSeconds = parseTimestampToSeconds(lastHand.end)
-      const currentEndSeconds = parseTimestampToSeconds(hand.end)
-      if (currentEndSeconds > lastEndSeconds) {
+      // 더 이른 시작 시간 선택 (핸드 시작 부분 포함)
+      if (startSeconds < lastStartSeconds) {
+        lastHand.start = hand.start
+      }
+      // 더 늦은 종료 시간 선택 (핸드 완료 부분 포함)
+      if (endSeconds > lastEndSeconds) {
         lastHand.end = hand.end
       }
     }
   }
+
+  console.log(`[deduplicateAndSortHands] ${sorted.length} hands -> ${deduped.length} after dedup`)
 
   // 3. 핸드 번호 1부터 재할당
   return deduped.map((hand, index) => ({

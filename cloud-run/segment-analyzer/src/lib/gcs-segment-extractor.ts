@@ -61,8 +61,17 @@ export class GCSSegmentExtractor {
     }
   }
 
+  /**
+   * 세그먼트 분할 with 오버랩
+   *
+   * 30분 단위로 분할하되, 5분 오버랩을 적용하여 경계에서 잘린 핸드도 포함
+   * 예: 0-35분, 25-65분, 55-95분...
+   *
+   * 오버랩된 핸드는 Orchestrator의 deduplicateAndSortHands에서 중복 제거됨
+   */
   private splitSegment(segment: SegmentInfo): SegmentInfo[] {
     const duration = segment.end - segment.start
+    const OVERLAP_DURATION = 300 // 5분 오버랩
 
     if (duration <= this.maxSegmentDuration) {
       return [segment]
@@ -72,16 +81,22 @@ export class GCSSegmentExtractor {
     let currentStart = segment.start
 
     while (currentStart < segment.end) {
+      // 첫 번째 세그먼트는 오버랩 없이 시작, 이후는 5분 일찍 시작
+      const effectiveStart = subSegments.length === 0
+        ? currentStart
+        : Math.max(segment.start, currentStart - OVERLAP_DURATION)
+
       const currentEnd = Math.min(
         currentStart + this.maxSegmentDuration,
         segment.end
       )
-      subSegments.push({ start: currentStart, end: currentEnd })
+
+      subSegments.push({ start: effectiveStart, end: currentEnd })
       currentStart = currentEnd
     }
 
     console.log(
-      `[GCSSegmentExtractor] Split segment ${segment.start}s-${segment.end}s into ${subSegments.length} sub-segments`
+      `[GCSSegmentExtractor] Split segment ${segment.start}s-${segment.end}s into ${subSegments.length} sub-segments (with ${OVERLAP_DURATION}s overlap)`
     )
 
     return subSegments
