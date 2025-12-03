@@ -155,10 +155,74 @@ export async function analyzeHandler(c: Context) {
 }
 
 /**
+ * MM:SS 또는 HH:MM:SS 형식의 타임스탬프를 초 단위로 변환
+ */
+function parseTimestampToSeconds(timestamp: string): number {
+  const parts = timestamp.split(':').map(Number)
+  if (parts.length === 3) {
+    return parts[0] * 3600 + parts[1] * 60 + parts[2]
+  } else if (parts.length === 2) {
+    return parts[0] * 60 + parts[1]
+  }
+  return 0
+}
+
+/**
+ * 중복 핸드 제거 (타임스탬프 기반)
+ * - 5초 이내 시작 시간은 동일 핸드로 간주
+ * - 타임스탬프 순서대로 정렬 후 1부터 핸드 번호 재할당
+ */
+function deduplicateAndSortHands(hands: Phase1Result['hands']): Phase1Result['hands'] {
+  if (hands.length === 0) return []
+
+  // 1. 타임스탬프 기준 정렬
+  const sorted = [...hands].sort((a, b) => {
+    const aStart = parseTimestampToSeconds(a.start)
+    const bStart = parseTimestampToSeconds(b.start)
+    return aStart - bStart
+  })
+
+  // 2. 중복 제거 (5초 이내 시작 시간은 동일 핸드)
+  const deduped: Phase1Result['hands'] = []
+  const DEDUP_THRESHOLD = 5 // 5초
+
+  for (const hand of sorted) {
+    const startSeconds = parseTimestampToSeconds(hand.start)
+    const lastHand = deduped[deduped.length - 1]
+
+    if (!lastHand) {
+      deduped.push(hand)
+      continue
+    }
+
+    const lastStartSeconds = parseTimestampToSeconds(lastHand.start)
+
+    // 5초 이상 차이나면 새로운 핸드
+    if (startSeconds - lastStartSeconds > DEDUP_THRESHOLD) {
+      deduped.push(hand)
+    }
+    // 5초 이내면 중복 - 더 긴 종료 시간 선택
+    else {
+      const lastEndSeconds = parseTimestampToSeconds(lastHand.end)
+      const currentEndSeconds = parseTimestampToSeconds(hand.end)
+      if (currentEndSeconds > lastEndSeconds) {
+        lastHand.end = hand.end
+      }
+    }
+  }
+
+  // 3. 핸드 번호 1부터 재할당
+  return deduped.map((hand, index) => ({
+    ...hand,
+    handNumber: index + 1,
+  }))
+}
+
+/**
  * Phase 1 완료 콜백 핸들러
  *
  * Segment Analyzer에서 Phase 1 완료 시 호출
- * Phase 2 태스크 생성
+ * 누적된 핸드를 중복 제거 후 Phase 2 태스크 생성
  */
 export async function phase1CompleteHandler(c: Context) {
   try {
@@ -170,33 +234,70 @@ export async function phase1CompleteHandler(c: Context) {
       hands: Phase1Result['hands']
     }>()
 
-    console.log(`[Orchestrator] Phase 1 complete for job ${body.jobId}`)
-    console.log(`[Orchestrator] Found ${body.hands.length} hands`)
+    console.log(`[Orchestrator] Phase 1 segment complete for job ${body.jobId}`)
+    console.log(`[Orchestrator] Received ${body.hands.length} hands from segment`)
 
-    // 1. Job 정보 가져오기 (tournamentId, eventId)
+    // 1. Job 정보 가져오기
     const jobRef = firestore.collection(COLLECTION_NAME).doc(body.jobId)
     const jobDoc = await jobRef.get()
     const jobData = jobDoc.data()
 
-    const tournamentId = jobData?.tournamentId || ''
-    const eventId = jobData?.eventId || ''
+    if (!jobData) {
+      return c.json({ error: 'Job not found' }, 404)
+    }
 
-    // 2. Job 상태 업데이트
+    const tournamentId = jobData.tournamentId || ''
+    const eventId = jobData.eventId || ''
+
+    // 2. 기존 누적 핸드에 새 핸드 추가
+    const existingHands: Phase1Result['hands'] = jobData.phase1Hands || []
+    const allHands = [...existingHands, ...body.hands]
+
+    // 3. 중복 제거 및 정렬
+    const dedupedHands = deduplicateAndSortHands(allHands)
+
+    console.log(`[Orchestrator] Total hands: ${allHands.length} -> Deduped: ${dedupedHands.length}`)
+
+    // 4. 누적 핸드 저장 (아직 Phase 2 시작 안 함)
+    await jobRef.update({
+      phase1Hands: dedupedHands,
+      phase1RawCount: allHands.length,
+      phase1DedupedCount: dedupedHands.length,
+    })
+
+    // 5. 모든 세그먼트 완료 확인
+    const { totalSegments, completedSegments, failedSegments } = jobData
+    const isAllSegmentsComplete = (completedSegments || 0) + (failedSegments || 0) >= totalSegments
+
+    if (!isAllSegmentsComplete) {
+      console.log(`[Orchestrator] Waiting for more segments... (${completedSegments}/${totalSegments})`)
+      return c.json({
+        success: true,
+        jobId: body.jobId,
+        handsAccumulated: dedupedHands.length,
+        waitingForMoreSegments: true,
+      })
+    }
+
+    // 6. 모든 세그먼트 완료 - Phase 2 시작
+    console.log(`[Orchestrator] All segments complete. Starting Phase 2 with ${dedupedHands.length} hands`)
+
+    // Job 상태 업데이트
     await jobRef.update({
       phase: 'phase2',
-      phase1CompletedSegments: body.hands.length,
-      phase2TotalHands: body.hands.length,
+      phase1CompletedSegments: dedupedHands.length,
+      phase2TotalHands: dedupedHands.length,
       phase2CompletedHands: 0,
       progress: 30, // Phase 1 완료 = 30%
     })
 
-    // 3. 각 핸드에 대해 Phase 2 태스크 생성
+    // 7. 각 핸드에 대해 Phase 2 태스크 생성
     const PHASE2_ANALYZER_URL = `${SEGMENT_ANALYZER_URL}/analyze-phase2`
     const queuePath = tasksClient.queuePath(PROJECT_ID, LOCATION, QUEUE_NAME)
     const taskPromises: Promise<string>[] = []
 
-    for (let i = 0; i < body.hands.length; i++) {
-      const hand = body.hands[i]
+    for (let i = 0; i < dedupedHands.length; i++) {
+      const hand = dedupedHands[i]
 
       const request: ProcessPhase2Request = {
         jobId: body.jobId,
@@ -237,12 +338,14 @@ export async function phase1CompleteHandler(c: Context) {
 
     await Promise.all(taskPromises)
 
-    console.log(`[Orchestrator] All ${body.hands.length} Phase 2 tasks enqueued`)
+    console.log(`[Orchestrator] All ${dedupedHands.length} Phase 2 tasks enqueued`)
 
     return c.json({
       success: true,
       jobId: body.jobId,
-      phase2TasksCreated: body.hands.length,
+      phase2TasksCreated: dedupedHands.length,
+      rawHandsCount: allHands.length,
+      dedupedHandsCount: dedupedHands.length,
     })
 
   } catch (error) {

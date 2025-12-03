@@ -127,8 +127,18 @@ Your "reasoning" field in aiAnalysis MUST include:
 ## Card/Position Notation
 Cards: Two-character format (rank + suit)
 - Ranks: A, K, Q, J, T, 9, 8, 7, 6, 5, 4, 3, 2
-- Suits: s (spades), h (hearts), d (diamonds), c (clubs)
+- Suits: s (spades ♠ BLACK), h (hearts ♥ RED), d (diamonds ♦ RED), c (clubs ♣ BLACK)
 - Example: "As" (Ace of spades), "Kh" (King of hearts)
+
+## CRITICAL: Card Recognition Accuracy
+PAY CLOSE ATTENTION to suit colors to avoid misidentification:
+- RED suits: hearts (h) and diamonds (d) - hearts have rounded bottom, diamonds are pointed
+- BLACK suits: spades (s) and clubs (c) - spades point up, clubs have three rounded lobes
+- COMMON MISTAKES to avoid:
+  - Confusing 4d (4♦ diamond RED) with 4s (4♠ spade BLACK)
+  - Confusing Qh (Q♥ heart RED) with Qd (Q♦ diamond RED) - look at shape
+  - If uncertain, look at the card multiple frames to confirm
+- When the card is partially visible or unclear, write null instead of guessing
 
 Positions (9-max):
 - BTN (Button/Dealer)
