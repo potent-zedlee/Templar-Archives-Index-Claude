@@ -97,9 +97,13 @@ export async function getWeeklyHighlights(): Promise<WeeklyHighlight[]> {
         }
       }
 
+      // 기존 문자열 데이터와 새로운 정수 데이터 모두 호환
+      const handNumber = typeof data.number === 'string'
+        ? parseInt(data.number, 10) || 0
+        : data.number ?? 0
       highlights.push({
         id: doc.id,
-        number: data.number || '',
+        number: handNumber,
         description: data.description || '',
         timestamp: data.timestamp || '',
         pot_size: data.potSize || 0,

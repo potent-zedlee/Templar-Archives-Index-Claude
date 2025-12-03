@@ -466,7 +466,8 @@ async function saveHandToDatabase(
     eventId: eventId,
     tournamentId: tournamentId,
     playerIds: playerIds, // array-contains 쿼리용
-    number: String(hand.handNumber),
+    // 정수 타입 사용 (Firestore 정렬 일관성 보장)
+    number: typeof hand.handNumber === 'number' ? hand.handNumber : parseInt(String(hand.handNumber), 10) || 0,
     description: generateHandDescription(hand),
     timestamp: formatTimestampDisplay(hand), // 사용자 표시용 타임코드
     videoTimestampStart: hand.absoluteTimestampStart ?? undefined, // 초 단위

@@ -59,7 +59,7 @@ type Stream = {
 
 type Hand = {
   id: string
-  number: string
+  number: number
   description: string
   timestamp: string
 }
@@ -67,7 +67,7 @@ type Hand = {
 type HandSearchDialogProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
-  onSelect: (hand: { id: string; number: string; description: string; tournament: string; stream: string }) => void
+  onSelect: (hand: { id: string; number: number; description: string; tournament: string; stream: string }) => void
 }
 
 export function HandSearchDialog({ open, onOpenChange, onSelect }: HandSearchDialogProps) {
@@ -264,7 +264,7 @@ export function HandSearchDialog({ open, onOpenChange, onSelect }: HandSearchDia
       return streams.filter((s) => s.name.toLowerCase().includes(query))
     } else if (step === 'hand') {
       return hands.filter((h) =>
-        h.number.toLowerCase().includes(query) ||
+        String(h.number).toLowerCase().includes(query) ||
         h.description.toLowerCase().includes(query)
       )
     }

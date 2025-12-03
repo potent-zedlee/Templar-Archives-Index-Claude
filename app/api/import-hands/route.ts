@@ -69,7 +69,7 @@ interface ImportHandStreets {
 
 // Import 핸드 타입
 interface ImportHand {
-  number: string
+  number: string | number
   description: string
   timestamp: string
   summary?: string
@@ -350,7 +350,8 @@ export async function POST(request: NextRequest) {
           streamId: streamId,
           eventId: streamData?.eventId || '',
           tournamentId: streamData?.tournamentId || '',
-          number: hand.number,
+          // 정수 타입으로 변환 (Firestore 정렬 일관성 보장)
+          number: typeof hand.number === 'number' ? hand.number : parseInt(String(hand.number), 10) || 0,
           description: hand.description,
           aiSummary: hand.summary,
           timestamp: hand.timestamp,

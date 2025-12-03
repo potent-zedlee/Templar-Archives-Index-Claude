@@ -39,7 +39,7 @@ import type { HandHistory } from './types/hand-history'
  */
 export interface EnrichedHand {
   id: string
-  number: string
+  number: number
   description: string
   timestamp: string
   potSize?: number
@@ -59,7 +59,7 @@ export interface EnrichedHand {
  */
 export interface HandDetails {
   id: string
-  number: string
+  number: number
   description: string
   timestamp: string
   potSize?: number
@@ -204,9 +204,14 @@ async function enrichHand(
   // 플레이어 이름 추출 (임베딩된 데이터에서)
   const playerNames = hand.players?.map((p) => p.name) || []
 
+  // 기존 문자열 데이터와 새로운 정수 데이터 모두 호환
+  const handNumber = typeof hand.number === 'string'
+    ? parseInt(hand.number, 10) || 0
+    : hand.number ?? 0
+
   return {
     id: handId,
-    number: hand.number,
+    number: handNumber,
     description: hand.description,
     timestamp: hand.timestamp,
     potSize: hand.potSize,
@@ -341,9 +346,14 @@ export async function fetchHandDetails(handId: string): Promise<HandDetails | nu
       }),
     )
 
+    // 기존 문자열 데이터와 새로운 정수 데이터 모두 호환
+    const handNumber = typeof hand.number === 'string'
+      ? parseInt(hand.number, 10) || 0
+      : hand.number ?? 0
+
     return {
       id: handId,
-      number: hand.number,
+      number: handNumber,
       description: hand.description,
       timestamp: hand.timestamp,
       potSize: hand.potSize,
@@ -567,8 +577,13 @@ export async function fetchPlayerHands(playerId: string): Promise<{
         // 현재 플레이어의 정보 찾기
         const winner = hand.players?.find((p) => p.isWinner)?.name || 'Unknown'
 
+        // 기존 문자열 데이터와 새로운 정수 데이터 모두 호환
+        const handNum = typeof hand.number === 'string'
+          ? hand.number
+          : String(hand.number ?? 0)
+
         return {
-          handNumber: hand.number || '???',
+          handNumber: handNum || '???',
           summary: hand.description || '핸드 정보',
           startTime,
           endTime,
@@ -698,7 +713,7 @@ export async function fetchPlayerHandsGrouped(playerId: string): Promise<
       date: string
       hands: Array<{
         id: string
-        number: string
+        number: number
         description: string
         timestamp: string
         position?: string
@@ -727,7 +742,7 @@ export async function fetchPlayerHandsGrouped(playerId: string): Promise<
             date: string
             hands: Array<{
               id: string
-              number: string
+              number: number
               description: string
               timestamp: string
               position?: string
@@ -782,10 +797,15 @@ export async function fetchPlayerHandsGrouped(playerId: string): Promise<
         })
       }
 
+      // 기존 문자열 데이터와 새로운 정수 데이터 모두 호환
+      const handNum = typeof hand.number === 'string'
+        ? parseInt(hand.number, 10) || 0
+        : hand.number ?? 0
+
       // 핸드 추가
       tournamentGroup.eventMap.get(eventId)!.hands.push({
         id: handId,
-        number: hand.number,
+        number: handNum,
         description: hand.description,
         timestamp: hand.timestamp,
         position: playerInfo?.position,

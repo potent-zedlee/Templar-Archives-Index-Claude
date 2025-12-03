@@ -124,7 +124,8 @@ async function normalizeHandNumbers(
     chunk.forEach((hand, index) => {
       const newNumber = processed + index + 1
       batch.update(hand.ref, {
-        number: String(newNumber),
+        // 정수 타입으로 저장 (Firestore 정렬 일관성 보장)
+        number: newNumber,
         updatedAt: new Date(),
       })
     })
@@ -231,8 +232,9 @@ export async function phase2Handler(c: Context) {
       tournamentId: body.tournamentId,
       eventId: body.eventId,
       jobId: body.jobId,
-      // 임시 번호 - 분석 완료 후 normalizeHandNumbers에서 재할당됨
-      number: String(body.handIndex || 0),
+      // 임시 번호 (정수) - 분석 완료 후 normalizeHandNumbers에서 재할당됨
+      // 정수 타입 사용으로 Firestore 정렬 일관성 보장
+      number: body.handIndex || 0,
 
       // 보드 카드
       boardFlop: sanitizeForFirestore(result.board.flop),

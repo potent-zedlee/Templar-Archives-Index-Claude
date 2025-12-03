@@ -23,7 +23,7 @@ import type { FirestoreHand, FirestoreTournament, FirestoreEvent, FirestoreStrea
 
 export type Hand = {
   id: string
-  number: string
+  number: number
   description: string
   timestamp: string
   streamId: string
@@ -86,9 +86,13 @@ const handConverter = {
   },
   fromFirestore(snapshot: QueryDocumentSnapshot): Hand {
     const data = snapshot.data() as FirestoreHand
+    // 기존 문자열 데이터와 새로운 정수 데이터 모두 호환
+    const handNumber = typeof data.number === 'string'
+      ? parseInt(data.number, 10) || 0
+      : data.number ?? 0
     return {
       id: snapshot.id,
-      number: data.number,
+      number: handNumber,
       description: data.description,
       timestamp: data.timestamp,
       streamId: data.streamId,

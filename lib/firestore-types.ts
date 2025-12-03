@@ -426,8 +426,8 @@ export interface FirestoreHand {
   /** 플레이어 ID 목록 (array-contains 쿼리용) */
   playerIds: string[]
 
-  /** 핸드 번호 */
-  number: string
+  /** 핸드 번호 (정수: 정렬 일관성을 위해 string이 아닌 number 사용) */
+  number: number
   /** 핸드 설명 */
   description: string
   /** AI 생성 요약 */

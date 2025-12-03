@@ -7,7 +7,7 @@ import { Search } from "lucide-react"
 
 export interface HandWithDetails {
   id: string
-  number: string
+  number: number
   finalPot?: number
   tournamentName?: string
   streamName?: string

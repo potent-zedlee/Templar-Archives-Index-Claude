@@ -662,20 +662,26 @@ export function useStreamHands(streamId: string) {
     queryKey: adminArchiveQueryKeys.hands(streamId),
     queryFn: async () => {
       const handsRef = collection(firestore, 'hands')
+      // videoTimestampStart로 정렬: 영상 내 실제 핸드 순서 보장
+      // (number 필드는 정규화 전 임시값일 수 있음)
       const q = query(
         handsRef,
         where('streamId', '==', streamId),
-        orderBy('number', 'asc')
+        orderBy('videoTimestampStart', 'asc')
       )
       const snapshot = await getDocs(q)
 
       const hands: Hand[] = []
       snapshot.forEach((docSnapshot) => {
         const data = docSnapshot.data()
+        // 기존 문자열 데이터와 새로운 정수 데이터 모두 호환
+        const handNumber = typeof data.number === 'string'
+          ? parseInt(data.number, 10) || 0
+          : data.number ?? 0
         hands.push({
           id: docSnapshot.id,
           streamId: data.streamId,
-          number: data.number,
+          number: handNumber,
           description: data.description,
           aiSummary: data.aiSummary,
           confidence: data.confidence,

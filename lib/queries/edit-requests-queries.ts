@@ -42,7 +42,7 @@ export type HandEditRequest = {
   createdAt: string
   hand?: {
     id: string
-    number: string
+    number: number
     description: string
     stream?: {
       name: string
@@ -161,11 +161,16 @@ async function fetchUserEditRequests({
             const tournamentRef = doc(firestore, `tournaments/${handData.tournamentId}`)
             const tournamentSnap = await getDoc(tournamentRef)
 
+            // 기존 문자열 데이터와 새로운 정수 데이터 모두 호환
+            const handNumber = typeof handData.number === 'string'
+              ? parseInt(handData.number, 10) || 0
+              : handData.number ?? 0
+
             return {
               ...editRequest,
               hand: {
                 id: handSnap.id,
-                number: handData.number,
+                number: handNumber,
                 description: handData.description,
                 stream: streamSnap.exists()
                   ? {

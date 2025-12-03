@@ -164,7 +164,8 @@ export interface Stream {
 export interface Hand {
   id: string
   streamId: string
-  number: string
+  /** 핸드 번호 (정수: 정렬 일관성을 위해 number 타입 사용) */
+  number: number
   description: string
 
   // AI-generated summary (DB: ai_summary)

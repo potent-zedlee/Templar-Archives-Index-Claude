@@ -31,7 +31,7 @@ import Link from "next/link"
 
 type Hand = {
   id: string
-  number: string
+  number: number
   description: string
   stream: {
     id: string

@@ -31,7 +31,7 @@ interface PlayerHandGroup {
     eventName: string
     hands: {
       id: string
-      number: string
+      number: number
       description: string
       timestamp: string
       position?: string
@@ -244,9 +244,13 @@ async function groupHandsByTournament(
       group.events.push(eventGroup)
     }
 
+    // 기존 문자열 데이터와 새로운 정수 데이터 모두 호환
+    const handNumber = typeof hand.number === 'string'
+      ? parseInt(hand.number, 10) || 0
+      : hand.number ?? 0
     eventGroup.hands.push({
       id: hand.id,
-      number: hand.number,
+      number: handNumber,
       description: hand.description,
       timestamp: hand.timestamp,
       position: hand.playerInfo?.position,

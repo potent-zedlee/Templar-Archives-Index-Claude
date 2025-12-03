@@ -57,7 +57,7 @@ export type NaturalSearchFilter = z.infer<typeof NaturalSearchFilterSchema>
  */
 export interface NaturalSearchResult {
   id: string
-  number: string
+  number: number
   description: string
   timestamp: string
   favorite?: boolean

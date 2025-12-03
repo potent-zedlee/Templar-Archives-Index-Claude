@@ -60,7 +60,7 @@ function PlayingCard({ card }: { card: string }) {
 
 interface HandDetailData {
   id: string
-  number: string
+  number: number
   potSize?: number
   aiSummary?: string
   stakes?: string
