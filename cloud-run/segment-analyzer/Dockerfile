@@ -1,5 +1,6 @@
 # Segment Analyzer Service Dockerfile
 # FFmpeg 포함 Node.js 환경
+# Updated: 2025-12-03 - Fix TypeScript build
 
 FROM node:22-slim
 
@@ -15,7 +16,8 @@ WORKDIR /app
 COPY package*.json ./
 
 # 전체 의존성 설치 (빌드용 devDependencies 포함)
-RUN npm install
+# --include=dev 옵션으로 TypeScript 포함 보장
+RUN npm install --include=dev
 
 # 소스 코드 복사
 COPY tsconfig.json ./
