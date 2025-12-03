@@ -10,6 +10,21 @@ import { Firestore, FieldValue } from '@google-cloud/firestore'
 import { vertexAnalyzer } from '../lib/vertex-analyzer-phase2'
 import type { ProcessPhase2Request, Phase2Result } from '../types'
 
+/**
+ * "HH:MM:SS" 또는 "MM:SS" 형식의 타임스탬프를 초 단위로 변환
+ */
+function parseTimestampToSeconds(timestamp: string): number {
+  const parts = timestamp.split(':').map(Number)
+  if (parts.length === 3) {
+    // HH:MM:SS
+    return parts[0] * 3600 + parts[1] * 60 + parts[2]
+  } else if (parts.length === 2) {
+    // MM:SS
+    return parts[0] * 60 + parts[1]
+  }
+  return 0
+}
+
 const firestore = new Firestore({
   projectId: process.env.GOOGLE_CLOUD_PROJECT,
 })
@@ -82,9 +97,9 @@ export async function phase2Handler(c: Context) {
         hand: w.hand || null,
       })),
 
-      // 타임스탬프
-      videoTimestampStart: body.handTimestamp.start,
-      videoTimestampEnd: body.handTimestamp.end,
+      // 타임스탬프 (초 단위로 변환)
+      videoTimestampStart: parseTimestampToSeconds(body.handTimestamp.start),
+      videoTimestampEnd: parseTimestampToSeconds(body.handTimestamp.end),
 
       // 시맨틱 분석 필드
       semanticTags: result.semanticTags,
