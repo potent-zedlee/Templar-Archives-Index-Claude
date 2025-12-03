@@ -13,6 +13,7 @@ import { Hono } from 'hono'
 import { logger } from 'hono/logger'
 import { processSegmentHandler } from './handlers/process-segment'
 import { phase2Handler } from './handlers/phase2-handler'
+import { phase2BatchHandler } from './handlers/phase2-batch-handler'
 
 const app = new Hono()
 
@@ -26,6 +27,7 @@ app.get('/health', (c) => c.json({ status: 'healthy' }))
 // API Routes
 app.post('/analyze-segment', processSegmentHandler)
 app.post('/analyze-phase2', phase2Handler)
+app.post('/analyze-phase2-batch', phase2BatchHandler)  // 배치 처리 (비용 최적화)
 
 // Error handling
 app.onError((err, c) => {

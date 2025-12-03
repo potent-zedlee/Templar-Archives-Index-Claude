@@ -168,6 +168,20 @@ function parseTimestampToSeconds(timestamp: string): number {
 }
 
 /**
+ * 초 단위를 HH:MM:SS 또는 MM:SS 형식으로 변환
+ */
+function formatSecondsToTimestamp(totalSeconds: number): string {
+  const hours = Math.floor(totalSeconds / 3600)
+  const minutes = Math.floor((totalSeconds % 3600) / 60)
+  const seconds = Math.floor(totalSeconds % 60)
+
+  if (hours > 0) {
+    return `${hours}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
+  }
+  return `${minutes}:${String(seconds).padStart(2, '0')}`
+}
+
+/**
  * 중복 핸드 제거 및 병합 (타임스탬프 기반)
  *
  * 세그먼트 오버랩으로 인한 중복 핸드 처리:
@@ -301,29 +315,86 @@ export async function phase1CompleteHandler(c: Context) {
       progress: 30, // Phase 1 완료 = 30%
     })
 
-    // 7. 각 핸드에 대해 Phase 2 태스크 생성
-    const PHASE2_ANALYZER_URL = `${SEGMENT_ANALYZER_URL}/analyze-phase2`
+    // 7. 세그먼트별 배치 Phase 2 태스크 생성 (비용 최적화)
+    // 기존: 214회 개별 호출 → 최적화: 12회 배치 호출 (비디오 토큰 90% 절감)
+    const PHASE2_BATCH_URL = `${SEGMENT_ANALYZER_URL}/analyze-phase2-batch`
     const queuePath = tasksClient.queuePath(PROJECT_ID, LOCATION, QUEUE_NAME)
     const taskPromises: Promise<string>[] = []
 
-    for (let i = 0; i < dedupedHands.length; i++) {
-      const hand = dedupedHands[i]
+    // 세그먼트 정보 가져오기
+    const segments: SegmentInfo[] = jobData.segments || []
 
-      const request: ProcessPhase2Request = {
+    // 핸드를 세그먼트별로 그룹화
+    interface SegmentHandGroup {
+      segmentIndex: number
+      start: number
+      end: number
+      hands: Phase1Result['hands']
+    }
+
+    const segmentGroups: SegmentHandGroup[] = segments.map((seg, idx) => ({
+      segmentIndex: idx,
+      start: seg.start,
+      end: seg.end,
+      hands: [],
+    }))
+
+    // 각 핸드를 해당 세그먼트에 할당
+    for (const hand of dedupedHands) {
+      const handStart = parseTimestampToSeconds(hand.start)
+
+      // 핸드가 속하는 세그먼트 찾기
+      const segmentGroup = segmentGroups.find(
+        g => handStart >= g.start && handStart < g.end
+      )
+
+      if (segmentGroup) {
+        // 세그먼트 내 상대 타임스탬프 계산
+        const relativeStart = handStart - segmentGroup.start
+        const relativeEnd = parseTimestampToSeconds(hand.end) - segmentGroup.start
+
+        segmentGroup.hands.push({
+          ...hand,
+          start: formatSecondsToTimestamp(relativeStart),
+          end: formatSecondsToTimestamp(relativeEnd),
+        })
+      }
+    }
+
+    // 핸드가 있는 세그먼트만 필터링
+    const nonEmptyGroups = segmentGroups.filter(g => g.hands.length > 0)
+
+    console.log(`[Orchestrator] Grouping ${dedupedHands.length} hands into ${nonEmptyGroups.length} segment batches`)
+
+    // 각 세그먼트 그룹에 대해 배치 태스크 생성
+    for (let i = 0; i < nonEmptyGroups.length; i++) {
+      const group = nonEmptyGroups[i]
+
+      // 세그먼트 GCS URI 생성 (Phase 1에서 사용한 것과 동일)
+      // 형식: gs://bucket/segments/{streamId}/segment_{index}.mp4
+      const bucketName = process.env.GCS_BUCKET_NAME || 'templar-archives-videos'
+      const segmentGcsUri = `gs://${bucketName}/segments/${body.streamId}/segment_${group.segmentIndex}.mp4`
+
+      const request = {
         jobId: body.jobId,
         streamId: body.streamId,
         tournamentId,
         eventId,
-        handIndex: hand.handNumber,
-        gcsUri: body.gcsUri,
-        handTimestamp: hand,
+        segmentIndex: group.segmentIndex,
+        gcsSegmentUri: segmentGcsUri,
         platform: body.platform,
+        handTimestamps: group.hands.map(h => ({
+          handNumber: h.handNumber,
+          start: h.start,
+          end: h.end,
+        })),
+        useCache: true, // Context Cache 활성화
       }
 
       const task = {
         httpRequest: {
           httpMethod: 'POST' as const,
-          url: PHASE2_ANALYZER_URL,
+          url: PHASE2_BATCH_URL,
           headers: {
             'Content-Type': 'application/json',
           },
@@ -332,15 +403,15 @@ export async function phase1CompleteHandler(c: Context) {
             ? { serviceAccountEmail: process.env.SERVICE_ACCOUNT_EMAIL }
             : undefined,
         },
-        // 핸드 간 약간의 지연 (동시 실행 제어)
+        // 세그먼트 간 약간의 지연 (동시 실행 제어)
         scheduleTime: {
-          seconds: Math.floor(Date.now() / 1000) + i * 3,
+          seconds: Math.floor(Date.now() / 1000) + i * 5,
         },
       }
 
       taskPromises.push(
         tasksClient.createTask({ parent: queuePath, task }).then(([response]) => {
-          console.log(`[Orchestrator] Created Phase 2 task for hand ${hand.handNumber}: ${response.name}`)
+          console.log(`[Orchestrator] Created Phase 2 batch task for segment ${group.segmentIndex} (${group.hands.length} hands): ${response.name}`)
           return response.name!
         })
       )
@@ -348,12 +419,13 @@ export async function phase1CompleteHandler(c: Context) {
 
     await Promise.all(taskPromises)
 
-    console.log(`[Orchestrator] All ${dedupedHands.length} Phase 2 tasks enqueued`)
+    console.log(`[Orchestrator] All ${nonEmptyGroups.length} Phase 2 batch tasks enqueued (${dedupedHands.length} hands total)`)
 
     return c.json({
       success: true,
       jobId: body.jobId,
-      phase2TasksCreated: dedupedHands.length,
+      phase2BatchTasks: nonEmptyGroups.length,
+      phase2TotalHands: dedupedHands.length,
       rawHandsCount: allHands.length,
       dedupedHandsCount: dedupedHands.length,
     })
