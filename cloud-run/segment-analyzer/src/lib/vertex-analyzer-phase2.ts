@@ -20,7 +20,7 @@ import type { Phase2Result } from '../types'
 
 export type Platform = 'ept' | 'triton' | 'wsop'
 
-// Gemini 2.5 Flash - Phase 2 상세 분석용
+// Gemini 2.5 Flash - Phase 2 상세 분석용 (정확도 우선)
 const MODEL_NAME = 'gemini-2.5-flash'
 
 export interface HandTimestamp {

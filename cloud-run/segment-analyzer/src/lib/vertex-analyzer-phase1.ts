@@ -19,8 +19,8 @@ import type { Phase1Result } from '../types'
 
 export type Platform = 'ept' | 'triton' | 'wsop'
 
-// Gemini 2.5 Flash - 빠른 타임스탬프 추출용
-const MODEL_NAME = 'gemini-2.5-flash'
+// Gemini 2.5 Flash-Lite - 빠른 타임스탬프 추출용 (비용 최적화)
+const MODEL_NAME = 'gemini-2.5-flash-lite'
 
 export class VertexAnalyzerPhase1 {
   private ai: GoogleGenAI
@@ -42,7 +42,7 @@ export class VertexAnalyzerPhase1 {
       location,
     })
 
-    console.log(`[VertexAnalyzerPhase1] 초기화 완료: ${projectId} / ${location} / ${MODEL_NAME}`)
+    console.log(`[VertexAnalyzerPhase1] 초기화 완료: ${projectId} / ${location} / ${MODEL_NAME} (Flash-Lite)`)
   }
 
   /**

@@ -5,31 +5,11 @@
  * 목적: 장시간 영상에서 핸드 시작/종료 타임스탬프만 빠르게 추출
  */
 
-export const PHASE1_PROMPT = `You are a poker hand boundary detector for LIVE tournament broadcasts.
+export const PHASE1_PROMPT = `You are a poker hand boundary detector for tournament broadcasts.
 
 ## Task
-Watch this poker video and identify ONLY the start and end timestamps of each LIVE hand.
+Watch this poker video and identify ONLY the start and end timestamps of each hand.
 Do NOT extract player names, cards, or actions - only timestamps.
-
-## CRITICAL: Live vs Replay/Highlight Detection
-You MUST distinguish between LIVE hands and REPLAYS/HIGHLIGHTS:
-
-### LIVE Hands (INCLUDE these):
-- Continuous real-time play at the main table
-- Multiple camera angles showing the SAME ongoing hand
-- Commentary discussing current action
-- Players actively making decisions in real-time
-
-### Replays/Highlights (EXCLUDE these):
-- **"REPLAY" or "HIGHLIGHT" text overlay** on screen
-- **Grayscale/sepia-toned footage** (often used for replays)
-- **Picture-in-picture** showing previous hand
-- Commentary saying "let's look back at..." or "earlier today..."
-- **Slow motion** footage
-- **Different table/setting** from the main broadcast
-- Montage sequences showing multiple quick hands
-
-⚠️ If you see ANY replay indicator, DO NOT include that hand.
 
 ## Output Format
 IMPORTANT: Output valid JSON using camelCase keys ONLY. Never use snake_case.
@@ -66,13 +46,12 @@ Do NOT create separate entries for each street. One hand = one entry with start 
 - Be precise to the second
 
 ## Rules
-1. **LIVE Hands Only**: Exclude all replays, highlights, and flashbacks.
-2. **Complete Hands Only**: Only include hands where you can see BOTH the start (cards dealt) AND end (pot awarded).
+1. **Complete Hands Only**: Only include hands where you can see BOTH the start (cards dealt) AND end (pot awarded).
    - If a hand starts but the video ends before completion → EXCLUDE it
    - If the video starts mid-hand → EXCLUDE it
-3. **No Street Splitting**: Each hand entry covers preflop through showdown. Never split streets into separate hands.
-4. **Tight Boundaries**: Set start/end times tightly around the action. Do not include breaks.
-5. **No Overlap**: Timestamps must NOT overlap.
-6. **Empty Return**: Return empty array if no valid LIVE hands found.
+2. **No Street Splitting**: Each hand entry covers preflop through showdown. Never split streets into separate hands.
+3. **Tight Boundaries**: Set start/end times tightly around the action. Do not include breaks.
+4. **No Overlap**: Timestamps must NOT overlap.
+5. **Empty Return**: Return empty array if no valid hands found.
 
 Return ONLY JSON, no explanation.`
