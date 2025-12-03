@@ -174,15 +174,18 @@ export interface FinalizeRequest {
   streamId: string
 }
 
-// API 응답 형식 (기존 Trigger.dev 호환)
+// API 응답 형식 (기존 Trigger.dev 호환 + Phase 2 확장)
 export interface JobStatusResponse {
   id: string
   status: 'PENDING' | 'EXECUTING' | 'SUCCESS' | 'FAILURE'
   progress: number
+  phase: 'phase1' | 'phase2' | 'completed'
   metadata: {
     totalSegments: number
     completedSegments: number
-    handsFound: number
+    handsFound: number  // Phase 1: 중복 포함, Phase 2: 중복 제거 후
+    phase2TotalHands?: number
+    phase2CompletedHands?: number
   }
   createdAt: string
   completedAt: string | null
@@ -197,18 +200,46 @@ export function mapJobStatus(job: AnalysisJob): JobStatusResponse {
     failed: 'FAILURE',
   }
 
-  const progress = job.totalSegments > 0
-    ? Math.round((job.completedSegments / job.totalSegments) * 100)
-    : 0
+  // Phase에 따른 progress 계산
+  // Phase 1: 0-30% (세그먼트 기반)
+  // Phase 2: 30-100% (핸드 기반)
+  let progress: number
+  const currentPhase = job.phase ?? 'phase1'
+
+  if (currentPhase === 'phase1') {
+    // Phase 1: 세그먼트 완료율 * 30%
+    progress = job.totalSegments > 0
+      ? Math.round((job.completedSegments / job.totalSegments) * 30)
+      : 0
+  } else if (currentPhase === 'phase2') {
+    // Phase 2: 30% + (핸드 완료율 * 70%)
+    const phase2Progress = (job.phase2TotalHands ?? 0) > 0
+      ? ((job.phase2CompletedHands ?? 0) / job.phase2TotalHands!) * 70
+      : 0
+    progress = Math.round(30 + phase2Progress)
+  } else {
+    // completed
+    progress = 100
+  }
+
+  // handsFound는 Phase에 따라 다른 값 반환
+  // Phase 1: 세그먼트별 누적 (중복 포함)
+  // Phase 2+: phase2TotalHands (중복 제거 후)
+  const handsFound = currentPhase === 'phase1'
+    ? job.handsFound
+    : (job.phase2TotalHands ?? job.handsFound)
 
   return {
     id: job.jobId,
     status: statusMap[job.status],
     progress,
+    phase: currentPhase,
     metadata: {
       totalSegments: job.totalSegments,
       completedSegments: job.completedSegments,
-      handsFound: job.handsFound,
+      handsFound,
+      phase2TotalHands: job.phase2TotalHands,
+      phase2CompletedHands: job.phase2CompletedHands,
     },
     createdAt: job.createdAt.toISOString(),
     completedAt: job.completedAt?.toISOString() ?? null,

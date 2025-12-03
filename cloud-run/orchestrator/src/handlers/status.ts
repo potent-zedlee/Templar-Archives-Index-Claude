@@ -10,7 +10,8 @@
 
 import type { Context } from 'hono'
 import { Firestore } from '@google-cloud/firestore'
-import type { AnalysisJob, JobStatusResponse } from '../types'
+import type { AnalysisJob } from '../types'
+import { mapJobStatus } from '../types'
 
 const firestore = new Firestore({
   projectId: process.env.GOOGLE_CLOUD_PROJECT,
@@ -91,31 +92,8 @@ export async function statusHandler(c: Context) {
       }
     }
 
-    // 기존 Trigger.dev 응답 형식으로 변환
-    const statusMap: Record<AnalysisJob['status'], JobStatusResponse['status']> = {
-      pending: 'PENDING',
-      analyzing: 'EXECUTING',
-      completed: 'SUCCESS',
-      failed: 'FAILURE',
-    }
-
-    const progress = job.totalSegments > 0
-      ? Math.round((job.completedSegments / job.totalSegments) * 100)
-      : 0
-
-    const response: JobStatusResponse = {
-      id: job.jobId,
-      status: statusMap[job.status],
-      progress,
-      metadata: {
-        totalSegments: job.totalSegments,
-        completedSegments: job.completedSegments,
-        handsFound: job.handsFound,
-      },
-      createdAt: job.createdAt.toISOString(),
-      completedAt: job.completedAt?.toISOString() ?? null,
-      error: job.errorMessage,
-    }
+    // mapJobStatus 함수로 일관된 응답 생성
+    const response = mapJobStatus(job)
 
     return c.json(response)
 
