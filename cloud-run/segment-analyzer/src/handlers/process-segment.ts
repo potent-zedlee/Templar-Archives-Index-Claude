@@ -117,6 +117,17 @@ export async function processSegmentHandler(c: Context) {
       return c.json({ error: 'Job not found' }, 404)
     }
 
+    // 이미 완료된 세그먼트인지 확인 (Cloud Tasks 재시도 방지)
+    const jobData = jobDoc.data()
+    if (jobData?.segments?.[segmentIndex]?.status === 'completed') {
+      console.log(`[SegmentAnalyzer] Segment ${segmentIndex} already completed, skipping`)
+      return c.json({
+        success: true,
+        skipped: true,
+        reason: 'Segment already completed',
+      })
+    }
+
     // 세그먼트 상태를 processing으로 업데이트
     await updateSegmentStatus(jobRef, segmentIndex, 'processing')
 
@@ -247,19 +258,27 @@ async function updateSegmentStatus(
 
 /**
  * 세그먼트 완료 업데이트
+ * Race condition 방지: 이미 완료된 세그먼트는 스킵
  */
 async function updateSegmentCompleted(
   jobRef: FirebaseFirestore.DocumentReference,
   segmentIndex: number,
   handsFound: number
-) {
-  await firestore.runTransaction(async (transaction) => {
+): Promise<boolean> {
+  return await firestore.runTransaction(async (transaction) => {
     const jobDoc = await transaction.get(jobRef)
     const data = jobDoc.data()
 
-    if (!data) return
+    if (!data) return false
 
     const segments = [...data.segments]
+
+    // 이미 완료된 세그먼트인지 확인 (race condition 방지)
+    if (segments[segmentIndex]?.status === 'completed') {
+      console.log(`[SegmentAnalyzer] Segment ${segmentIndex} already completed, skipping`)
+      return false
+    }
+
     if (segments[segmentIndex]) {
       segments[segmentIndex] = {
         ...segments[segmentIndex],
@@ -268,16 +287,22 @@ async function updateSegmentCompleted(
       }
     }
 
+    // completedSegments는 segments 배열에서 직접 계산
+    const completedCount = segments.filter(s => s?.status === 'completed').length
+
     transaction.update(jobRef, {
       segments,
-      completedSegments: (data.completedSegments || 0) + 1,
+      completedSegments: completedCount,
       handsFound: (data.handsFound || 0) + handsFound,
     })
+
+    return true
   })
 }
 
 /**
  * 세그먼트 실패 업데이트
+ * Race condition 방지: 이미 처리된 세그먼트는 스킵
  */
 async function updateSegmentFailed(
   jobRef: FirebaseFirestore.DocumentReference,
@@ -291,6 +316,13 @@ async function updateSegmentFailed(
     if (!data) return
 
     const segments = [...data.segments]
+
+    // 이미 완료/실패된 세그먼트인지 확인
+    if (segments[segmentIndex]?.status === 'completed' || segments[segmentIndex]?.status === 'failed') {
+      console.log(`[SegmentAnalyzer] Segment ${segmentIndex} already ${segments[segmentIndex]?.status}, skipping failure update`)
+      return
+    }
+
     if (segments[segmentIndex]) {
       segments[segmentIndex] = {
         ...segments[segmentIndex],
@@ -299,9 +331,12 @@ async function updateSegmentFailed(
       }
     }
 
+    // failedSegments는 segments 배열에서 직접 계산
+    const failedCount = segments.filter(s => s?.status === 'failed').length
+
     transaction.update(jobRef, {
       segments,
-      failedSegments: (data.failedSegments || 0) + 1,
+      failedSegments: failedCount,
     })
   })
 }

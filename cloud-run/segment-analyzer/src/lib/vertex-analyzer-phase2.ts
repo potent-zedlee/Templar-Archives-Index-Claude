@@ -153,7 +153,7 @@ export class VertexAnalyzerPhase2 {
             temperature: 0.1, // 더 정확한 분석을 위해 낮춤
             topP: 0.9,
             topK: 32,
-            maxOutputTokens: 65535,
+            maxOutputTokens: 8192,
             responseMimeType: 'application/json',
             // Gemini 3 Pro의 adaptive thinking 활성화
             // 복잡한 포커 핸드 분석에 적합한 설정
