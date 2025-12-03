@@ -301,6 +301,13 @@ docker buildx build --platform linux/amd64 --load ...
 
 **참고**: [Cloud Run 소스 배포 공식 문서](https://cloud.google.com/run/docs/deploying-source-code)
 
+### 하이브리드 빌드 전략
+
+| 서비스 | 빌드 방식 | 이유 |
+|--------|----------|------|
+| **orchestrator** | Buildpack (Dockerfile 없음) | FFmpeg 불필요, 간단 |
+| **segment-analyzer** | Multi-stage Dockerfile | FFmpeg 필수 |
+
 ### Firebase Security Rules 역할
 
 | 역할 | 권한 |
@@ -537,5 +544,5 @@ const MAX_CONCURRENT_UPLOADS = 3     // 동시 파일 3개 - 대역폭 활용
 
 ---
 
-**마지막 업데이트**: 2025-12-02
-**문서 버전**: 8.4 (Cloud Run 환경 변수 문서화: SERVICE_ACCOUNT_EMAIL, ORCHESTRATOR_URL)
+**마지막 업데이트**: 2025-12-03
+**문서 버전**: 8.5 (배포 아키텍처 최적화: Buildpack + Multi-stage Dockerfile 하이브리드, 레거시 코드 정리)

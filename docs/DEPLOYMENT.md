@@ -1,6 +1,6 @@
 # Templar Archives 배포 가이드
 
-**마지막 업데이트**: 2025-12-01
+**마지막 업데이트**: 2025-12-03
 
 ---
 
@@ -115,7 +115,7 @@ NEXT_SERVER_ACTIONS_ENCRYPTION_KEY=<암호화 키>
 
 ## 4단계: Cloud Run 설정 (영상 분석)
 
-### 4.1 Cloud Run 서비스 배포
+### 4.1 배포 명령
 
 ```bash
 # 전체 배포 (권장)
@@ -126,15 +126,22 @@ cd cloud-run && ./deploy.sh orchestrator      # Orchestrator만
 cd cloud-run && ./deploy.sh segment-analyzer  # Segment Analyzer만
 ```
 
-### 4.2 Cloud Build 사용 (권장)
+### 4.2 배포 방식: `gcloud run deploy --source`
 
-deploy.sh는 `gcloud run deploy --source` 명령을 사용하여 **Cloud Build**에서 서버 빌드를 수행합니다.
+deploy.sh는 `gcloud run deploy --source` 명령을 사용하여 **Cloud Build에서 서버 빌드**를 수행합니다.
 
 **장점:**
 - 로컬 Docker 설치 불필요
 - Apple Silicon Mac에서도 플랫폼 문제 없음
 
-### 4.3 Cloud Tasks 큐 생성
+### 4.3 하이브리드 빌드 전략
+
+| 서비스 | 빌드 방식 | 이유 |
+|--------|----------|------|
+| **orchestrator** | Buildpack | FFmpeg 불필요, 간단 |
+| **segment-analyzer** | Multi-stage Dockerfile | FFmpeg 필수 |
+
+### 4.4 Cloud Tasks 큐 생성
 
 ```bash
 gcloud tasks queues create video-analysis-queue --location=asia-northeast3
@@ -163,6 +170,7 @@ gh run view <run-id> --log-failed
 
 # Cloud Run 로그
 gcloud run services logs read video-orchestrator --region=asia-northeast3
+gcloud run services logs read segment-analyzer --region=asia-northeast3
 ```
 
 ---
@@ -207,6 +215,21 @@ gsutil cors set gcs-cors.json gs://templar-archives-videos
 
 **브라우저 캐시 문제**: CORS preflight가 캐시될 수 있으므로 하드 리프레시(Cmd+Shift+R) 또는 시크릿 탭에서 테스트
 
+### Cloud Run 캐시 문제 (이전 코드 배포됨)
+
+**원인**: Cloud Build 레이어 캐시로 인해 변경된 코드가 반영되지 않음
+
+**해결**:
+```bash
+# 강제 새 빌드
+gcloud builds submit --no-cache --source=. ...
+```
+
+**예방**:
+- `package-lock.json` 포함 확인
+- `npm ci` 사용 (npm install 대신)
+- Multi-stage Dockerfile로 빌드 최적화
+
 ---
 
 ## 참고 문서
@@ -214,4 +237,6 @@ gsutil cors set gcs-cors.json gs://templar-archives-videos
 - [Vercel 문서](https://vercel.com/docs)
 - [Firebase Hosting 문서](https://firebase.google.com/docs/hosting)
 - [Cloud Run 문서](https://cloud.google.com/run/docs)
+- [Cloud Run 소스 배포](https://cloud.google.com/run/docs/deploying-source-code)
 - [CLAUDE.md](../CLAUDE.md) - 프로젝트 개발 가이드
+- [cloud-run/README.md](../cloud-run/README.md) - Cloud Run 상세 문서
