@@ -113,6 +113,9 @@ function mapFirestoreEvent(
 
 /**
  * FirestoreStream을 Stream 타입으로 변환
+ *
+ * 참고: pipelineStatus를 포함하여 분석 완료(completed) 상태의 스트림도
+ * Archive에서 핸드를 표시할 수 있음
  */
 function mapFirestoreStream(
   docSnap: DocumentSnapshot | QueryDocumentSnapshot,
@@ -137,6 +140,12 @@ function mapFirestoreStream(
     createdAt: timestampToString(data.createdAt),
     playerCount: data.stats?.playersCount || 0,
     handCount: data.stats?.handsCount || 0,
+    // 파이프라인 필드 (분석 완료 여부 확인용)
+    pipelineStatus: data.pipelineStatus,
+    pipelineProgress: data.pipelineProgress,
+    pipelineError: data.pipelineError,
+    pipelineUpdatedAt: timestampToString(data.pipelineUpdatedAt),
+    currentJobId: data.currentJobId,
     selected: false,
   }
 }
@@ -289,6 +298,10 @@ async function fetchEventsByTournament(tournamentId: string): Promise<Event[]> {
  * 특정 이벤트의 스트림 목록 조회 (Lazy Load)
  * 이벤트 확장 시에만 호출
  *
+ * 참고: 분석 완료(completed) 상태의 스트림도 포함
+ * - publishedAt 대신 createdAt으로 정렬 (모든 스트림에 존재)
+ * - pipelineStatus가 completed/published인 스트림 표시
+ *
  * @param tournamentId - 토너먼트 ID
  * @param eventId - 이벤트 ID
  * @returns Stream[]
@@ -299,7 +312,8 @@ async function fetchStreamsByEvent(
 ): Promise<Stream[]> {
   try {
     const streamsRef = collection(db, COLLECTION_PATHS.STREAMS(tournamentId, eventId))
-    const streamsQuery = query(streamsRef, orderBy('publishedAt', 'desc'))
+    // createdAt으로 정렬 (모든 스트림에 존재하는 필드)
+    const streamsQuery = query(streamsRef, orderBy('createdAt', 'desc'))
     const streamsSnapshot = await getDocs(streamsQuery)
 
     return streamsSnapshot.docs.map((streamDoc) =>
@@ -353,7 +367,8 @@ async function fetchTournamentsTreeFirestore(
       // 3. 모든 이벤트의 스트림을 병렬로 조회 (N+1 → 병렬화)
       const eventPromises = eventsSnapshot.docs.map(async (eventDoc) => {
         const streamsRef = collection(db, COLLECTION_PATHS.STREAMS(tournamentDoc.id, eventDoc.id))
-        const streamsQuery = query(streamsRef, orderBy('publishedAt', 'desc'))
+        // createdAt으로 정렬 (모든 스트림에 존재하는 필드, completed 상태 포함)
+        const streamsQuery = query(streamsRef, orderBy('createdAt', 'desc'))
         const streamsSnapshot = await getDocs(streamsQuery)
 
         const streams: Stream[] = streamsSnapshot.docs
