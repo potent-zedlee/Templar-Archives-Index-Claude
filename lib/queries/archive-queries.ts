@@ -199,8 +199,8 @@ function mapFirestoreHand(docSnap: DocumentSnapshot | QueryDocumentSnapshot): Ha
       isWinner: p.isWinner,
       player: {
         id: p.playerId,
-        name: p.name,
-        normalizedName: p.name.toLowerCase().replace(/[^a-z0-9]/g, ''),
+        name: p.name || 'Unknown',
+        normalizedName: (p.name || '').toLowerCase().replace(/[^a-z0-9]/g, ''),
       },
     })),
     checked: false,
@@ -530,20 +530,12 @@ export function useStreamsQuery(
  * @returns Hand[]
  */
 async function fetchHandsByStreamFirestore(streamId: string): Promise<Hand[]> {
-  try {
-    console.log('[DEBUG] fetchHandsByStreamFirestore called with streamId:', streamId)
-    const handsRef = collection(db, COLLECTION_PATHS.HANDS)
-    // number 필드로 정렬: 핸드 번호 순서 보장 (#1, #2, #3...)
-    const handsQuery = query(handsRef, where('streamId', '==', streamId), orderBy('number', 'asc'))
-    console.log('[DEBUG] Executing hands query...')
-    const handsSnapshot = await getDocs(handsQuery)
-    console.log('[DEBUG] Hands query result count:', handsSnapshot.size)
+  const handsRef = collection(db, COLLECTION_PATHS.HANDS)
+  // number 필드로 정렬: 핸드 번호 순서 보장 (#1, #2, #3...)
+  const handsQuery = query(handsRef, where('streamId', '==', streamId), orderBy('number', 'asc'))
+  const handsSnapshot = await getDocs(handsQuery)
 
-    return handsSnapshot.docs.map(mapFirestoreHand)
-  } catch (error) {
-    console.error('[DEBUG] Error fetching hands from Firestore:', error)
-    throw error
-  }
+  return handsSnapshot.docs.map(mapFirestoreHand)
 }
 
 /**
