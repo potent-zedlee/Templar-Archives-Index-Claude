@@ -439,14 +439,14 @@ export async function updateStreamPipelineStatusById(
     }
 
     // collectionGroup으로 모든 streams 서브컬렉션에서 해당 ID의 문서 찾기
+    // 스트림 문서에 저장된 'id' 필드를 사용하여 검색
     const snapshot = await adminFirestore
       .collectionGroup('streams')
-      .where('__name__', '>=', streamId)
-      .where('__name__', '<=', streamId + '\uf8ff')
+      .where('id', '==', streamId)
+      .limit(1)
       .get()
 
-    // 문서 ID가 정확히 일치하는 것만 필터링
-    const matchingDoc = snapshot.docs.find(doc => doc.id === streamId)
+    const matchingDoc = snapshot.docs[0]
 
     if (!matchingDoc) {
       return { success: false, error: `Stream not found: ${streamId}` }
