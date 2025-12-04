@@ -420,6 +420,62 @@ export async function resetStreamAnalysis(
 }
 
 /**
+ * 스트림 파이프라인 상태 업데이트 (streamId만으로 조회)
+ *
+ * collectionGroup 쿼리를 사용하여 서브컬렉션 경로를 모르더라도
+ * streamId만으로 스트림을 찾아 상태를 업데이트합니다.
+ *
+ * ReviewPanel에서 전체 승인 시 사용됩니다.
+ */
+export async function updateStreamPipelineStatusById(
+  streamId: string,
+  newStatus: Exclude<PipelineStatus, 'all'>,
+  options?: { error?: string }
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const auth = await verifyAdmin()
+    if (!auth.authorized) {
+      return { success: false, error: auth.error }
+    }
+
+    // collectionGroup으로 모든 streams 서브컬렉션에서 해당 ID의 문서 찾기
+    const snapshot = await adminFirestore
+      .collectionGroup('streams')
+      .where('__name__', '>=', streamId)
+      .where('__name__', '<=', streamId + '\uf8ff')
+      .get()
+
+    // 문서 ID가 정확히 일치하는 것만 필터링
+    const matchingDoc = snapshot.docs.find(doc => doc.id === streamId)
+
+    if (!matchingDoc) {
+      return { success: false, error: `Stream not found: ${streamId}` }
+    }
+
+    const updateData: Record<string, unknown> = {
+      pipelineStatus: newStatus,
+      pipelineUpdatedAt: new Date(),
+    }
+
+    if (options?.error) {
+      updateData.pipelineError = options.error
+    }
+
+    if (newStatus === 'analyzing') {
+      updateData.pipelineProgress = 0
+    }
+
+    await matchingDoc.ref.update(updateData)
+
+    console.log(`[updateStreamPipelineStatusById] Stream ${streamId} status updated to ${newStatus}`)
+    return { success: true }
+  } catch (error: unknown) {
+    console.error('[updateStreamPipelineStatusById] Error:', error)
+    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
+  }
+}
+
+/**
  * 스트림 핸드 수 동기화
  *
  * hands 컬렉션에서 해당 스트림의 핸드 수를 계산하여

@@ -9,6 +9,7 @@ import { Hono } from 'hono'
 import { logger } from 'hono/logger'
 import { cors } from 'hono/cors'
 import { analyzeHandler, phase1CompleteHandler } from './handlers/analyze'
+import { youtubeAnalyzeHandler } from './handlers/youtube-analyze'
 import { statusHandler } from './handlers/status'
 
 const app = new Hono()
@@ -23,6 +24,7 @@ app.get('/health', (c) => c.json({ status: 'healthy' }))
 
 // API Routes
 app.post('/analyze', analyzeHandler)
+app.post('/analyze-youtube', youtubeAnalyzeHandler)  // YouTube URL 직접 분석
 app.post('/phase1-complete', phase1CompleteHandler)
 app.get('/status/:jobId', statusHandler)
 

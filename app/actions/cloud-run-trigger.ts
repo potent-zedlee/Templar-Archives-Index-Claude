@@ -201,3 +201,193 @@ export async function startAnalysis(input: {
     streamId: input.streamId,
   })
 }
+
+// =====================================================
+// YouTube URL 직접 분석
+// =====================================================
+
+export interface YouTubeAnalysisInput {
+  youtubeUrl: string
+  // 방법 1: 전체 영상 분석 (자동 30분 분할)
+  videoDurationSeconds?: number  // 영상 총 길이 (초)
+  // 방법 2: 특정 구간만 분석 (수동 지정)
+  segments?: Array<{ start: number; end: number }>
+  platform?: KanPlatform
+  streamId: string
+  streamName?: string  // 새 스트림 생성 시 이름
+}
+
+export interface YouTubeAnalysisResult {
+  success: boolean
+  jobId?: string
+  streamId?: string
+  youtubeUrl?: string
+  totalSegments?: number
+  error?: string
+}
+
+/**
+ * YouTube URL로 분석 시작 (GCS 업로드 불필요)
+ *
+ * YouTube 공개 영상을 직접 Gemini API로 분석
+ * - videoMetadata로 30분씩 세그먼트 분할
+ * - FFmpeg 처리 불필요
+ * - GCS 저장 비용 절감
+ */
+export async function startYouTubeAnalysis(
+  input: YouTubeAnalysisInput
+): Promise<YouTubeAnalysisResult> {
+  try {
+    const {
+      youtubeUrl,
+      videoDurationSeconds,
+      segments,
+      platform = 'ept',
+      streamId,
+      streamName,
+    } = input
+
+    console.log('[CloudRun-YouTube] Starting YouTube analysis')
+    console.log(`[CloudRun-YouTube] URL: ${youtubeUrl}`)
+    if (segments && segments.length > 0) {
+      console.log(`[CloudRun-YouTube] Segments: ${segments.length} (manual)`)
+      for (const seg of segments) {
+        console.log(`[CloudRun-YouTube]   - ${seg.start}s ~ ${seg.end}s`)
+      }
+    } else if (videoDurationSeconds) {
+      console.log(`[CloudRun-YouTube] Duration: ${videoDurationSeconds}s (${(videoDurationSeconds / 3600).toFixed(1)}h) - auto split`)
+    }
+    console.log(`[CloudRun-YouTube] Platform: ${platform}`)
+
+    if (!ORCHESTRATOR_URL) {
+      return {
+        success: false,
+        error: 'CLOUD_RUN_ORCHESTRATOR_URL is not configured',
+      }
+    }
+
+    // YouTube URL 검증
+    const youtubePattern = /^https?:\/\/(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[a-zA-Z0-9_-]{11}/
+    if (!youtubePattern.test(youtubeUrl)) {
+      return {
+        success: false,
+        error: 'Invalid YouTube URL format',
+      }
+    }
+
+    // segments 또는 videoDurationSeconds 중 하나는 필수
+    if (!segments && !videoDurationSeconds) {
+      return {
+        success: false,
+        error: 'Either segments or videoDurationSeconds is required',
+      }
+    }
+
+    // 영상 길이 검증 (videoDurationSeconds 사용 시만)
+    if (videoDurationSeconds) {
+      if (videoDurationSeconds < 60) {
+        return {
+          success: false,
+          error: 'Video is too short (minimum 1 minute)',
+        }
+      }
+      if (videoDurationSeconds > 24 * 3600) {
+        return {
+          success: false,
+          error: 'Video is too long (maximum 24 hours)',
+        }
+      }
+    }
+
+    // Stream이 없으면 생성
+    let targetStreamId = streamId
+    if (!targetStreamId) {
+      // 새 스트림 생성
+      const newStreamRef = adminFirestore.collection(COLLECTION_PATHS.UNSORTED_STREAMS).doc()
+      await newStreamRef.set({
+        id: newStreamRef.id,
+        name: streamName || `YouTube: ${youtubeUrl.substring(0, 50)}...`,
+        sourceType: 'youtube',
+        youtubeUrl,
+        videoDurationSeconds,
+        pipelineStatus: 'pending',
+        pipelineProgress: 0,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      targetStreamId = newStreamRef.id
+      console.log(`[CloudRun-YouTube] Created new stream: ${targetStreamId}`)
+    }
+
+    // Cloud Run Orchestrator 호출 (YouTube 엔드포인트)
+    console.log(`[CloudRun-YouTube] Calling Orchestrator: ${ORCHESTRATOR_URL}/analyze-youtube`)
+
+    // segments 또는 videoDurationSeconds 중 하나를 전달
+    const requestBody: Record<string, unknown> = {
+      streamId: targetStreamId,
+      youtubeUrl,
+      platform,
+    }
+
+    if (segments && segments.length > 0) {
+      requestBody.segments = segments
+    } else {
+      requestBody.videoDurationSeconds = videoDurationSeconds
+    }
+
+    const response = await fetch(`${ORCHESTRATOR_URL}/analyze-youtube`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestBody),
+    })
+
+    if (!response.ok) {
+      const error = await response.json()
+      console.error('[CloudRun-YouTube] Orchestrator error:', error)
+      return {
+        success: false,
+        error: error.error || `Orchestrator returned ${response.status}`,
+      }
+    }
+
+    const result = await response.json()
+    const jobId = result.jobId
+
+    console.log(`[CloudRun-YouTube] Job started: ${jobId}`)
+    console.log(`[CloudRun-YouTube] Total segments: ${result.totalSegments}`)
+
+    // Stream 상태 업데이트 (분석 중)
+    await adminFirestore
+      .collection(COLLECTION_PATHS.UNSORTED_STREAMS)
+      .doc(targetStreamId)
+      .update({
+        pipelineStatus: 'analyzing',
+        pipelineProgress: 0,
+        pipelineUpdatedAt: new Date(),
+        currentJobId: jobId,
+        sourceType: 'youtube',
+        youtubeUrl,
+        updatedAt: new Date(),
+      })
+
+    // 캐시 무효화
+    revalidatePath('/archive')
+    revalidatePath('/admin/archive/pipeline')
+
+    return {
+      success: true,
+      jobId,
+      streamId: targetStreamId,
+      youtubeUrl: result.youtubeUrl,
+      totalSegments: result.totalSegments,
+    }
+  } catch (error) {
+    console.error('[CloudRun-YouTube] Error:', error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    }
+  }
+}

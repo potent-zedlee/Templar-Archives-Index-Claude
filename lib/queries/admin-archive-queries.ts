@@ -412,6 +412,7 @@ import {
   getPipelineStatusCounts as getPipelineStatusCountsAction,
   getStreamsByPipelineStatus as getStreamsByPipelineStatusAction,
   resetStreamAnalysis as resetStreamAnalysisAction,
+  updateStreamPipelineStatusById as updateStreamPipelineStatusByIdAction,
 } from '@/app/actions/pipeline'
 
 /**
@@ -502,6 +503,9 @@ export function usePipelineStatusCounts() {
 
 /**
  * 스트림 파이프라인 상태 업데이트 뮤테이션
+ *
+ * collectionGroup 쿼리를 사용하여 서브컬렉션 경로를 모르더라도
+ * streamId만으로 스트림을 찾아 상태를 업데이트합니다.
  */
 export function useUpdatePipelineStatus() {
   const queryClient = useQueryClient()
@@ -516,22 +520,17 @@ export function useUpdatePipelineStatus() {
       status: PipelineStatus
       error?: string
     }) => {
-      const streamRef = doc(firestore, 'streams', streamId)
+      // Server Action 사용 (collectionGroup 쿼리로 서브컬렉션 지원)
+      const result = await updateStreamPipelineStatusByIdAction(
+        streamId,
+        status as Exclude<PipelineStatus, 'all'>,
+        error ? { error } : undefined
+      )
 
-      const updateData: Record<string, unknown> = {
-        pipelineStatus: status,
-        pipelineUpdatedAt: Timestamp.now(),
+      if (!result.success) {
+        throw new Error(result.error || '상태 업데이트 실패')
       }
 
-      if (error) {
-        updateData.pipelineError = error
-      }
-
-      if (status === 'analyzing') {
-        updateData.pipelineProgress = 0
-      }
-
-      await updateDoc(streamRef, updateData)
       return { streamId, status }
     },
     onSuccess: () => {
