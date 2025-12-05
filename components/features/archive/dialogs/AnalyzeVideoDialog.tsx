@@ -47,6 +47,7 @@ import { PlayerMatchResults } from "@/components/features/player/PlayerMatchResu
 import { VideoPlayerWithTimestamp } from "@/components/features/video/VideoPlayerWithTimestamp"
 import { startKanAnalysis } from "@/app/actions/kan-analysis"
 import { updateStreamVideoUrl } from "@/app/actions/archive"
+import { startYouTubeAnalysis } from "@/app/actions/cloud-run-trigger"
 import { useCloudRunJob } from "@/lib/hooks/use-cloud-run-job"
 import type { TimeSegment } from "@/types/segments"
 import { formatTime } from "@/types/segments"
@@ -68,6 +69,7 @@ interface PlayerInput {
 
 type Platform = "ept" | "triton" | "pokerstars" | "wsop" | "hustler"
 type AnalysisStatus = "idle" | "analyzing" | "processing" | "success" | "error"
+type AnalysisMode = "gcs" | "youtube"  // 분석 모드: GCS 업로드 vs YouTube 직접
 
 interface PlayerMatchResult {
   inputName: string
@@ -111,6 +113,11 @@ export function AnalyzeVideoDialog({
   const [youtubeUrl, setYoutubeUrl] = useState(stream?.videoUrl || '')
   const [isYoutubeEditing, setIsYoutubeEditing] = useState(false)
   const [isSavingYoutube, setIsSavingYoutube] = useState(false)
+
+  // 분석 모드 (YouTube URL이 있으면 YouTube 모드 기본값)
+  const [analysisMode, setAnalysisMode] = useState<AnalysisMode>(
+    stream?.videoUrl || stream?.videoSource === 'youtube' ? 'youtube' : 'gcs'
+  )
 
   // Progress tracking
   const [progressPercent, setProgressPercent] = useState(0)
@@ -176,6 +183,8 @@ export function AnalyzeVideoDialog({
       setYoutubeUrl(stream?.videoUrl || '')
       setYoutubeInput('')
       setIsYoutubeEditing(false)
+      // 분석 모드 초기화
+      setAnalysisMode(stream?.videoUrl || stream?.videoSource === 'youtube' ? 'youtube' : 'gcs')
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, stream?.videoUrl])
@@ -405,24 +414,46 @@ export function AnalyzeVideoDialog({
     console.log('[AnalyzeVideoDialog] handleAnalyze called')
     console.log('[AnalyzeVideoDialog] Timestamp:', new Date().toISOString())
     console.log('[AnalyzeVideoDialog] stream:', stream)
+    console.log('[AnalyzeVideoDialog] analysisMode:', analysisMode)
+    console.log('[AnalyzeVideoDialog] youtubeUrl:', youtubeUrl)
+    console.log('[AnalyzeVideoDialog] videoDuration:', videoDuration)
     console.log('============================================')
 
-    // 1단계: 즉시 검증 (UI 블로킹 최소화)
-    if (!stream?.gcsUri) {
-      console.error('[AnalyzeVideoDialog] No GCS URI')
-      setStatus("error")
-      setError("GCS URI가 없습니다")
-      toast.error("GCS URI가 없습니다")
-      return
-    }
+    // 1단계: 모드별 검증
+    if (analysisMode === 'youtube') {
+      // YouTube 모드: URL과 영상 길이 필수
+      if (!youtubeUrl) {
+        console.error('[AnalyzeVideoDialog] No YouTube URL')
+        setStatus("error")
+        setError("YouTube URL이 없습니다")
+        toast.error("YouTube URL을 입력해주세요")
+        return
+      }
+      if (!videoDuration || videoDuration < 60) {
+        console.error('[AnalyzeVideoDialog] Video duration too short or unknown')
+        setStatus("error")
+        setError("영상 길이를 확인할 수 없습니다. 영상 플레이어에서 재생해주세요.")
+        toast.error("영상을 재생하여 길이를 확인해주세요")
+        return
+      }
+    } else {
+      // GCS 모드: gcsUri 필수
+      if (!stream?.gcsUri) {
+        console.error('[AnalyzeVideoDialog] No GCS URI')
+        setStatus("error")
+        setError("GCS URI가 없습니다")
+        toast.error("GCS URI가 없습니다")
+        return
+      }
 
-    // gcsUri가 있으면 uploadStatus와 관계없이 분석 허용
-    if (stream.uploadStatus !== 'uploaded' && !stream.gcsUri) {
-      console.error('[AnalyzeVideoDialog] Video not uploaded')
-      setStatus("error")
-      setError("영상이 업로드되지 않았습니다")
-      toast.error("영상이 업로드되지 않았습니다")
-      return
+      // gcsUri가 있으면 uploadStatus와 관계없이 분석 허용
+      if (stream.uploadStatus !== 'uploaded' && !stream.gcsUri) {
+        console.error('[AnalyzeVideoDialog] Video not uploaded')
+        setStatus("error")
+        setError("영상이 업로드되지 않았습니다")
+        toast.error("영상이 업로드되지 않았습니다")
+        return
+      }
     }
 
     // 2단계: 즉시 UI 응답 (최소한의 상태만 변경하여 INP 최적화)
@@ -445,6 +476,7 @@ export function AnalyzeVideoDialog({
   const performAnalysis = async () => {
     try {
       console.log('[AnalyzeVideoDialog] Starting analysis...')
+      console.log('[AnalyzeVideoDialog] Analysis mode:', analysisMode)
 
       // Filter out empty players
       const validPlayers = players
@@ -453,6 +485,59 @@ export function AnalyzeVideoDialog({
 
       console.log('[AnalyzeVideoDialog] Valid players:', validPlayers)
 
+      // YouTube 모드인 경우 별도 처리
+      if (analysisMode === 'youtube') {
+        console.log('[AnalyzeVideoDialog] Using YouTube direct analysis')
+        console.log('[AnalyzeVideoDialog] YouTube URL:', youtubeUrl)
+        console.log('[AnalyzeVideoDialog] Video duration:', videoDuration, 'seconds')
+
+        // 세그먼트가 지정된 경우 사용, 아니면 전체 영상 (자동 30분 분할)
+        let youtubeSegments: Array<{ start: number; end: number }> | undefined
+
+        if (segments.length > 0) {
+          youtubeSegments = segments.map(seg => ({
+            start: timeStringToSeconds(seg.startTime),
+            end: timeStringToSeconds(seg.endTime),
+          }))
+          console.log('[AnalyzeVideoDialog] Using manual segments:', youtubeSegments)
+        }
+
+        const result = await startYouTubeAnalysis({
+          youtubeUrl,
+          videoDurationSeconds: youtubeSegments ? undefined : videoDuration,
+          segments: youtubeSegments,
+          platform: platform as 'ept' | 'triton' | 'wsop',
+          streamId: stream!.id,
+        })
+
+        console.log('[AnalyzeVideoDialog] startYouTubeAnalysis result:', result)
+
+        if (!result.success) {
+          throw new Error(result.error || "YouTube 분석에 실패했습니다")
+        }
+
+        // YouTube 분석 결과 처리
+        requestAnimationFrame(() => {
+          setJobId(result.jobId ?? null)
+          setStatus("processing")
+          setStartTime(new Date())
+          setProgressPercent(0)
+          setHandsFound(0)
+          // 세그먼트 결과 초기화
+          const totalSegs = result.totalSegments || 1
+          setSegmentResults(
+            Array.from({ length: totalSegs }, (_, idx) => ({
+              status: 'pending' as const,
+              segment_id: `seg_${idx}`,
+            }))
+          )
+          setProgress(`YouTube 분석이 시작되었습니다... (${totalSegs}개 세그먼트)`)
+          toast.success(`YouTube 분석 요청 완료! ${totalSegs}개 세그먼트로 분석됩니다.`)
+        })
+        return
+      }
+
+      // GCS 모드: 기존 로직 유지
       // Convert VideoSegment[] to TimeSegment[]
       // If no segments selected, analyze entire video (0 to videoDuration)
       let timeSegments: TimeSegment[]
@@ -627,133 +712,176 @@ export function AnalyzeVideoDialog({
 
             {/* Right Column: Upload + Form */}
             <div className="flex-1 md:flex-[2] space-y-6 overflow-y-auto">
-            {/* YouTube URL Section */}
+            {/* 분석 모드 선택 */}
             <div className="space-y-3">
-              <Label className="flex items-center gap-2">
-                <Youtube className="h-4 w-4 text-red-500" />
-                YouTube 링크 (선택)
-              </Label>
+              <Label>분석 방식</Label>
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  variant={analysisMode === 'youtube' ? 'default' : 'outline'}
+                  onClick={() => setAnalysisMode('youtube')}
+                  className="justify-start"
+                >
+                  <Youtube className="h-4 w-4 mr-2 text-red-500" />
+                  YouTube 직접
+                </Button>
+                <Button
+                  variant={analysisMode === 'gcs' ? 'default' : 'outline'}
+                  onClick={() => setAnalysisMode('gcs')}
+                  className="justify-start"
+                >
+                  <Link2 className="h-4 w-4 mr-2" />
+                  파일 업로드
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {analysisMode === 'youtube'
+                  ? 'YouTube 공개 영상을 직접 분석합니다. 업로드 불필요!'
+                  : 'GCS에 파일을 업로드한 후 분석합니다.'}
+              </p>
+            </div>
 
-              {/* YouTube URL이 없거나 편집 모드일 때 입력 폼 표시 */}
-              {(!youtubeUrl || isYoutubeEditing) ? (
-                <div className="space-y-2">
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder="https://youtube.com/watch?v=..."
-                      value={youtubeInput}
-                      onChange={(e) => setYoutubeInput(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault()
-                          handleYoutubeConfirm()
-                        }
-                      }}
-                      disabled={isSavingYoutube}
-                    />
-                    <Button
-                      onClick={handleYoutubeConfirm}
-                      disabled={!youtubeInput.trim() || isSavingYoutube}
-                      size="sm"
-                    >
-                      {isSavingYoutube ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Link2 className="h-4 w-4" />
-                      )}
-                    </Button>
-                    {isYoutubeEditing && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={handleYoutubeCancel}
+            {/* YouTube URL Section - YouTube 모드일 때만 표시 */}
+            {analysisMode === 'youtube' && (
+              <div className="space-y-3">
+                <Label className="flex items-center gap-2">
+                  <Youtube className="h-4 w-4 text-red-500" />
+                  YouTube URL (필수)
+                </Label>
+
+                {/* YouTube URL이 없거나 편집 모드일 때 입력 폼 표시 */}
+                {(!youtubeUrl || isYoutubeEditing) ? (
+                  <div className="space-y-2">
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="https://youtube.com/watch?v=..."
+                        value={youtubeInput}
+                        onChange={(e) => setYoutubeInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault()
+                            handleYoutubeConfirm()
+                          }
+                        }}
                         disabled={isSavingYoutube}
+                      />
+                      <Button
+                        onClick={handleYoutubeConfirm}
+                        disabled={!youtubeInput.trim() || isSavingYoutube}
+                        size="sm"
                       >
-                        <X className="h-4 w-4" />
+                        {isSavingYoutube ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Link2 className="h-4 w-4" />
+                        )}
                       </Button>
-                    )}
+                      {isYoutubeEditing && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={handleYoutubeCancel}
+                          disabled={isSavingYoutube}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ) : (
-                // YouTube URL이 있을 때 표시
-                <div className="flex items-center gap-2 rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3">
-                  <Youtube className="h-5 w-5 text-red-500" />
-                  <span className="text-sm font-medium text-red-400 flex-1 truncate">
-                    YouTube 연결됨
-                  </span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleYoutubeEdit}
-                    className="text-xs h-7"
-                  >
-                    변경
-                  </Button>
-                </div>
-              )}
-
-              <p className="text-xs text-muted-foreground">
-                참고용 영상 링크입니다. 분석은 업로드된 파일로 진행됩니다.
-              </p>
-            </div>
-
-            {/* Upload Section */}
-            <div className="space-y-3">
-              <Label>영상 업로드 (필수)</Label>
-
-              {/* 업로드 가능 상태: DB가 none이고 gcsUri가 없고 훅도 idle일 때 */}
-              {stream?.uploadStatus === 'none' && !stream?.gcsUri && uploadStatus === 'idle' && (
-                <VideoUploader
-                  onFileSelect={(file) => {
-                    console.log('[AnalyzeVideoDialog] File selected:', file.name)
-                    setSelectedFile({ name: file.name, size: file.size })
-                    upload(file)
-                  }}
-                />
-              )}
-
-              {/* 업로드 진행 중: 훅 상태가 uploading이거나 DB가 uploading일 때 */}
-              {(uploadStatus === 'uploading' || uploadStatus === 'paused' || stream?.uploadStatus === 'uploading') && (
-                <UploadProgress
-                  fileName={selectedFile?.name || stream?.videoFile || '업로드 중...'}
-                  fileSize={selectedFile?.size || 0}
-                  progress={uploadProgress}
-                  status={uploadStatus === 'idle' ? 'uploading' : uploadStatus}
-                  uploadSpeed={uploadSpeed}
-                  remainingTime={uploadRemainingTime}
-                  error={uploadError?.message}
-                  onPause={pause}
-                  onResume={resume}
-                  onCancel={cancel}
-                />
-              )}
-
-              {(stream?.uploadStatus === 'uploaded' || stream?.gcsUri || uploadStatus === 'completed') && (
-                <div className="flex items-center gap-2 rounded-lg border border-green-500/20 bg-green-500/10 px-4 py-3">
-                  <CheckCircle2 className="h-5 w-5 text-green-500" />
-                  <span className="text-sm font-medium text-green-400">
-                    업로드 완료
-                  </span>
-                </div>
-              )}
-
-              {(stream?.uploadStatus === 'failed' || uploadStatus === 'error') && (
-                <div className="flex items-center gap-2 rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3">
-                  <AlertCircle className="h-5 w-5 text-red-500" />
-                  <div>
-                    <span className="text-sm font-medium text-red-400">
-                      업로드 실패
+                ) : (
+                  // YouTube URL이 있을 때 표시
+                  <div className="flex items-center gap-2 rounded-lg border border-green-500/20 bg-green-500/10 px-4 py-3">
+                    <Youtube className="h-5 w-5 text-red-500" />
+                    <span className="text-sm font-medium text-green-400 flex-1 truncate">
+                      YouTube 연결됨
                     </span>
-                    {uploadError && (
-                      <p className="text-xs text-red-400/80 mt-1">{uploadError.message}</p>
-                    )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleYoutubeEdit}
+                      className="text-xs h-7"
+                    >
+                      변경
+                    </Button>
                   </div>
-                </div>
-              )}
+                )}
 
-              <p className="text-xs text-muted-foreground">
-                GCS에 영상을 업로드한 후 분석을 시작할 수 있습니다
-              </p>
-            </div>
+                {/* 영상 길이 표시 */}
+                {youtubeUrl && videoDuration > 0 && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <CheckCircle2 className="h-4 w-4 text-green-500" />
+                    영상 길이: {Math.floor(videoDuration / 3600)}시간 {Math.floor((videoDuration % 3600) / 60)}분
+                  </div>
+                )}
+
+                {youtubeUrl && videoDuration === 0 && (
+                  <div className="flex items-center gap-2 text-sm text-amber-500">
+                    <AlertCircle className="h-4 w-4" />
+                    영상을 재생하면 길이가 자동으로 감지됩니다
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Upload Section - GCS 모드에서만 표시 */}
+            {analysisMode === 'gcs' && (
+              <div className="space-y-3">
+                <Label>영상 업로드 (필수)</Label>
+
+                {/* 업로드 가능 상태: DB가 none이고 gcsUri가 없고 훅도 idle일 때 */}
+                {stream?.uploadStatus === 'none' && !stream?.gcsUri && uploadStatus === 'idle' && (
+                  <VideoUploader
+                    onFileSelect={(file) => {
+                      console.log('[AnalyzeVideoDialog] File selected:', file.name)
+                      setSelectedFile({ name: file.name, size: file.size })
+                      upload(file)
+                    }}
+                  />
+                )}
+
+                {/* 업로드 진행 중: 훅 상태가 uploading이거나 DB가 uploading일 때 */}
+                {(uploadStatus === 'uploading' || uploadStatus === 'paused' || stream?.uploadStatus === 'uploading') && (
+                  <UploadProgress
+                    fileName={selectedFile?.name || stream?.videoFile || '업로드 중...'}
+                    fileSize={selectedFile?.size || 0}
+                    progress={uploadProgress}
+                    status={uploadStatus === 'idle' ? 'uploading' : uploadStatus}
+                    uploadSpeed={uploadSpeed}
+                    remainingTime={uploadRemainingTime}
+                    error={uploadError?.message}
+                    onPause={pause}
+                    onResume={resume}
+                    onCancel={cancel}
+                  />
+                )}
+
+                {(stream?.uploadStatus === 'uploaded' || stream?.gcsUri || uploadStatus === 'completed') && (
+                  <div className="flex items-center gap-2 rounded-lg border border-green-500/20 bg-green-500/10 px-4 py-3">
+                    <CheckCircle2 className="h-5 w-5 text-green-500" />
+                    <span className="text-sm font-medium text-green-400">
+                      업로드 완료
+                    </span>
+                  </div>
+                )}
+
+                {(stream?.uploadStatus === 'failed' || uploadStatus === 'error') && (
+                  <div className="flex items-center gap-2 rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3">
+                    <AlertCircle className="h-5 w-5 text-red-500" />
+                    <div>
+                      <span className="text-sm font-medium text-red-400">
+                        업로드 실패
+                      </span>
+                      {uploadError && (
+                        <p className="text-xs text-red-400/80 mt-1">{uploadError.message}</p>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                <p className="text-xs text-muted-foreground">
+                  GCS에 영상을 업로드한 후 분석을 시작할 수 있습니다
+                </p>
+              </div>
+            )}
             {/* Platform Selection */}
             <div className="space-y-2">
               <Label>플랫폼 선택</Label>
@@ -878,7 +1006,11 @@ export function AnalyzeVideoDialog({
               </Button>
               <Button
                 onClick={handleAnalyze}
-                disabled={!stream?.gcsUri && stream?.uploadStatus !== 'uploaded' && uploadStatus !== 'completed'}
+                disabled={
+                  analysisMode === 'youtube'
+                    ? (!youtubeUrl || videoDuration < 60)  // YouTube: URL 필수 + 1분 이상 영상
+                    : (!stream?.gcsUri && stream?.uploadStatus !== 'uploaded' && uploadStatus !== 'completed')  // GCS: 업로드 완료 필수
+                }
                 data-testid="start-analysis-button"
               >
                 <Sparkles className="h-4 w-4 mr-2" />
