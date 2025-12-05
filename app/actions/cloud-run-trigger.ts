@@ -379,18 +379,25 @@ export async function startYouTubeAnalysis(
     console.log(`[CloudRun-YouTube] Total segments: ${result.totalSegments}`)
 
     // Stream 상태 업데이트 (분석 중)
-    await adminFirestore
-      .collection(COLLECTION_PATHS.UNSORTED_STREAMS)
-      .doc(targetStreamId)
-      .update({
-        pipelineStatus: 'analyzing',
-        pipelineProgress: 0,
-        pipelineUpdatedAt: new Date(),
-        currentJobId: jobId,
-        sourceType: 'youtube',
-        youtubeUrl,
-        updatedAt: new Date(),
-      })
+    // tournamentId/eventId가 있으면 중첩 경로, 없으면 streams 컬렉션
+    const streamRef = tournamentId && eventId
+      ? adminFirestore
+          .collection('tournaments').doc(tournamentId)
+          .collection('events').doc(eventId)
+          .collection('streams').doc(targetStreamId)
+      : adminFirestore
+          .collection(COLLECTION_PATHS.UNSORTED_STREAMS)
+          .doc(targetStreamId)
+
+    await streamRef.update({
+      pipelineStatus: 'analyzing',
+      pipelineProgress: 0,
+      pipelineUpdatedAt: new Date(),
+      currentJobId: jobId,
+      sourceType: 'youtube',
+      youtubeUrl,
+      updatedAt: new Date(),
+    })
 
     // 캐시 무효화
     revalidatePath('/archive')
