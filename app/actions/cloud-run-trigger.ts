@@ -303,6 +303,38 @@ export async function startYouTubeAnalysis(
       }
     }
 
+    // 30분 단위로 세그먼트 자동 분할 (Cloud Run 타임아웃 방지)
+    const MAX_SEGMENT_DURATION = 30 * 60 // 30분
+    let processedSegments: Array<{ start: number; end: number }> = []
+
+    if (segments && segments.length > 0) {
+      // 사용자 지정 세그먼트를 30분 단위로 분할
+      for (const seg of segments) {
+        const duration = seg.end - seg.start
+        if (duration <= MAX_SEGMENT_DURATION) {
+          processedSegments.push(seg)
+        } else {
+          // 30분 단위로 분할
+          let currentStart = seg.start
+          while (currentStart < seg.end) {
+            const currentEnd = Math.min(currentStart + MAX_SEGMENT_DURATION, seg.end)
+            processedSegments.push({ start: currentStart, end: currentEnd })
+            currentStart = currentEnd
+          }
+        }
+      }
+      console.log(`[CloudRun-YouTube] Segments split: ${segments.length} → ${processedSegments.length}`)
+    } else if (videoDurationSeconds) {
+      // 전체 영상을 30분 단위로 분할
+      let currentStart = 0
+      while (currentStart < videoDurationSeconds) {
+        const currentEnd = Math.min(currentStart + MAX_SEGMENT_DURATION, videoDurationSeconds)
+        processedSegments.push({ start: currentStart, end: currentEnd })
+        currentStart = currentEnd
+      }
+      console.log(`[CloudRun-YouTube] Full video split into ${processedSegments.length} segments`)
+    }
+
     // Stream이 없으면 생성
     let targetStreamId = streamId
     if (!targetStreamId) {
@@ -350,9 +382,9 @@ export async function startYouTubeAnalysis(
       requestBody.videoDurationSeconds = videoDurationSeconds
     }
 
-    // segments가 있으면 추가
-    if (segments && segments.length > 0) {
-      requestBody.segments = segments
+    // 분할된 세그먼트 전달 (항상 있음)
+    if (processedSegments.length > 0) {
+      requestBody.segments = processedSegments
     }
 
     const response = await fetch(`${ORCHESTRATOR_URL}/analyze-youtube`, {
