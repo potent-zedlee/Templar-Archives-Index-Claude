@@ -94,10 +94,11 @@ export function Footer() {
               ))}
               <li>
                 <a
-                  href="https://github.com/anthropics/claude-code"
+                  href="https://github.com/templar-archives"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-sm text-muted-foreground hover:text-gold-400 dark:hover:text-gold-300 transition-colors"
+                  aria-label="Templar Archives GitHub (새 탭에서 열림)"
                 >
                   GitHub
                 </a>

@@ -1,12 +1,23 @@
 import Link from 'next/link'
-import { Sparkles } from 'lucide-react'
+import { Sparkles, ArrowRight } from 'lucide-react'
+
+// 상수 정의
+const HERO_CONTENT = {
+  subtitle: '프로 포커 토너먼트의 모든 핸드 히스토리를 분석하고 학습하세요',
+  ctaPrimary: 'Archive 둘러보기',
+  ctaSecondary: '핸드 검색하기',
+  features: ['AI 영상 분석', 'GTO 분석', '실시간 통계'],
+} as const
 
 export function HeroSection() {
   return (
-    <section className="relative py-20 md:py-32 overflow-hidden">
+    <section
+      className="relative py-16 sm:py-20 md:py-32 overflow-hidden"
+      aria-labelledby="hero-title"
+    >
       {/* Background with gold glow effect */}
-      <div className="absolute inset-0 bg-gradient-to-b from-muted/50 to-background" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-gold-400/10 via-transparent to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-b from-muted/50 to-background" aria-hidden="true" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-gold-400/10 via-transparent to-transparent" aria-hidden="true" />
 
       {/* Grid pattern overlay */}
       <div
@@ -16,68 +27,69 @@ export function HeroSection() {
                            linear-gradient(90deg, rgba(251, 191, 36, 0.1) 1px, transparent 1px)`,
           backgroundSize: '50px 50px'
         }}
+        aria-hidden="true"
       />
 
       <div className="container max-w-7xl mx-auto px-4 md:px-6 relative z-10">
-        <div className="flex flex-col items-center text-center space-y-8">
+        <div className="flex flex-col items-center text-center space-y-6 sm:space-y-8">
           {/* Decorative icon */}
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gold-400/10 rounded-full border border-gold-400/20 mb-4">
-            <Sparkles className="w-8 h-8 text-gold-400" />
+          <div
+            className="inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 bg-gold-400/10 rounded-full border border-gold-400/20 mb-2 sm:mb-4"
+            aria-hidden="true"
+          >
+            <Sparkles className="w-7 h-7 sm:w-8 sm:h-8 text-gold-400" />
           </div>
 
           {/* Title */}
-          <div className="space-y-4">
-            <h1 className="text-5xl md:text-7xl font-bold tracking-tight">
+          <div className="space-y-3 sm:space-y-4">
+            <h1
+              id="hero-title"
+              className="text-4xl sm:text-5xl md:text-7xl font-bold tracking-tight"
+            >
               <span className="text-gold-400">TEMPLAR</span>{' '}
               <span className="text-foreground">ARCHIVES</span>
             </h1>
-            <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto">
-              프로 포커 토너먼트의 모든 핸드 히스토리를 분석하고 학습하세요
+            <p className="text-lg sm:text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto px-4 sm:px-0">
+              {HERO_CONTENT.subtitle}
             </p>
           </div>
 
           {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 pt-4">
+          <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 pt-2 sm:pt-4 w-full sm:w-auto px-4 sm:px-0">
             <Link
               href="/archive"
-              className="group px-8 py-4 bg-gold-400 text-gray-900 font-bold text-lg rounded-lg hover:bg-gold-500 transition-all duration-300 shadow-lg shadow-gold-400/20 hover:shadow-gold-400/40 hover:scale-105"
+              className="group px-6 sm:px-8 py-3 sm:py-4 bg-gold-400 text-gray-900 font-bold text-base sm:text-lg rounded-lg hover:bg-gold-500 transition-all duration-300 shadow-lg shadow-gold-400/20 hover:shadow-gold-400/40 hover:scale-105 text-center"
             >
-              <span className="flex items-center gap-2">
-                Archive 둘러보기
-                <svg
+              <span className="flex items-center justify-center gap-2">
+                {HERO_CONTENT.ctaPrimary}
+                <ArrowRight
                   className="w-5 h-5 group-hover:translate-x-1 transition-transform"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 5l7 7-7 7"
-                  />
-                </svg>
+                  aria-hidden="true"
+                />
               </span>
             </Link>
             <Link
               href="/search"
-              className="px-8 py-4 bg-muted text-foreground font-bold text-lg rounded-lg hover:bg-muted transition-all duration-300 border border-border hover:border-gold-400/50"
+              className="px-6 sm:px-8 py-3 sm:py-4 bg-muted text-foreground font-bold text-base sm:text-lg rounded-lg hover:bg-muted/80 transition-all duration-300 border border-border hover:border-gold-400/50 text-center"
             >
-              핸드 검색하기
+              {HERO_CONTENT.ctaSecondary}
             </Link>
           </div>
 
           {/* Feature badges */}
-          <div className="flex flex-wrap gap-3 justify-center pt-8">
-            {['AI 영상 분석', 'GTO 분석', '실시간 통계'].map((feature) => (
+          <nav
+            className="flex flex-wrap gap-2 sm:gap-3 justify-center pt-6 sm:pt-8 px-4 sm:px-0"
+            aria-label="주요 기능"
+          >
+            {HERO_CONTENT.features.map((feature) => (
               <span
                 key={feature}
-                className="px-4 py-2 bg-muted/80 text-muted-foreground text-sm rounded-full border border-border/50 backdrop-blur-sm"
+                className="px-3 sm:px-4 py-1.5 sm:py-2 bg-muted/80 text-muted-foreground text-xs sm:text-sm rounded-full border border-border/50 backdrop-blur-sm"
               >
                 {feature}
               </span>
             ))}
-          </div>
+          </nav>
         </div>
       </div>
     </section>

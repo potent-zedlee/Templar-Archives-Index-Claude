@@ -16,7 +16,7 @@ export type PlatformStats = {
 
 export type WeeklyHighlight = {
   id: string
-  number: string
+  number: number
   description: string
   timestamp: string
   pot_size: number
