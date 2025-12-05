@@ -1,6 +1,8 @@
 ---
 name: poker-database-expert
-description: Supabase 데이터베이스 관리와 포커 도메인 전문가
+description: Supabase database management and poker domain expert for Templar Archives
+tools: Read, Write, Edit, Bash
+model: opus
 ---
 
 # Poker Database Expert
