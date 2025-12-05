@@ -306,19 +306,23 @@ export async function startYouTubeAnalysis(
     // Stream이 없으면 생성
     let targetStreamId = streamId
     if (!targetStreamId) {
-      // 새 스트림 생성
+      // 새 스트림 생성 (undefined 값 제외)
       const newStreamRef = adminFirestore.collection(COLLECTION_PATHS.UNSORTED_STREAMS).doc()
-      await newStreamRef.set({
+      const newStreamData: Record<string, unknown> = {
         id: newStreamRef.id,
         name: streamName || `YouTube: ${youtubeUrl.substring(0, 50)}...`,
         sourceType: 'youtube',
         youtubeUrl,
-        videoDurationSeconds,
         pipelineStatus: 'pending',
         pipelineProgress: 0,
         createdAt: new Date(),
         updatedAt: new Date(),
-      })
+      }
+      // videoDurationSeconds가 있을 때만 추가
+      if (videoDurationSeconds !== undefined) {
+        newStreamData.videoDurationSeconds = videoDurationSeconds
+      }
+      await newStreamRef.set(newStreamData)
       targetStreamId = newStreamRef.id
       console.log(`[CloudRun-YouTube] Created new stream: ${targetStreamId}`)
     }
@@ -341,10 +345,14 @@ export async function startYouTubeAnalysis(
       requestBody.eventId = eventId
     }
 
+    // videoDurationSeconds가 있으면 항상 전달
+    if (videoDurationSeconds !== undefined) {
+      requestBody.videoDurationSeconds = videoDurationSeconds
+    }
+
+    // segments가 있으면 추가
     if (segments && segments.length > 0) {
       requestBody.segments = segments
-    } else {
-      requestBody.videoDurationSeconds = videoDurationSeconds
     }
 
     const response = await fetch(`${ORCHESTRATOR_URL}/analyze-youtube`, {

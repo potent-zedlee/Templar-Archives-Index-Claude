@@ -504,7 +504,7 @@ export function AnalyzeVideoDialog({
 
         const result = await startYouTubeAnalysis({
           youtubeUrl,
-          videoDurationSeconds: youtubeSegments ? undefined : videoDuration,
+          videoDurationSeconds: videoDuration,  // 항상 전달 (세그먼트 유무와 무관)
           segments: youtubeSegments,
           platform: platform as 'ept' | 'triton' | 'wsop',
           streamId: stream!.id,
