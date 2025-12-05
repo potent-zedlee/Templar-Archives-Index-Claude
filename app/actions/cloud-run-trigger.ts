@@ -214,7 +214,9 @@ export interface YouTubeAnalysisInput {
   segments?: Array<{ start: number; end: number }>
   platform?: KanPlatform
   streamId: string
-  streamName?: string  // 새 스트림 생성 시 이름
+  tournamentId?: string  // 토너먼트 ID (핸드 저장용)
+  eventId?: string       // 이벤트 ID (핸드 저장용)
+  streamName?: string    // 새 스트림 생성 시 이름
 }
 
 export interface YouTubeAnalysisResult {
@@ -244,6 +246,8 @@ export async function startYouTubeAnalysis(
       segments,
       platform = 'ept',
       streamId,
+      tournamentId,
+      eventId,
       streamName,
     } = input
 
@@ -327,6 +331,14 @@ export async function startYouTubeAnalysis(
       streamId: targetStreamId,
       youtubeUrl,
       platform,
+    }
+
+    // tournamentId와 eventId가 있으면 추가 (핸드 저장용)
+    if (tournamentId) {
+      requestBody.tournamentId = tournamentId
+    }
+    if (eventId) {
+      requestBody.eventId = eventId
     }
 
     if (segments && segments.length > 0) {

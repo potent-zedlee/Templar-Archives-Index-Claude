@@ -508,6 +508,8 @@ export function AnalyzeVideoDialog({
           segments: youtubeSegments,
           platform: platform as 'ept' | 'triton' | 'wsop',
           streamId: stream!.id,
+          tournamentId: stream!.tournamentId,
+          eventId: stream!.eventId,
         })
 
         console.log('[AnalyzeVideoDialog] startYouTubeAnalysis result:', result)
