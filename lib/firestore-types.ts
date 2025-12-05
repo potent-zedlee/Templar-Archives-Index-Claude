@@ -309,8 +309,8 @@ export interface FirestoreStream {
 
   // ==================== 파이프라인 필드 (Admin Archive 워크플로우) ====================
 
-  /** 파이프라인 상태 */
-  pipelineStatus?: 'pending' | 'needs_classify' | 'analyzing' | 'completed' | 'needs_review' | 'published' | 'failed'
+  /** 파이프라인 상태 (3단계 단순화) */
+  pipelineStatus?: 'uploaded' | 'analyzing' | 'published' | 'failed'
   /** 파이프라인 진행률 (0-100) */
   pipelineProgress?: number
   /** 파이프라인 에러 메시지 */

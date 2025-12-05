@@ -29,9 +29,7 @@ import { Badge } from '@/components/ui/badge'
 import {
   LayoutGrid,
   Upload,
-  FolderTree,
   Sparkles,
-  CheckCircle,
   Globe,
   AlertCircle
 } from 'lucide-react'
@@ -46,14 +44,11 @@ interface PipelineTab {
   bgColor: string
 }
 
-// StreamCard.tsx와 동일한 색상 팔레트 사용
+// StreamCard.tsx와 동일한 색상 팔레트 사용 (3단계 단순화)
 const tabs: PipelineTab[] = [
   { status: 'all', label: 'All', icon: LayoutGrid, color: 'text-foreground', bgColor: 'bg-muted' },
-  { status: 'pending', label: 'Pending', icon: Upload, color: 'text-slate-600 dark:text-slate-400', bgColor: 'bg-slate-100 dark:bg-slate-800' },
-  { status: 'needs_classify', label: 'Classify', icon: FolderTree, color: 'text-amber-600 dark:text-amber-400', bgColor: 'bg-amber-100 dark:bg-amber-900/30' },
+  { status: 'uploaded', label: 'Uploaded', icon: Upload, color: 'text-slate-600 dark:text-slate-400', bgColor: 'bg-slate-100 dark:bg-slate-800' },
   { status: 'analyzing', label: 'Analyzing', icon: Sparkles, color: 'text-blue-600 dark:text-blue-400', bgColor: 'bg-blue-100 dark:bg-blue-900/30' },
-  { status: 'completed', label: 'Completed', icon: CheckCircle, color: 'text-green-600 dark:text-green-400', bgColor: 'bg-green-100 dark:bg-green-900/30' },
-  { status: 'needs_review', label: 'Review', icon: CheckCircle, color: 'text-purple-600 dark:text-purple-400', bgColor: 'bg-purple-100 dark:bg-purple-900/30' },
   { status: 'published', label: 'Published', icon: Globe, color: 'text-emerald-600 dark:text-emerald-400', bgColor: 'bg-emerald-100 dark:bg-emerald-900/30' },
   { status: 'failed', label: 'Failed', icon: AlertCircle, color: 'text-red-600 dark:text-red-400', bgColor: 'bg-red-100 dark:bg-red-900/30' },
 ]

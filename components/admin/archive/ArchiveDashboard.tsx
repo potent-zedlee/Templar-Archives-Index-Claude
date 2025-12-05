@@ -43,7 +43,6 @@ import {
   useStreamsByPipelineStatus,
   usePipelineStatusCounts,
   useRetryAnalysis,
-  useUpdatePipelineStatus,
   type PipelineStream,
 } from '@/lib/queries/admin-archive-queries'
 import { useActiveJobs } from '@/lib/queries/kan-queries'
@@ -134,7 +133,6 @@ function DashboardContent() {
   const { data: streams, isLoading, refetch } = useStreamsByPipelineStatus(currentStatus)
   const { data: counts } = usePipelineStatusCounts()
   const retryMutation = useRetryAnalysis()
-  const updateStatusMutation = useUpdatePipelineStatus()
 
   // 상태 변경 핸들러
   const handleStatusChange = useCallback(
@@ -165,12 +163,6 @@ function DashboardContent() {
     [retryMutation]
   )
 
-  // 분류 다이얼로그 열기
-  const handleClassify = useCallback((stream: PipelineStream) => {
-    setClassifyStream(stream)
-    setClassifyDialogOpen(true)
-  }, [])
-
   // 분석 다이얼로그 열기
   const handleAnalyze = useCallback((stream: PipelineStream) => {
     // PipelineStream을 StreamWithIds로 변환
@@ -194,24 +186,6 @@ function DashboardContent() {
     setAnalyzeStream(streamWithIds)
     setAnalyzeDialogOpen(true)
   }, [])
-
-  // 리뷰 패널 열기
-  const handleReview = useCallback((stream: PipelineStream) => {
-    setReviewStreamId(stream.id)
-    setReviewStreamName(stream.name)
-    setReviewPanelOpen(true)
-  }, [])
-
-  // 발행 핸들러
-  const handlePublish = useCallback(
-    (streamId: string) => {
-      updateStatusMutation.mutate({
-        streamId,
-        status: 'published',
-      })
-    },
-    [updateStatusMutation]
-  )
 
   // 선택된 스트림 데이터
   const selectedStream = useMemo(() => {
@@ -304,10 +278,7 @@ function DashboardContent() {
                 <StreamDetailPanel
                   stream={selectedStream}
                   onClose={() => setSelectedItem(null)}
-                  onClassify={() => handleClassify(selectedStream)}
                   onAnalyze={() => handleAnalyze(selectedStream)}
-                  onReview={() => handleReview(selectedStream)}
-                  onPublish={() => handlePublish(selectedStream.id)}
                   onRetry={() => handleRetry(selectedStream)}
                 />
               ) : (

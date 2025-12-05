@@ -213,24 +213,24 @@ export function ReviewPanel({
     setSelectedHandIds(newSet)
   }
 
-  // 전체 승인
+  // 전체 승인 → 바로 발행
   const handleApproveAll = async () => {
     try {
       await updatePipelineStatus.mutateAsync({
         streamId,
-        status: 'needs_review',
+        status: 'published',
       })
 
-      toast.success('모든 핸드가 승인되었습니다')
+      toast.success('모든 핸드가 승인 및 발행되었습니다')
       onApprove?.()
       onClose()
     } catch (error) {
       console.error('[ReviewPanel] handleApproveAll error:', error)
-      toast.error('승인 실패')
+      toast.error('발행 실패')
     }
   }
 
-  // 선택 승인
+  // 선택 승인 → 바로 발행
   const handleApproveSelected = async () => {
     if (selectedHandIds.size === 0) {
       toast.warning('선택된 핸드가 없습니다')
@@ -240,15 +240,15 @@ export function ReviewPanel({
     try {
       await updatePipelineStatus.mutateAsync({
         streamId,
-        status: 'needs_review',
+        status: 'published',
       })
 
-      toast.success(`${selectedHandIds.size}개 핸드가 승인되었습니다`)
+      toast.success(`${selectedHandIds.size}개 핸드가 승인 및 발행되었습니다`)
       onApprove?.()
       onClose()
     } catch (error) {
       console.error('[ReviewPanel] handleApproveSelected error:', error)
-      toast.error('승인 실패')
+      toast.error('발행 실패')
     }
   }
 

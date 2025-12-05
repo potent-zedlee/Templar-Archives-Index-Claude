@@ -17,18 +17,16 @@ import type {
 // ==================== Pipeline Status ====================
 
 /**
- * Stream 파이프라인 상태
+ * Stream 파이프라인 상태 (3단계 단순화)
  *
- * Upload -> Classify -> Analyze -> Review -> Publish 워크플로우
+ * Upload -> Analyze -> Publish 워크플로우
+ * 검토는 유저 claim 방식으로 전환
  */
 export type PipelineStatus =
-  | 'pending'        // 업로드 대기
-  | 'needs_classify' // 분류 필요 (토너먼트/이벤트 할당 필요)
-  | 'analyzing'      // AI 분석 중
-  | 'completed'      // 분석 완료 (핸드 추출됨)
-  | 'needs_review'   // 검토 필요
-  | 'published'      // 발행 완료
-  | 'failed'         // 분석 실패
+  | 'uploaded'   // 업로드 완료, 분석 대기
+  | 'analyzing'  // AI 분석 중
+  | 'published'  // 발행 완료
+  | 'failed'     // 분석 실패
 
 // ==================== Enums & Constants (Zod에서 파생) ====================
 

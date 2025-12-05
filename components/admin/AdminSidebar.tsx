@@ -24,10 +24,7 @@ import {
   ShieldAlert,
   Settings,
   Upload,
-  FolderTree,
   Sparkles,
-  CheckCircle,
-  ClipboardCheck,
   Globe,
   AlertCircle,
 } from "lucide-react"
@@ -48,11 +45,8 @@ interface PipelineSubItem {
 }
 
 const pipelineSubItems: PipelineSubItem[] = [
-  { title: "Pending", status: "pending", icon: Upload, color: "text-muted-foreground" },
-  { title: "Classify", status: "needs_classify", icon: FolderTree, color: "text-yellow-500" },
+  { title: "Uploaded", status: "uploaded", icon: Upload, color: "text-muted-foreground" },
   { title: "Analyzing", status: "analyzing", icon: Sparkles, color: "text-blue-500" },
-  { title: "Completed", status: "completed", icon: CheckCircle, color: "text-green-500" },
-  { title: "Review", status: "needs_review", icon: ClipboardCheck, color: "text-orange-500" },
   { title: "Published", status: "published", icon: Globe, color: "text-emerald-500" },
   { title: "Failed", status: "failed", icon: AlertCircle, color: "text-red-500" },
 ]
@@ -187,9 +181,9 @@ export function AdminSidebar() {
     return pathname?.startsWith(href)
   }
 
-  // Archive 전체 대기 작업 수 (pending + needs_classify + failed)
+  // Archive 전체 대기 작업 수 (uploaded + failed)
   const archivePendingCount = counts
-    ? (counts.pending + counts.needs_classify + counts.failed)
+    ? (counts.uploaded + counts.failed)
     : 0
 
   return (

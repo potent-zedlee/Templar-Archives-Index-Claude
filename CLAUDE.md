@@ -178,21 +178,21 @@ Tournament → Event → Stream → Hand
 │   │ 📤 │ ──▶  │ 📁 │ ──▶   │ 🤖 │ ──▶   │ ✅ │ ──▶   │ 🌐 │    │
 │   └────┘      └────┘       └────┘       └────┘       └────┘    │
 │                                                                  │
-│   pending     needs_       analyzing/   needs_       published   │
-│               classify     completed    review                   │
+│   uploaded   ──▶   analyzing   ──▶   published                   │
+│                        ↓                                          │
+│                      failed                                       │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-**Stream 파이프라인 상태** (`PipelineStatus`):
+**Stream 파이프라인 상태** (`PipelineStatus`) - 3단계 단순화:
 | 상태 | 설명 |
 |------|------|
-| `pending` | 업로드 대기 |
-| `needs_classify` | 분류 필요 (토너먼트/이벤트 할당) |
+| `uploaded` | 업로드 완료, 분석 대기 |
 | `analyzing` | AI 분석 진행 중 |
-| `completed` | 분석 완료 (핸드 추출됨) |
-| `needs_review` | 검토 필요 |
 | `published` | 발행 완료 |
 | `failed` | 분석 실패 |
+
+> 검토(Review)는 유저 claim 방식으로 전환됨
 
 **핵심 파일**:
 | 파일 | 역할 |
@@ -380,8 +380,8 @@ tournaments/
   └── events/ (subcollection)
       └── streams/ (subcollection)
 
-streams/                  # 미분류 스트림 (파이프라인 관리용)
-  ├── pipelineStatus      # pending | needs_classify | analyzing | completed | needs_review | published | failed
+streams/                  # 스트림 (파이프라인 관리용)
+  ├── pipelineStatus      # uploaded | analyzing | published | failed
   ├── pipelineProgress    # 0-100
   ├── pipelineError       # 에러 메시지
   ├── analysisAttempts    # 분석 시도 횟수

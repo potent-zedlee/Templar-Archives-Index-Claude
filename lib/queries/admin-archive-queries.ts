@@ -69,15 +69,12 @@ export interface PipelineStream {
 }
 
 /**
- * 파이프라인 상태별 카운트
+ * 파이프라인 상태별 카운트 (3단계 단순화)
  */
 export interface PipelineStatusCounts {
   all: number
-  pending: number
-  needs_classify: number
+  uploaded: number
   analyzing: number
-  completed: number
-  needs_review: number
   published: number
   failed: number
 }
@@ -440,7 +437,7 @@ async function getStreamsByPipelineStatus(
     gcsUri: stream.gcsUri,
     gcsPath: stream.gcsPath,
     uploadStatus: stream.uploadStatus as 'none' | 'uploading' | 'uploaded' | 'failed' | undefined,
-    pipelineStatus: stream.pipelineStatus as PipelineStatus || 'pending',
+    pipelineStatus: stream.pipelineStatus as PipelineStatus || 'uploaded',
     pipelineProgress: stream.pipelineProgress || 0,
     pipelineError: stream.pipelineError,
     pipelineUpdatedAt: stream.pipelineUpdatedAt ? new Date(stream.pipelineUpdatedAt) : undefined,
@@ -631,7 +628,7 @@ export function useClassifyStream() {
         tournamentName: tournamentData.name,
         eventId: eventId,
         eventName: eventData.name,
-        pipelineStatus: 'pending' as PipelineStatus,
+        pipelineStatus: 'uploaded' as PipelineStatus,
         pipelineUpdatedAt: Timestamp.now(),
       })
 

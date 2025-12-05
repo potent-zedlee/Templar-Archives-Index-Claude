@@ -21,9 +21,7 @@ import {
 } from '@/components/ui/card'
 import {
   Play,
-  FolderTree,
   Sparkles,
-  CheckCircle,
   Globe,
   RefreshCw,
   ExternalLink,
@@ -41,24 +39,18 @@ import { ko } from 'date-fns/locale'
 interface StreamDetailPanelProps {
   stream: PipelineStream | null
   onClose?: () => void
-  onClassify?: (streamId: string) => void
   onAnalyze?: (streamId: string) => void
-  onReview?: (streamId: string) => void
-  onPublish?: (streamId: string) => void
   onRetry?: (streamId: string) => void
   className?: string
 }
 
 /**
- * 파이프라인 상태 라벨 반환
+ * 파이프라인 상태 라벨 반환 (3단계 단순화)
  */
 export function getPipelineStatusLabel(status: PipelineStatus): string {
   const labels: Record<PipelineStatus, string> = {
-    pending: '대기 중',
-    needs_classify: '분류 필요',
+    uploaded: '업로드 완료',
     analyzing: '분석 중',
-    completed: '분석 완료',
-    needs_review: '검토 필요',
     published: '발행됨',
     failed: '실패',
   }
@@ -66,33 +58,20 @@ export function getPipelineStatusLabel(status: PipelineStatus): string {
 }
 
 /**
- * 파이프라인 상태별 색상 반환
+ * 파이프라인 상태별 색상 반환 (3단계 단순화)
  */
 export function getPipelineStatusColor(status: PipelineStatus): {
   color: string
   bgColor: string
 } {
-  // StreamCard.tsx와 동일한 색상 팔레트 사용
   const colors: Record<PipelineStatus, { color: string; bgColor: string }> = {
-    pending: {
+    uploaded: {
       color: 'text-slate-700 dark:text-slate-300',
       bgColor: 'bg-slate-100 dark:bg-slate-800'
-    },
-    needs_classify: {
-      color: 'text-amber-700 dark:text-amber-300',
-      bgColor: 'bg-amber-100 dark:bg-amber-900/30'
     },
     analyzing: {
       color: 'text-blue-700 dark:text-blue-300',
       bgColor: 'bg-blue-100 dark:bg-blue-900/30'
-    },
-    completed: {
-      color: 'text-green-700 dark:text-green-300',
-      bgColor: 'bg-green-100 dark:bg-green-900/30'
-    },
-    needs_review: {
-      color: 'text-purple-700 dark:text-purple-300',
-      bgColor: 'bg-purple-100 dark:bg-purple-900/30'
     },
     published: {
       color: 'text-emerald-700 dark:text-emerald-300',
@@ -109,10 +88,7 @@ export function getPipelineStatusColor(status: PipelineStatus): {
 export function StreamDetailPanel({
   stream,
   onClose,
-  onClassify,
   onAnalyze,
-  onReview,
-  onPublish,
   onRetry,
   className,
 }: StreamDetailPanelProps) {
@@ -257,44 +233,22 @@ export function StreamDetailPanel({
         </CardContent>
       </ScrollArea>
 
-      {/* 액션 버튼 */}
+      {/* 액션 버튼 (3단계 파이프라인: uploaded → analyzing → published) */}
       <div className="p-4 border-t space-y-2">
-        {stream.pipelineStatus === 'needs_classify' && onClassify && (
-          <Button className="w-full" onClick={() => onClassify(stream.id)}>
-            <FolderTree className="h-4 w-4 mr-2" />
-            분류하기
-          </Button>
-        )}
-
-        {stream.pipelineStatus === 'pending' && onAnalyze && (
+        {/* uploaded 상태: 분석 시작 버튼 */}
+        {stream.pipelineStatus === 'uploaded' && onAnalyze && (
           <Button className="w-full" onClick={() => onAnalyze(stream.id)}>
             <Sparkles className="h-4 w-4 mr-2" />
             분석 시작
           </Button>
         )}
 
-        {stream.pipelineStatus === 'completed' && (
-          <>
-            {onReview && (
-              <Button className="w-full" onClick={() => onReview(stream.id)}>
-                <CheckCircle className="h-4 w-4 mr-2" />
-                검토하기
-              </Button>
-            )}
-            {onRetry && (
-              <Button variant="outline" className="w-full" onClick={() => onRetry(stream.id)}>
-                <RefreshCw className="h-4 w-4 mr-2" />
-                재분석하기
-              </Button>
-            )}
-          </>
-        )}
-
-        {stream.pipelineStatus === 'needs_review' && onPublish && (
-          <Button className="w-full" onClick={() => onPublish(stream.id)}>
-            <Globe className="h-4 w-4 mr-2" />
-            발행하기
-          </Button>
+        {/* published 상태: 완료 표시 */}
+        {stream.pipelineStatus === 'published' && (
+          <div className="text-center text-sm text-muted-foreground py-2">
+            <Globe className="h-4 w-4 inline mr-2" />
+            발행 완료
+          </div>
         )}
 
         {/* 실패 또는 분석 중(멈춘 경우)일 때 재시도 버튼 */}
