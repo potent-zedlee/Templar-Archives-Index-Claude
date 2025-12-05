@@ -124,9 +124,10 @@ Tournament → Event → Stream → Hand
 
 ### 영상 분석 파이프라인 (GCS + Cloud Run + Vertex AI)
 
+**GCS 업로드 방식** (대용량 로컬 파일):
 ```
 사용자 (분석 시작)
-    → Server Action (app/actions/kan-trigger.ts)
+    → Server Action (app/actions/cloud-run-trigger.ts)
     → GCS 업로드 (gs://bucket/videos/xxx.mp4)
     → Cloud Run Orchestrator
         → Cloud Tasks 큐잉
@@ -136,25 +137,44 @@ Tournament → Event → Stream → Hand
     → Firestore 실시간 진행률 업데이트
 ```
 
+**YouTube 직접 분석 방식** (GCS 업로드 불필요):
+```
+사용자 (YouTube URL 입력)
+    → Server Action (startYouTubeAnalysis)
+    → 자동 30분 세그먼트 분할
+    → Cloud Run Orchestrator (/analyze-youtube)
+        → Cloud Tasks 큐잉
+        → YouTube Segment Handler (FFmpeg 불필요)
+        → Gemini 2.5 Flash + videoMetadata
+    → JSON 핸드 데이터 파싱
+    → Firestore 저장 (hands 컬렉션)
+```
+
 **핵심 모듈**:
 | 파일 | 역할 |
 |------|------|
-| `app/actions/cloud-run-trigger.ts` | Server Action - Cloud Run 분석 시작 |
+| `app/actions/cloud-run-trigger.ts` | Server Action - Cloud Run 분석 시작 (GCS/YouTube) |
 | `cloud-run/orchestrator/` | Cloud Run - 작업 관리, 세그먼트 분할 |
+| `cloud-run/orchestrator/src/handlers/youtube-analyze.ts` | YouTube 분석 요청 핸들러 |
 | `cloud-run/segment-analyzer/` | Cloud Run - FFmpeg + Gemini 2-Phase 분석 |
+| `cloud-run/segment-analyzer/src/handlers/youtube-segment-handler.ts` | YouTube 세그먼트 분석 (FFmpeg 불필요) |
+| `cloud-run/segment-analyzer/src/lib/vertex-analyzer-youtube.ts` | Gemini + videoMetadata 분석기 |
 | `cloud-run/segment-analyzer/src/lib/vertex-analyzer-phase2.ts` | Gemini 3 Pro Phase 2 분석기 |
 | `cloud-run/segment-analyzer/src/lib/prompts/phase2-prompt.ts` | Chain-of-Thought 프롬프트 |
 | `lib/ai/prompts.ts` | Platform별 AI 프롬프트 (EPT/Triton) |
 | `lib/hooks/use-cloud-run-job.ts` | Cloud Run 작업 진행률 폴링 |
 
 **특징**:
-- GCS gs:// URI 직접 전달 (대용량 최적화)
-- 30분 세그먼트 자동 분할
+- **YouTube 직접 분석**: GCS 업로드 없이 YouTube URL로 바로 분석 (FFmpeg 불필요, 비용 절감)
+- **분류된 스트림 경로 지원**: tournamentId/eventId 전달 시 중첩 컬렉션에 핸드 저장
+- GCS gs:// URI 직접 전달 (대용량 로컬 파일 최적화)
+- 30분 세그먼트 자동 분할 (Cloud Run 타임아웃 방지)
 - Cloud Tasks 재시도: 3회, Exponential Backoff
 - Firestore 실시간 진행률
 - Vertex AI global 리전 (Gemini 3 Pro 1M 토큰 지원)
 - 2-Phase 분석: Phase 1 (타임스탬프 추출) → Phase 2 (상세 분석 + 시맨틱 태깅)
 - Chain-of-Thought 추론으로 포커 심리 분석
+- undefined 값 자동 제외로 Firestore 저장 안정성 보장
 
 **Cloud Run 환경 변수** (deploy.sh에서 자동 설정):
 | 서비스 | 환경 변수 | 설명 |
@@ -544,5 +564,5 @@ const MAX_CONCURRENT_UPLOADS = 3     // 동시 파일 3개 - 대역폭 활용
 
 ---
 
-**마지막 업데이트**: 2025-12-03
-**문서 버전**: 8.5 (배포 아키텍처 최적화: Buildpack + Multi-stage Dockerfile 하이브리드, 레거시 코드 정리)
+**마지막 업데이트**: 2025-12-06
+**문서 버전**: 8.6 (YouTube 직접 분석 모드 추가, 분류된 스트림 경로 지원, 30분 세그먼트 자동 분할)
