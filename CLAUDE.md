@@ -72,6 +72,7 @@ npm run analyze
 | AI | Vertex AI Gemini 3 Pro (Phase 2) / Gemini 2.5 Flash (Phase 1) |
 | Background Jobs | Cloud Run + Cloud Tasks |
 | Video | GCS Resumable Upload (청크 업로드) |
+| Search | Algolia (선택적, Firestore fallback) |
 | Hosting | Vercel (메인) + Firebase Hosting (백업) |
 
 **Node.js**: >=22.0.0
@@ -564,5 +565,83 @@ const MAX_CONCURRENT_UPLOADS = 3     // 동시 파일 3개 - 대역폭 활용
 
 ---
 
-**마지막 업데이트**: 2025-12-06
-**문서 버전**: 8.6 (YouTube 직접 분석 모드 추가, 분류된 스트림 경로 지원, 30분 세그먼트 자동 분할)
+## Algolia 검색
+
+### 설정
+
+환경변수가 설정되지 않으면 자동으로 Firestore 검색으로 fallback됩니다.
+
+```bash
+# .env.local
+NEXT_PUBLIC_ALGOLIA_APP_ID=your-app-id
+NEXT_PUBLIC_ALGOLIA_SEARCH_KEY=your-search-only-api-key
+ALGOLIA_ADMIN_KEY=your-admin-api-key  # 서버사이드 전용
+```
+
+### 인덱스 구조
+
+| 인덱스 | 설명 | 검색 가능 필드 |
+|--------|------|----------------|
+| `hands` | 핸드 검색 | description, aiSummary, players.name, semanticTags |
+| `players` | 플레이어 검색 | name, normalizedName, aliases, country |
+| `tournaments` | 토너먼트 검색 | name, category, location, city, country |
+
+### 핵심 파일
+
+| 파일 | 역할 |
+|------|------|
+| `lib/algolia.ts` | 클라이언트 초기화, 인덱스 설정 |
+| `lib/algolia-indexing.ts` | 인덱싱 유틸리티 (서버사이드) |
+| `lib/hooks/use-algolia-search.ts` | 검색 훅 (클라이언트) |
+
+### 사용 예시
+
+```typescript
+// 기본 검색 훅
+import { useHandSearch, isAlgoliaConfigured } from '@/lib/hooks/use-algolia-search'
+
+function SearchComponent() {
+  const { results, isLoading, search, isAlgoliaEnabled } = useHandSearch()
+
+  // Algolia가 비활성화되면 Firestore로 fallback
+  if (!isAlgoliaEnabled) {
+    return <FirestoreSearch />
+  }
+
+  return (
+    <input onChange={(e) => search(e.target.value, { hitsPerPage: 20 })} />
+  )
+}
+
+// 자동 검색 (debounce 포함)
+import { useAutoSearch } from '@/lib/hooks/use-algolia-search'
+
+const { results } = useAutoSearch(query, {
+  indexName: 'hands',
+  debounceMs: 300
+})
+
+// 멀티 인덱스 검색
+import { useMultiSearch } from '@/lib/hooks/use-algolia-search'
+
+const { results, search } = useMultiSearch()
+await search('Phil Ivey')
+// results.hands, results.players, results.tournaments
+```
+
+### 인덱싱 (서버사이드)
+
+```typescript
+import { indexHand, batchIndexHands } from '@/lib/algolia-indexing'
+
+// 단일 핸드 인덱싱
+await indexHand(hand)
+
+// 배치 인덱싱
+await batchIndexHands(hands)
+```
+
+---
+
+**마지막 업데이트**: 2025-12-07
+**문서 버전**: 8.7 (Algolia 검색 연동 추가)
