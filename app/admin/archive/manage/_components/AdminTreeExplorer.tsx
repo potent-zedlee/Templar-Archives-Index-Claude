@@ -12,10 +12,9 @@
 
 import { useState, useMemo, useCallback, useRef } from 'react'
 import { useDraggable, useDroppable } from '@dnd-kit/core'
-import { motion, AnimatePresence } from 'motion/react'
+import { useVirtualizer } from '@tanstack/react-virtual'
 import { cn } from '@/lib/utils'
 import { Input } from '@/components/ui/input'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { Button } from '@/components/ui/button'
 import {
   Search,
@@ -47,6 +46,59 @@ interface AdminTreeExplorerProps {
   onRefresh: () => void
 }
 
+// 플랫 리스트 아이템 타입
+type FlatItem =
+  | { type: 'unsorted'; data: UnsortedVideo; depth: 0 }
+  | { type: 'tournament'; data: Tournament; depth: 0 }
+  | { type: 'event'; data: Event; depth: 1; tournamentId: string }
+  | { type: 'stream'; data: Stream; depth: 2; eventId: string; tournamentId: string }
+
+/**
+ * 트리를 플랫 리스트로 변환
+ */
+function flattenTree(
+  tournaments: Tournament[],
+  unsortedVideos: UnsortedVideo[],
+  expandedNodes: Set<string>
+): FlatItem[] {
+  const result: FlatItem[] = []
+
+  // Unsorted videos
+  unsortedVideos.forEach((video) => {
+    result.push({ type: 'unsorted', data: video, depth: 0 })
+  })
+
+  // Tournaments
+  tournaments.forEach((tournament) => {
+    result.push({ type: 'tournament', data: tournament, depth: 0 })
+
+    if (expandedNodes.has(tournament.id) && tournament.events) {
+      tournament.events.forEach((event) => {
+        result.push({
+          type: 'event',
+          data: event,
+          depth: 1,
+          tournamentId: tournament.id,
+        })
+
+        if (expandedNodes.has(event.id) && event.streams) {
+          event.streams.forEach((stream) => {
+            result.push({
+              type: 'stream',
+              data: stream,
+              depth: 2,
+              eventId: event.id,
+              tournamentId: tournament.id,
+            })
+          })
+        }
+      })
+    }
+  })
+
+  return result
+}
+
 export function AdminTreeExplorer({
   tournaments,
   unsortedVideos,
@@ -55,6 +107,7 @@ export function AdminTreeExplorer({
   onMoveToRequest,
   onRefresh,
 }: AdminTreeExplorerProps) {
+  const parentRef = useRef<HTMLDivElement>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set())
   const searchInputRef = useRef<HTMLInputElement>(null)
@@ -85,6 +138,20 @@ export function AdminTreeExplorer({
     const query = searchQuery.toLowerCase()
     return unsortedVideos.filter((v) => v.name.toLowerCase().includes(query))
   }, [unsortedVideos, searchQuery])
+
+  // 플랫 리스트 생성
+  const flatItems = useMemo(
+    () => flattenTree(filteredTournaments, filteredUnsorted, expandedNodes),
+    [filteredTournaments, filteredUnsorted, expandedNodes]
+  )
+
+  // eslint-disable-next-line react-hooks/incompatible-library -- TanStack Virtual is not fully compatible with React Compiler
+  const rowVirtualizer = useVirtualizer({
+    count: flatItems.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 40,
+    overscan: 15,
+  })
 
   // 노드 확장/축소
   const toggleNode = useCallback((nodeId: string) => {
@@ -147,63 +214,87 @@ export function AdminTreeExplorer({
         </Button>
       </div>
 
-      {/* Tree Content */}
-      <ScrollArea className="flex-1">
-        <div className="p-2">
-          {/* Unsorted Section */}
-          {filteredUnsorted.length > 0 && (
-            <div className="mb-4">
-              <div className="mb-2 flex items-center gap-2 px-2 text-xs font-medium text-muted-foreground">
-                <span>UNSORTED</span>
-                <span className="rounded-full bg-muted px-1.5 py-0.5">
-                  {filteredUnsorted.length}
-                </span>
-              </div>
-              <div className="space-y-0.5">
-                {filteredUnsorted.map((video) => (
-                  <UnsortedVideoNode
-                    key={video.id}
-                    video={video}
-                    isActive={activeItemId === video.id}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
+      {/* Tree Content - 가상 스크롤 */}
+      <div
+        ref={parentRef}
+        className="flex-1 overflow-auto"
+        style={{
+          contain: 'strict',
+        }}
+      >
+        {flatItems.length > 0 ? (
+          <div
+            style={{
+              height: `${rowVirtualizer.getTotalSize()}px`,
+              width: '100%',
+              position: 'relative',
+            }}
+          >
+            {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+              const item = flatItems[virtualRow.index]
 
-          {/* Tournaments Section */}
-          <div>
-            <div className="mb-2 flex items-center gap-2 px-2 text-xs font-medium text-muted-foreground">
-              <span>TOURNAMENTS</span>
-              <span className="rounded-full bg-muted px-1.5 py-0.5">
-                {filteredTournaments.length}
-              </span>
-            </div>
-            <div className="space-y-0.5">
-              {filteredTournaments.map((tournament) => (
-                <TournamentNode
-                  key={tournament.id}
-                  tournament={tournament}
-                  isExpanded={expandedNodes.has(tournament.id)}
-                  expandedNodes={expandedNodes}
-                  activeItemId={activeItemId}
-                  overItemId={overItemId}
-                  onToggle={toggleNode}
-                  onMoveToRequest={onMoveToRequest}
-                />
-              ))}
-            </div>
+              return (
+                <div
+                  key={virtualRow.key}
+                  data-index={virtualRow.index}
+                  ref={rowVirtualizer.measureElement}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    transform: `translateY(${virtualRow.start}px)`,
+                    paddingLeft: `${item.depth * 16}px`,
+                  }}
+                >
+                  {item.type === 'unsorted' && (
+                    <UnsortedVideoNode
+                      video={item.data}
+                      isActive={activeItemId === item.data.id}
+                    />
+                  )}
+                  {item.type === 'tournament' && (
+                    <TournamentNode
+                      tournament={item.data}
+                      isExpanded={expandedNodes.has(item.data.id)}
+                      expandedNodes={expandedNodes}
+                      activeItemId={activeItemId}
+                      overItemId={overItemId}
+                      onToggle={toggleNode}
+                      onMoveToRequest={onMoveToRequest}
+                    />
+                  )}
+                  {item.type === 'event' && (
+                    <EventNode
+                      event={item.data}
+                      tournamentId={item.tournamentId}
+                      isExpanded={expandedNodes.has(item.data.id)}
+                      activeItemId={activeItemId}
+                      overItemId={overItemId}
+                      onToggle={toggleNode}
+                      onMoveToRequest={onMoveToRequest}
+                    />
+                  )}
+                  {item.type === 'stream' && (
+                    <StreamNode
+                      stream={item.data}
+                      eventId={item.eventId}
+                      tournamentId={item.tournamentId}
+                      isActive={activeItemId === item.data.id}
+                      onMoveToRequest={onMoveToRequest}
+                    />
+                  )}
+                </div>
+              )
+            })}
           </div>
-
-          {/* Empty State */}
-          {filteredTournaments.length === 0 && filteredUnsorted.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-              <Search className="mb-2 h-8 w-8" />
-              <p>No results found</p>
-            </div>
-          )}
-        </div>
-      </ScrollArea>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+            <Search className="mb-2 h-8 w-8" />
+            <p>No results found</p>
+          </div>
+        )}
+      </div>
 
       {/* Footer */}
       <div className="border-t px-3 py-2 text-xs text-muted-foreground">
@@ -276,11 +367,8 @@ interface TournamentNodeProps {
 function TournamentNode({
   tournament,
   isExpanded,
-  expandedNodes,
-  activeItemId,
   overItemId,
   onToggle,
-  onMoveToRequest,
 }: TournamentNodeProps) {
   const { isOver, setNodeRef } = useDroppable({
     id: `tournament-drop-${tournament.id}`,
@@ -293,67 +381,38 @@ function TournamentNode({
   const hasChildren = tournament.events && tournament.events.length > 0
 
   return (
-    <div>
-      <AdminContextMenu
-        nodeType="tournament"
-        nodeId={tournament.id}
-        nodeName={tournament.name}
-      >
-        <div
-          ref={setNodeRef}
-          onClick={() => hasChildren && onToggle(tournament.id)}
-          className={cn(
-            'flex cursor-pointer items-center gap-1 rounded-md px-2 py-1.5 text-sm hover:bg-accent',
-            isOver && 'bg-blue-500/20 ring-2 ring-blue-500',
-            overItemId === `tournament-drop-${tournament.id}` && 'bg-blue-500/20'
-          )}
-        >
-          {hasChildren ? (
-            isExpanded ? (
-              <ChevronDown className="h-4 w-4 text-muted-foreground" />
-            ) : (
-              <ChevronRight className="h-4 w-4 text-muted-foreground" />
-            )
-          ) : (
-            <span className="w-4" />
-          )}
-          <Trophy className="h-4 w-4 text-yellow-500" />
-          <span className="flex-1 truncate font-medium">{tournament.name}</span>
-          {hasChildren && (
-            <span className="text-xs text-muted-foreground">
-              ({tournament.events?.length})
-            </span>
-          )}
-        </div>
-      </AdminContextMenu>
-
-      <AnimatePresence>
-        {isExpanded && hasChildren && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="overflow-hidden"
-          >
-            <div className="ml-4 border-l pl-2">
-              {tournament.events?.map((event) => (
-                <EventNode
-                  key={event.id}
-                  event={event}
-                  tournamentId={tournament.id}
-                  isExpanded={expandedNodes.has(event.id)}
-                  activeItemId={activeItemId}
-                  overItemId={overItemId}
-                  onToggle={onToggle}
-                  onMoveToRequest={onMoveToRequest}
-                />
-              ))}
-            </div>
-          </motion.div>
+    <AdminContextMenu
+      nodeType="tournament"
+      nodeId={tournament.id}
+      nodeName={tournament.name}
+    >
+      <div
+        ref={setNodeRef}
+        onClick={() => hasChildren && onToggle(tournament.id)}
+        className={cn(
+          'flex cursor-pointer items-center gap-1 rounded-md px-2 py-1.5 text-sm hover:bg-accent',
+          isOver && 'bg-blue-500/20 ring-2 ring-blue-500',
+          overItemId === `tournament-drop-${tournament.id}` && 'bg-blue-500/20'
         )}
-      </AnimatePresence>
-    </div>
+      >
+        {hasChildren ? (
+          isExpanded ? (
+            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+          ) : (
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          )
+        ) : (
+          <span className="w-4" />
+        )}
+        <Trophy className="h-4 w-4 text-yellow-500" />
+        <span className="flex-1 truncate font-medium">{tournament.name}</span>
+        {hasChildren && (
+          <span className="text-xs text-muted-foreground">
+            ({tournament.events?.length})
+          </span>
+        )}
+      </div>
+    </AdminContextMenu>
   )
 }
 
@@ -454,31 +513,6 @@ function EventNode({
           )}
         </div>
       </AdminContextMenu>
-
-      <AnimatePresence>
-        {isExpanded && hasChildren && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="overflow-hidden"
-          >
-            <div className="ml-4 border-l pl-2">
-              {event.streams?.map((stream) => (
-                <StreamNode
-                  key={stream.id}
-                  stream={stream}
-                  eventId={event.id}
-                  tournamentId={tournamentId}
-                  isActive={activeItemId === stream.id}
-                  onMoveToRequest={onMoveToRequest}
-                />
-              ))}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   )
 }

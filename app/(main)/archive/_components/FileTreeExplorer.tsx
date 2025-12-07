@@ -11,10 +11,9 @@
 'use client'
 
 import { useEffect, useRef, useMemo, useState, useCallback } from 'react'
-import { motion, AnimatePresence } from 'motion/react'
+import { useVirtualizer } from '@tanstack/react-virtual'
 import { cn } from '@/lib/utils'
 import { Input } from '@/components/ui/input'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import {
   Search,
   X,
@@ -154,24 +153,26 @@ function convertToTreeNodes(tournaments: Tournament[]): TreeNodeType[] {
 }
 
 /**
- * 트리 노드를 플랫 리스트로 변환 (키보드 네비게이션용)
+ * 트리 노드를 플랫 리스트로 변환 (가상 스크롤용 - depth 포함)
  */
+interface FlatTreeNode extends TreeNodeType {
+  depth: number
+}
+
 function flattenTreeNodes(
   nodes: TreeNodeType[],
-  expandedNodes: Set<string>
-): TreeNodeType[] {
-  const result: TreeNodeType[] = []
+  expandedNodes: Set<string>,
+  depth = 0
+): FlatTreeNode[] {
+  const result: FlatTreeNode[] = []
 
-  function traverse(nodeList: TreeNodeType[]) {
-    nodeList.forEach((node) => {
-      result.push(node)
-      if (node.children && expandedNodes.has(node.id)) {
-        traverse(node.children)
-      }
-    })
-  }
+  nodes.forEach((node) => {
+    result.push({ ...node, depth })
+    if (node.children && expandedNodes.has(node.id)) {
+      result.push(...flattenTreeNodes(node.children, expandedNodes, depth + 1))
+    }
+  })
 
-  traverse(nodes)
   return result
 }
 
@@ -218,7 +219,7 @@ export function FileTreeExplorer({
   onContextMenu,
   filterConfig,
 }: FileTreeExplorerProps) {
-  const containerRef = useRef<HTMLDivElement>(null)
+  const parentRef = useRef<HTMLDivElement>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
   const [filtersOpen, setFiltersOpen] = useState(false)
   const [dateOpen, setDateOpen] = useState(false)
@@ -263,11 +264,24 @@ export function FileTreeExplorer({
     [treeNodes, treeSearchQuery]
   )
 
+  // 플랫 노드 리스트 (가상 스크롤용)
+  const flatNodes = useMemo(
+    () => flattenTreeNodes(filteredNodes, expandedNodes),
+    [filteredNodes, expandedNodes]
+  )
+
   // 플랫 노드 리스트 업데이트 (키보드 네비게이션용)
   useEffect(() => {
-    const flatNodes = flattenTreeNodes(filteredNodes, expandedNodes)
     setFlatNodeList(flatNodes)
-  }, [filteredNodes, expandedNodes, setFlatNodeList])
+  }, [flatNodes, setFlatNodeList])
+
+  // eslint-disable-next-line react-hooks/incompatible-library -- TanStack Virtual is not fully compatible with React Compiler
+  const rowVirtualizer = useVirtualizer({
+    count: flatNodes.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 40, // 각 노드 예상 높이
+    overscan: 15,
+  })
 
   // 노드 토글 핸들러
   const handleToggle = (nodeId: string) => {
@@ -470,39 +484,9 @@ export function FileTreeExplorer({
     }
   }
 
-  // 재귀적으로 트리 노드 렌더링
-  const renderTreeNodes = (nodes: TreeNodeType[]) => {
-    return nodes.map((node) => (
-      <div key={node.id}>
-        <TreeNode
-          node={node}
-          isExpanded={expandedNodes.has(node.id)}
-          isSelected={selectedNodeId === node.id}
-          isFocused={focusedNodeId === node.id}
-          isLoading={loadingNodes.has(node.id)}
-          onToggle={handleToggle}
-          onClick={handleNodeClick}
-          onContextMenu={handleContextMenu}
-        />
-        <AnimatePresence>
-          {node.children && expandedNodes.has(node.id) && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.15 }}
-            >
-              {renderTreeNodes(node.children)}
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-    ))
-  }
 
   return (
     <div
-      ref={containerRef}
       className={cn(
         'flex flex-col h-full bg-background border-r border-border',
         className
@@ -735,26 +719,68 @@ export function FileTreeExplorer({
         </Collapsible>
       )}
 
-      {/* 트리 컨텐츠 */}
-      <ScrollArea className="flex-1 h-0 min-h-0">
-        <div className="py-1" aria-busy={loadingNodes.size > 0} aria-live="polite">
-          {filteredNodes.length > 0 ? (
-            renderTreeNodes(filteredNodes)
-          ) : treeSearchQuery ? (
-            <div className="flex flex-col items-center justify-center py-8 text-muted-foreground" role="status">
-              <Search className="w-8 h-8 mb-2 opacity-50" aria-hidden="true" />
-              <p className="text-sm">No results found</p>
-              <p className="text-xs mt-1">Try a different search term</p>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-8 text-muted-foreground" role="status">
-              <FolderTree className="w-8 h-8 mb-2 opacity-50" aria-hidden="true" />
-              <p className="text-sm">No tournaments</p>
-              <p className="text-xs mt-1">Create a tournament to get started</p>
-            </div>
-          )}
-        </div>
-      </ScrollArea>
+      {/* 트리 컨텐츠 - 가상 스크롤 */}
+      <div
+        ref={parentRef}
+        className="flex-1 h-0 min-h-0 overflow-auto"
+        style={{
+          contain: 'strict',
+        }}
+        aria-busy={loadingNodes.size > 0}
+        aria-live="polite"
+      >
+        {flatNodes.length > 0 ? (
+          <div
+            style={{
+              height: `${rowVirtualizer.getTotalSize()}px`,
+              width: '100%',
+              position: 'relative',
+            }}
+          >
+            {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+              const node = flatNodes[virtualRow.index]
+
+              return (
+                <div
+                  key={virtualRow.key}
+                  data-index={virtualRow.index}
+                  ref={rowVirtualizer.measureElement}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    transform: `translateY(${virtualRow.start}px)`,
+                  }}
+                >
+                  <TreeNode
+                    node={node}
+                    isExpanded={expandedNodes.has(node.id)}
+                    isSelected={selectedNodeId === node.id}
+                    isFocused={focusedNodeId === node.id}
+                    isLoading={loadingNodes.has(node.id)}
+                    onToggle={handleToggle}
+                    onClick={handleNodeClick}
+                    onContextMenu={handleContextMenu}
+                  />
+                </div>
+              )
+            })}
+          </div>
+        ) : treeSearchQuery ? (
+          <div className="flex flex-col items-center justify-center py-8 text-muted-foreground" role="status">
+            <Search className="w-8 h-8 mb-2 opacity-50" aria-hidden="true" />
+            <p className="text-sm">No results found</p>
+            <p className="text-xs mt-1">Try a different search term</p>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-8 text-muted-foreground" role="status">
+            <FolderTree className="w-8 h-8 mb-2 opacity-50" aria-hidden="true" />
+            <p className="text-sm">No tournaments</p>
+            <p className="text-xs mt-1">Create a tournament to get started</p>
+          </div>
+        )}
+      </div>
 
       {/* 푸터 - 통계 */}
       <div className="flex-shrink-0 p-2 border-t border-border text-xs text-muted-foreground">
