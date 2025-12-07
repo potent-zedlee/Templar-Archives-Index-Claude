@@ -25,8 +25,10 @@ export function ArchiveDashboard({ tournaments }: ArchiveDashboardProps) {
     const totalStreams = tournaments.reduce((sum, t) =>
       sum + (t.events?.reduce((s, e) => s + (e.streams?.length || 0), 0) || 0), 0
     )
-    // TODO: hand_count 필드 추가 필요
-    const totalHands = 0
+    const totalHands = tournaments.reduce((sum, t) =>
+      sum + (t.events?.reduce((s, e) =>
+        s + (e.streams?.reduce((h, stream) => h + (stream.handCount || 0), 0) || 0), 0) || 0), 0
+    )
 
     return { totalTournaments, totalEvents, totalStreams, totalHands }
   }, [tournaments])
@@ -39,7 +41,6 @@ export function ArchiveDashboard({ tournaments }: ArchiveDashboardProps) {
         categories[t.category] = { count: 0, tournaments: 0 }
       }
       categories[t.category].tournaments++
-      // TODO: hand_count 필드 추가 필요
     })
     return Object.entries(categories)
       .map(([name, data]) => ({ name, ...data }))
