@@ -58,14 +58,14 @@ const CATEGORY_COLORS: Record<string, string> = {
 
 export function PostDetail({ post }: PostDetailProps) {
   const router = useRouter()
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
   const toggleLikeMutation = useTogglePostLikeMutation()
   const deletePostMutation = useDeletePostMutation()
   const { data: userVote } = useUserPostLikeQuery(post.id, user?.id)
   const [isDeleting, setIsDeleting] = useState(false)
 
   const isAuthor = user?.id === post.author.id
-  const isAdmin = user?.role && ['admin', 'high_templar'].includes(user.role)
+  const isAdmin = profile?.role && ['admin', 'high_templar'].includes(profile.role)
   const canEdit = isAuthor || isAdmin
 
   const handleVote = (voteType: 'like' | 'dislike') => {

@@ -54,10 +54,9 @@ interface CreatePostFormProps {
     tags: string[]
     handId?: string
   }
-  postId?: string
 }
 
-export function CreatePostForm({ initialData, postId }: CreatePostFormProps) {
+export function CreatePostForm({ initialData }: CreatePostFormProps) {
   const router = useRouter()
   const createPostMutation = useCreatePostMutation()
   const [isSubmitting, setIsSubmitting] = useState(false)

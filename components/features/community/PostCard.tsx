@@ -8,7 +8,7 @@
 
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ThumbsUp, ThumbsDown, MessageCircle, Eye, Calendar, User } from 'lucide-react'
+import { ThumbsUp, ThumbsDown, MessageCircle, Eye, Calendar } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
