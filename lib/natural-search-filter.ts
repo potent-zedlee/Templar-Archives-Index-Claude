@@ -28,23 +28,23 @@ export const NaturalSearchFilterSchema = z.object({
   ).optional(),
 
   // 팟 크기 필터
-  pot_min: z.number().min(0).optional(),
-  pot_max: z.number().min(0).optional(),
+  potMin: z.number().min(0).optional(),
+  potMax: z.number().min(0).optional(),
 
   // 카드 필터
-  hole_cards: z.array(z.string().regex(/^[AKQJT98765432]{1,2}[scdh]?$/)).optional(),
-  board_cards: z.array(z.string().regex(/^[AKQJT98765432][scdh]$/)).optional(),
+  holeCards: z.array(z.string().regex(/^[AKQJT98765432]{1,2}[scdh]?$/)).optional(),
+  boardCards: z.array(z.string().regex(/^[AKQJT98765432][scdh]$/)).optional(),
 
   // 텍스트 검색
-  description_contains: z.string().optional(),
+  descriptionContains: z.string().optional(),
 
   // 날짜 필터
-  date_from: z.string().optional(),
-  date_to: z.string().optional(),
+  dateFrom: z.string().optional(),
+  dateTo: z.string().optional(),
 
   // 정렬 및 제한
-  order_by: z.enum(['pot_size', 'timestamp', 'created_at']).optional(),
-  order_direction: z.enum(['asc', 'desc']).optional(),
+  orderBy: z.enum(['potSize', 'timestamp', 'createdAt']).optional(),
+  orderDirection: z.enum(['asc', 'desc']).optional(),
   limit: z.number().min(1).max(100).optional(),
 })
 
@@ -259,18 +259,18 @@ export async function buildQueryFromFilter(
   let handsQuery = firestore.collection(COLLECTION_PATHS.HANDS) as FirebaseFirestore.Query
 
   // 팟 크기 필터
-  if (filter.pot_min !== undefined) {
-    handsQuery = handsQuery.where('potSize', '>=', filter.pot_min)
+  if (filter.potMin !== undefined) {
+    handsQuery = handsQuery.where('potSize', '>=', filter.potMin)
   }
-  if (filter.pot_max !== undefined) {
-    handsQuery = handsQuery.where('potSize', '<=', filter.pot_max)
+  if (filter.potMax !== undefined) {
+    handsQuery = handsQuery.where('potSize', '<=', filter.potMax)
   }
 
   // 정렬
-  const orderBy = filter.order_by === 'pot_size' ? 'potSize' :
-                  filter.order_by === 'created_at' ? 'createdAt' : 'timestamp'
-  const orderDirection = filter.order_direction || 'desc'
-  handsQuery = handsQuery.orderBy(orderBy, orderDirection)
+  const orderByField = filter.orderBy === 'potSize' ? 'potSize' :
+                  filter.orderBy === 'createdAt' ? 'createdAt' : 'timestamp'
+  const orderDirection = filter.orderDirection || 'desc'
+  handsQuery = handsQuery.orderBy(orderByField, orderDirection)
 
   // 제한
   const limit = filter.limit || 50
@@ -292,16 +292,16 @@ export async function buildQueryFromFilter(
     }
 
     // Description 텍스트 검색
-    if (filter.description_contains) {
-      const searchTerm = filter.description_contains.toLowerCase()
+    if (filter.descriptionContains) {
+      const searchTerm = filter.descriptionContains.toLowerCase()
       if (!hand.description?.toLowerCase().includes(searchTerm)) {
         continue
       }
     }
 
     // 홀카드 필터 (description에서 검색)
-    if (filter.hole_cards && filter.hole_cards.length > 0) {
-      const hasCard = filter.hole_cards.some(card =>
+    if (filter.holeCards && filter.holeCards.length > 0) {
+      const hasCard = filter.holeCards.some(card =>
         hand.description?.toLowerCase().includes(card.toLowerCase())
       )
       if (!hasCard) {
@@ -310,15 +310,15 @@ export async function buildQueryFromFilter(
     }
 
     // 보드 카드 필터
-    if (filter.board_cards && filter.board_cards.length > 0) {
-      const boardCards = [
+    if (filter.boardCards && filter.boardCards.length > 0) {
+      const boardCardsArray = [
         ...(hand.boardFlop || []),
         hand.boardTurn,
         hand.boardRiver,
       ].filter(Boolean)
 
-      const hasAllCards = filter.board_cards.every(card =>
-        boardCards.includes(card)
+      const hasAllCards = filter.boardCards.every(card =>
+        boardCardsArray.includes(card)
       )
       if (!hasAllCards) {
         continue
@@ -406,15 +406,15 @@ Available filter fields:
   "players": ["player name"],           // Array of player names (partial match ok)
   "tournaments": ["tournament name"],   // Array of tournament names (partial match ok)
   "categories": ["WSOP", "Triton", ...],// Tournament categories (exact match)
-  "pot_min": number,                    // Minimum pot size
-  "pot_max": number,                    // Maximum pot size
-  "hole_cards": ["AA", "KK"],          // Hole cards (e.g., "AA", "AKs", "KQ")
-  "board_cards": ["As", "Kh", "Qd"],   // Board cards with suits (e.g., "As" = Ace of spades)
-  "description_contains": "text",       // Text to search in hand description
-  "date_from": "2024-01-01",           // Start date (ISO format)
-  "date_to": "2024-12-31",             // End date (ISO format)
-  "order_by": "pot_size" | "timestamp" | "created_at",
-  "order_direction": "asc" | "desc",
+  "potMin": number,                     // Minimum pot size
+  "potMax": number,                     // Maximum pot size
+  "holeCards": ["AA", "KK"],           // Hole cards (e.g., "AA", "AKs", "KQ")
+  "boardCards": ["As", "Kh", "Qd"],    // Board cards with suits (e.g., "As" = Ace of spades)
+  "descriptionContains": "text",        // Text to search in hand description
+  "dateFrom": "2024-01-01",            // Start date (ISO format)
+  "dateTo": "2024-12-31",              // End date (ISO format)
+  "orderBy": "potSize" | "timestamp" | "createdAt",
+  "orderDirection": "asc" | "desc",
   "limit": 50                           // Max results (1-100)
 }
 
@@ -423,13 +423,13 @@ User: "Find hands with Daniel Negreanu"
 JSON: {"players": ["Daniel Negreanu"], "limit": 50}
 
 User: "Show me big pots from WSOP with pocket aces"
-JSON: {"categories": ["WSOP"], "hole_cards": ["AA"], "pot_min": 100000, "order_by": "pot_size", "order_direction": "desc"}
+JSON: {"categories": ["WSOP"], "holeCards": ["AA"], "potMin": 100000, "orderBy": "potSize", "orderDirection": "desc"}
 
 User: "Find hands between Phil Hellmuth and Tom Dwan"
 JSON: {"players": ["Phil Hellmuth", "Tom Dwan"], "limit": 50}
 
 User: "Show me hands with AA vs KK"
-JSON: {"description_contains": "AA vs KK", "limit": 50}
+JSON: {"descriptionContains": "AA vs KK", "limit": 50}
 
 IMPORTANT:
 1. Return ONLY valid JSON, no explanations or markdown

@@ -86,8 +86,8 @@ function HighlightCard({ hand }: { hand: WeeklyHighlight }) {
     >
       {/* Video Thumbnail */}
       <div className="relative aspect-video bg-background overflow-hidden">
-        {hand.video_url ? (
-          <LazyVideo videoUrl={hand.video_url} handNumber={hand.number} />
+        {hand.videoUrl ? (
+          <LazyVideo videoUrl={hand.videoUrl} handNumber={hand.number} />
         ) : (
           <div
             className="w-full h-full flex items-center justify-center bg-muted"
@@ -113,9 +113,9 @@ function HighlightCard({ hand }: { hand: WeeklyHighlight }) {
             id={`hand-${hand.id}-title`}
             className="text-xs text-muted-foreground uppercase tracking-wider"
           >
-            {hand.tournament_name}
+            {hand.tournamentName}
           </p>
-          <p className="text-sm text-muted-foreground">{hand.stream_name}</p>
+          <p className="text-sm text-muted-foreground">{hand.streamName}</p>
         </div>
 
         {/* Description */}
@@ -129,13 +129,13 @@ function HighlightCard({ hand }: { hand: WeeklyHighlight }) {
         <div className="flex items-center justify-between pt-2 border-t border-border">
           <div className="flex items-center gap-1.5 text-muted-foreground">
             <ThumbsUp className="w-4 h-4" aria-hidden="true" />
-            <span className="text-sm font-medium" aria-label={`${hand.likes_count}개의 좋아요`}>
-              {hand.likes_count}
+            <span className="text-sm font-medium" aria-label={`${hand.likesCount}개의 좋아요`}>
+              {hand.likesCount}
             </span>
           </div>
-          {hand.pot_size > 0 && (
-            <span className="text-sm font-bold text-gold-400" aria-label={`팟 사이즈 ${hand.pot_size.toLocaleString()}달러`}>
-              ${hand.pot_size.toLocaleString()}
+          {hand.potSize > 0 && (
+            <span className="text-sm font-bold text-gold-400" aria-label={`팟 사이즈 ${hand.potSize.toLocaleString()}달러`}>
+              ${hand.potSize.toLocaleString()}
             </span>
           )}
         </div>

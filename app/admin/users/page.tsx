@@ -262,9 +262,9 @@ export default function UsersClient() {
                   email: u.email,
                   name: u.nickname,
                   role: u.role,
-                  created_at: u.created_at,
-                  last_sign_in_at: (u as any).last_sign_in_at || null,
-                  banned_at: u.is_banned ? new Date().toISOString() : null,
+                  createdAt: u.created_at,
+                  lastSignInAt: (u as any).last_sign_in_at || null,
+                  bannedAt: u.is_banned ? new Date().toISOString() : null,
                 }))
                 exportUsers(exportData as any, 'csv')
                 toast.success('CSV downloaded')

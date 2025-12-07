@@ -185,18 +185,18 @@ async function fetchHandsWithDetails(options: {
 }): Promise<{ hands: Hand[]; count: number }> {
   const handsRef = collection(firestore, 'hands').withConverter(handConverter)
 
-  let q = query(handsRef, orderBy('created_at', 'desc'))
+  let q = query(handsRef, orderBy('createdAt', 'desc'))
 
   if (options.streamId) {
-    q = query(handsRef, where('stream_id', '==', options.streamId), orderBy('created_at', 'desc'))
+    q = query(handsRef, where('streamId', '==', options.streamId), orderBy('createdAt', 'desc'))
   }
 
   if (options.playerId) {
-    q = query(handsRef, where('player_ids', 'array-contains', options.playerId), orderBy('created_at', 'desc'))
+    q = query(handsRef, where('playerIds', 'array-contains', options.playerId), orderBy('createdAt', 'desc'))
   }
 
   if (options.favoriteOnly) {
-    q = query(handsRef, where('favorite', '==', true), orderBy('created_at', 'desc'))
+    q = query(handsRef, where('favorite', '==', true), orderBy('createdAt', 'desc'))
   }
 
   if (options.limit) {

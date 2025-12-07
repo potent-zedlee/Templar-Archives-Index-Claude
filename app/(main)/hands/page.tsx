@@ -20,7 +20,7 @@ async function getHands(): Promise<HandWithId[]> {
   try {
     const snapshot = await adminFirestore
       .collection('hands')
-      .orderBy('created_at', 'desc')
+      .orderBy('createdAt', 'desc')
       .limit(50)
       .get()
 

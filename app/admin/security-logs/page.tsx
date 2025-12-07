@@ -332,18 +332,17 @@ export default function SecurityLogsPage() {
       toast.error('내보낼 데이터가 없습니다')
       return
     }
-    // Convert camelCase back to snake_case for export compatibility
     const exportData = events.map(event => ({
       id: event.id,
-      event_type: event.eventType,
+      eventType: event.eventType,
       severity: event.severity,
-      user_id: event.userId,
-      ip_address: event.ipAddress,
-      user_agent: event.userAgent,
+      userId: event.userId,
+      ipAddress: event.ipAddress,
+      userAgent: event.userAgent,
       method: event.requestMethod,
       path: event.requestPath,
       details: event.details,
-      created_at: event.createdAt,
+      createdAt: event.createdAt,
     }))
     exportSecurityLogs(exportData, 'csv')
     toast.success('CSV 파일이 다운로드되었습니다')
@@ -354,18 +353,17 @@ export default function SecurityLogsPage() {
       toast.error('내보낼 데이터가 없습니다')
       return
     }
-    // Convert camelCase back to snake_case for export compatibility
     const exportData = events.map(event => ({
       id: event.id,
-      event_type: event.eventType,
+      eventType: event.eventType,
       severity: event.severity,
-      user_id: event.userId,
-      ip_address: event.ipAddress,
-      user_agent: event.userAgent,
+      userId: event.userId,
+      ipAddress: event.ipAddress,
+      userAgent: event.userAgent,
       method: event.requestMethod,
       path: event.requestPath,
       details: event.details,
-      created_at: event.createdAt,
+      createdAt: event.createdAt,
     }))
     exportSecurityLogs(exportData, 'json')
     toast.success('JSON 파일이 다운로드되었습니다')

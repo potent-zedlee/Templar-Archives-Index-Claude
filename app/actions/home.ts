@@ -106,17 +106,17 @@ export async function getWeeklyHighlights(): Promise<WeeklyHighlight[]> {
         number: handNumber,
         description: data.description || '',
         timestamp: data.timestamp || '',
-        pot_size: data.potSize || 0,
-        likes_count: data.engagement?.likesCount || 0,
-        video_url: videoUrl,
-        tournament_name: tournamentName,
-        stream_name: streamName,
+        potSize: data.potSize || 0,
+        likesCount: data.engagement?.likesCount || 0,
+        videoUrl: videoUrl,
+        tournamentName: tournamentName,
+        streamName: streamName,
       })
     }
 
     // 좋아요 수로 정렬하고 상위 3개 반환
     return highlights
-      .sort((a, b) => b.likes_count - a.likes_count)
+      .sort((a, b) => b.likesCount - a.likesCount)
       .slice(0, 3)
   } catch (error) {
     console.error('Error fetching weekly highlights:', error)
@@ -173,10 +173,10 @@ export async function getTopPlayers(): Promise<TopPlayer[]> {
       return {
         id: doc.id,
         name: data.name,
-        photo_url: data.photoUrl || null,
-        total_winnings: data.totalWinnings || 0,
-        tournament_count: data.stats?.tournamentsCount || 0,
-        hands_count: data.stats?.handsCount || 0,
+        photoUrl: data.photoUrl || null,
+        totalWinnings: data.totalWinnings || 0,
+        tournamentCount: data.stats?.tournamentsCount || 0,
+        handsCount: data.stats?.handsCount || 0,
       }
     })
 

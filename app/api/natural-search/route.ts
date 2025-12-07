@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
 
         // Claude가 잘못된 필터를 생성한 경우, 텍스트 검색으로 fallback
         filter = {
-          description_contains: trimmedQuery,
+          descriptionContains: trimmedQuery,
           limit: 50
         }
       } else {
@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
 
       // JSON 파싱 실패 시 텍스트 검색으로 fallback
       filter = {
-        description_contains: trimmedQuery,
+        descriptionContains: trimmedQuery,
         limit: 50
       }
     }

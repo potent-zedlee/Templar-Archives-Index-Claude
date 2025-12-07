@@ -149,15 +149,15 @@ function triggerDownload(blob: Blob, filename: string): void {
 export function exportSecurityLogs(
   logs: Array<{
     id: string
-    event_type: string
+    eventType: string
     severity: string
-    user_id: string | null
-    ip_address: string | null
-    user_agent: string | null
+    userId: string | null
+    ipAddress: string | null
+    userAgent: string | null
     method: string | null
     path: string | null
     details: Record<string, any> | null
-    created_at: string
+    createdAt: string
   }>,
   format: 'csv' | 'json' = 'csv'
 ): void {
@@ -168,24 +168,24 @@ export function exportSecurityLogs(
     // Flatten data for CSV
     const flattenedLogs = logs.map((log) => ({
       id: log.id,
-      event_type: log.event_type,
+      eventType: log.eventType,
       severity: log.severity,
-      user_id: log.user_id || '',
-      ip_address: log.ip_address || '',
-      user_agent: log.user_agent || '',
+      userId: log.userId || '',
+      ipAddress: log.ipAddress || '',
+      userAgent: log.userAgent || '',
       method: log.method || '',
       path: log.path || '',
       details: log.details ? JSON.stringify(log.details) : '',
-      created_at: log.created_at,
+      createdAt: log.createdAt,
     }))
 
     downloadCSV(flattenedLogs, filename, [
       'id',
-      'created_at',
-      'event_type',
+      'createdAt',
+      'eventType',
       'severity',
-      'user_id',
-      'ip_address',
+      'userId',
+      'ipAddress',
       'method',
       'path',
       'details',
@@ -204,16 +204,16 @@ export function exportSecurityLogs(
 export function exportAuditLogs(
   logs: Array<{
     id: string
-    user_id: string | null
+    userId: string | null
     action: string
-    resource_type: string | null
-    resource_id: string | null
-    old_value: Record<string, any> | null
-    new_value: Record<string, any> | null
-    ip_address: string | null
-    user_agent: string | null
+    resourceType: string | null
+    resourceId: string | null
+    oldValue: Record<string, any> | null
+    newValue: Record<string, any> | null
+    ipAddress: string | null
+    userAgent: string | null
     metadata: Record<string, any> | null
-    created_at: string
+    createdAt: string
     users?: { email: string; name: string | null } | null
   }>,
   format: 'csv' | 'json' = 'csv'
@@ -225,30 +225,30 @@ export function exportAuditLogs(
     // Flatten data for CSV
     const flattenedLogs = logs.map((log) => ({
       id: log.id,
-      created_at: log.created_at,
-      user_email: log.users?.email || '',
-      user_name: log.users?.name || '',
+      createdAt: log.createdAt,
+      userEmail: log.users?.email || '',
+      userName: log.users?.name || '',
       action: log.action,
-      resource_type: log.resource_type || '',
-      resource_id: log.resource_id || '',
-      old_value: log.old_value ? JSON.stringify(log.old_value) : '',
-      new_value: log.new_value ? JSON.stringify(log.new_value) : '',
-      ip_address: log.ip_address || '',
-      user_agent: log.user_agent || '',
+      resourceType: log.resourceType || '',
+      resourceId: log.resourceId || '',
+      oldValue: log.oldValue ? JSON.stringify(log.oldValue) : '',
+      newValue: log.newValue ? JSON.stringify(log.newValue) : '',
+      ipAddress: log.ipAddress || '',
+      userAgent: log.userAgent || '',
       metadata: log.metadata ? JSON.stringify(log.metadata) : '',
     }))
 
     downloadCSV(flattenedLogs, filename, [
       'id',
-      'created_at',
-      'user_email',
-      'user_name',
+      'createdAt',
+      'userEmail',
+      'userName',
       'action',
-      'resource_type',
-      'resource_id',
-      'old_value',
-      'new_value',
-      'ip_address',
+      'resourceType',
+      'resourceId',
+      'oldValue',
+      'newValue',
+      'ipAddress',
     ])
   } else {
     downloadJSON(logs, filename)
@@ -267,9 +267,9 @@ export function exportUsers(
     email: string
     name: string | null
     role: string
-    created_at: string
-    last_sign_in_at: string | null
-    banned_at: string | null
+    createdAt: string
+    lastSignInAt: string | null
+    bannedAt: string | null
   }>,
   format: 'csv' | 'json' = 'csv'
 ): void {
@@ -282,9 +282,9 @@ export function exportUsers(
       'email',
       'name',
       'role',
-      'created_at',
-      'last_sign_in_at',
-      'banned_at',
+      'createdAt',
+      'lastSignInAt',
+      'bannedAt',
     ])
   } else {
     downloadJSON(users, filename)
@@ -300,14 +300,14 @@ export function exportUsers(
 export function exportHandEditRequests(
   requests: Array<{
     id: string
-    hand_id: string
-    requester_id: string
-    edit_type: string
+    handId: string
+    requesterId: string
+    editType: string
     status: string
-    suggested_changes: Record<string, any>
+    suggestedChanges: Record<string, any>
     reason: string | null
-    created_at: string
-    reviewed_at: string | null
+    createdAt: string
+    reviewedAt: string | null
   }>,
   format: 'csv' | 'json' = 'csv'
 ): void {
@@ -318,26 +318,26 @@ export function exportHandEditRequests(
     // Flatten data for CSV
     const flattenedRequests = requests.map((request) => ({
       id: request.id,
-      hand_id: request.hand_id,
-      requester_id: request.requester_id,
-      edit_type: request.edit_type,
+      handId: request.handId,
+      requesterId: request.requesterId,
+      editType: request.editType,
       status: request.status,
-      suggested_changes: JSON.stringify(request.suggested_changes),
+      suggestedChanges: JSON.stringify(request.suggestedChanges),
       reason: request.reason || '',
-      created_at: request.created_at,
-      reviewed_at: request.reviewed_at || '',
+      createdAt: request.createdAt,
+      reviewedAt: request.reviewedAt || '',
     }))
 
     downloadCSV(flattenedRequests, filename, [
       'id',
-      'created_at',
-      'hand_id',
-      'requester_id',
-      'edit_type',
+      'createdAt',
+      'handId',
+      'requesterId',
+      'editType',
       'status',
-      'suggested_changes',
+      'suggestedChanges',
       'reason',
-      'reviewed_at',
+      'reviewedAt',
     ])
   } else {
     downloadJSON(requests, filename)

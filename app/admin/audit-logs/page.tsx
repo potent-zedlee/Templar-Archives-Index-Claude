@@ -130,9 +130,9 @@ export default function AuditLogsPage() {
   // Stats
   const [stats, setStats] = useState<{
     total: number
-    recent_24h: number
-    recent_7d: number
-    by_resource_type: Record<string, number>
+    recent24h: number
+    recent7d: number
+    byResourceType: Record<string, number>
   } | null>(null)
 
   // Check admin access
@@ -314,9 +314,9 @@ export default function AuditLogsPage() {
 
       setStats({
         total,
-        recent_24h: recent24h,
-        recent_7d: recent7d,
-        by_resource_type: byResourceType,
+        recent24h: recent24h,
+        recent7d: recent7d,
+        byResourceType: byResourceType,
       })
     } catch (error) {
       console.error('Failed to load stats:', error)
@@ -328,19 +328,18 @@ export default function AuditLogsPage() {
       toast.error('내보낼 데이터가 없습니다')
       return
     }
-    // Convert camelCase back to snake_case for export compatibility
     const exportData = logs.map(log => ({
       id: log.id,
-      user_id: log.userId,
+      userId: log.userId,
       action: log.action,
-      resource_type: log.resourceType,
-      resource_id: log.resourceId,
-      old_value: log.oldValue,
-      new_value: log.newValue,
-      ip_address: log.ipAddress,
-      user_agent: log.userAgent,
+      resourceType: log.resourceType,
+      resourceId: log.resourceId,
+      oldValue: log.oldValue,
+      newValue: log.newValue,
+      ipAddress: log.ipAddress,
+      userAgent: log.userAgent,
       metadata: log.metadata,
-      created_at: log.createdAt,
+      createdAt: log.createdAt,
       users: log.user ? {
         id: log.user.id,
         email: log.user.email,
@@ -401,16 +400,16 @@ export default function AuditLogsPage() {
           </Card>
           <Card className="p-4">
             <div className="text-sm text-muted-foreground">Last 24 Hours</div>
-            <div className="text-2xl font-bold">{stats.recent_24h.toLocaleString()}</div>
+            <div className="text-2xl font-bold">{stats.recent24h.toLocaleString()}</div>
           </Card>
           <Card className="p-4">
             <div className="text-sm text-muted-foreground">Last 7 Days</div>
-            <div className="text-2xl font-bold">{stats.recent_7d.toLocaleString()}</div>
+            <div className="text-2xl font-bold">{stats.recent7d.toLocaleString()}</div>
           </Card>
           <Card className="p-4">
             <div className="text-sm text-muted-foreground">Resource Types</div>
             <div className="text-2xl font-bold">
-              {Object.keys(stats.by_resource_type).length}
+              {Object.keys(stats.byResourceType).length}
             </div>
           </Card>
         </div>

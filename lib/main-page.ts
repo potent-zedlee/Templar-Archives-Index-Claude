@@ -19,20 +19,20 @@ export type WeeklyHighlight = {
   number: number
   description: string
   timestamp: string
-  pot_size: number
-  likes_count: number
-  video_url: string
-  tournament_name: string
-  stream_name: string
+  potSize: number
+  likesCount: number
+  videoUrl: string
+  tournamentName: string
+  streamName: string
 }
 
 export type TopPlayer = {
   id: string
   name: string
-  photo_url?: string
-  total_winnings: number
-  tournament_count: number
-  hands_count: number
+  photoUrl?: string
+  totalWinnings: number
+  tournamentCount: number
+  handsCount: number
 }
 
 /**
@@ -71,9 +71,9 @@ export async function getWeeklyHighlights(limitCount: number = 3): Promise<Weekl
 
     const handsQuery = query(
       collection(firestore, COLLECTION_PATHS.HANDS),
-      where('created_at', '>=', Timestamp.fromDate(sevenDaysAgo)),
-      orderBy('created_at', 'desc'),
-      orderBy('engagement.likes_count', 'desc'),
+      where('createdAt', '>=', Timestamp.fromDate(sevenDaysAgo)),
+      orderBy('createdAt', 'desc'),
+      orderBy('engagement.likesCount', 'desc'),
       limit(limitCount)
     )
 
@@ -90,11 +90,11 @@ export async function getWeeklyHighlights(limitCount: number = 3): Promise<Weekl
         number: handNumber,
         description: data.description || '',
         timestamp: data.timestamp || '',
-        pot_size: data.pot_size || 0,
-        likes_count: data.engagement?.likes_count || 0,
-        video_url: data.refData?.streamVideoUrl || '',
-        tournament_name: data.refData?.tournamentName || 'Unknown',
-        stream_name: data.refData?.streamName || 'Unknown'
+        potSize: data.potSize || 0,
+        likesCount: data.engagement?.likesCount || 0,
+        videoUrl: data.refData?.streamVideoUrl || '',
+        tournamentName: data.refData?.tournamentName || 'Unknown',
+        streamName: data.refData?.streamName || 'Unknown'
       }
     })
   } catch (error) {
@@ -110,7 +110,7 @@ export async function getLatestPosts(limitCount: number = 5) {
   try {
     const postsQuery = query(
       collection(firestore, COLLECTION_PATHS.POSTS),
-      orderBy('created_at', 'desc'),
+      orderBy('createdAt', 'desc'),
       limit(limitCount)
     )
 
@@ -123,12 +123,12 @@ export async function getLatestPosts(limitCount: number = 5) {
         title: data.title || '',
         content: data.content || '',
         category: data.category || '',
-        created_at: data.created_at?.toDate?.()?.toISOString() || '',
-        likes_count: data.engagement?.likes_count || 0,
-        comments_count: data.engagement?.comments_count || 0,
+        createdAt: data.createdAt?.toDate?.()?.toISOString() || '',
+        likesCount: data.engagement?.likesCount || 0,
+        commentsCount: data.engagement?.commentsCount || 0,
         author: {
           nickname: data.author?.name || 'Unknown',
-          avatar_url: data.author?.avatar_url || ''
+          avatarUrl: data.author?.avatarUrl || ''
         }
       }
     })
@@ -145,7 +145,7 @@ export async function getTopPlayers(limitCount: number = 5): Promise<TopPlayer[]
   try {
     const playersQuery = query(
       collection(firestore, COLLECTION_PATHS.PLAYERS),
-      orderBy('total_winnings', 'desc'),
+      orderBy('totalWinnings', 'desc'),
       limit(limitCount)
     )
 
@@ -156,10 +156,10 @@ export async function getTopPlayers(limitCount: number = 5): Promise<TopPlayer[]
       return {
         id: doc.id,
         name: data.name || '',
-        photo_url: data.photo_url,
-        total_winnings: data.total_winnings || 0,
-        tournament_count: data.stats?.tournament_count || 0,
-        hands_count: data.stats?.total_hands || 0
+        photoUrl: data.photoUrl,
+        totalWinnings: data.totalWinnings || 0,
+        tournamentCount: data.stats?.tournamentCount || 0,
+        handsCount: data.stats?.totalHands || 0
       }
     })
   } catch (error) {
