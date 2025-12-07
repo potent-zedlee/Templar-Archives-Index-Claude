@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
-import { Loader2, Check, X, AlertTriangle, Trash2 } from "lucide-react"
+import { Loader2, Check, X, AlertTriangle, Trash2, Shield } from "lucide-react"
 import { useAuth } from "@/components/layout/AuthProvider"
 import { toast } from "sonner"
 import {
@@ -11,6 +11,8 @@ import {
   useCheckNicknameQuery,
   useUpdateProfileMutation,
 } from "@/lib/queries/profile-queries"
+import { TwoFactorSetup } from "@/components/security/TwoFactorSetup"
+import { getTwoFactorStatus } from "@/app/actions/two-factor"
 
 export default function ProfileClient() {
   const router = useRouter()
@@ -25,6 +27,11 @@ export default function ProfileClient() {
   const [bio, setBio] = useState("")
   const [pokerExperience, setPokerExperience] = useState("")
   const [nicknameForCheck, setNicknameForCheck] = useState("")
+
+  // 2FA state
+  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false)
+  const [backupCodesRemaining, setBackupCodesRemaining] = useState(0)
+  const [twoFactorLoading, setTwoFactorLoading] = useState(true)
 
   // Nickname duplicate check (with debounce)
   const shouldCheckNickname = nicknameForCheck !== "" && nicknameForCheck !== profile?.nickname
@@ -53,6 +60,27 @@ export default function ProfileClient() {
       setPokerExperience(profile.pokerExperience || "")
     }
   }, [profile])
+
+  // Load 2FA status
+  useEffect(() => {
+    async function loadTwoFactorStatus() {
+      if (!user) return
+
+      try {
+        const result = await getTwoFactorStatus()
+        if (result.success && result.data) {
+          setTwoFactorEnabled(result.data.enabled)
+          setBackupCodesRemaining(result.data.backupCodesRemaining || 0)
+        }
+      } catch (error) {
+        console.error('2FA 상태 로드 실패:', error)
+      } finally {
+        setTwoFactorLoading(false)
+      }
+    }
+
+    loadTwoFactorStatus()
+  }, [user])
 
   // Debounce nickname check (500ms)
   useEffect(() => {
@@ -267,6 +295,37 @@ export default function ProfileClient() {
                 )}
               </button>
             </div>
+          </div>
+        </div>
+
+        {/* Security Section */}
+        <div className="card-postmodern mb-8">
+          <div className="p-6 border-b-2 border-black-300">
+            <h2 className="text-heading flex items-center gap-2">
+              <Shield className="h-5 w-5 text-gold-400" />
+              SECURITY
+            </h2>
+            <p className="text-black-600 mt-2">
+              Manage your account security settings.
+            </p>
+          </div>
+          <div className="p-6">
+            {twoFactorLoading ? (
+              <div className="flex items-center justify-center py-4">
+                <Loader2 className="h-6 w-6 animate-spin text-gold-400" />
+              </div>
+            ) : (
+              <TwoFactorSetup
+                initialEnabled={twoFactorEnabled}
+                initialBackupCodesRemaining={backupCodesRemaining}
+                onStatusChange={(enabled) => {
+                  setTwoFactorEnabled(enabled)
+                  if (!enabled) {
+                    setBackupCodesRemaining(0)
+                  }
+                }}
+              />
+            )}
           </div>
         </div>
 

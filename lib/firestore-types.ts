@@ -568,6 +568,26 @@ export interface PlayerHandIndex {
   handDate: Timestamp
 }
 
+// ==================== Two-Factor Authentication ====================
+
+/**
+ * 2FA 설정 정보
+ */
+export interface TwoFactorSettings {
+  /** 2FA 활성화 여부 */
+  enabled: boolean
+  /** 2FA 방식 (현재 TOTP만 지원) */
+  method: 'totp'
+  /** 암호화된 TOTP 시크릿 */
+  secretEncrypted?: string
+  /** 해시된 백업 코드 배열 */
+  backupCodesHashed: string[]
+  /** 2FA 활성화 시각 */
+  enabledAt?: Timestamp
+  /** 마지막 인증 시각 */
+  lastVerifiedAt?: Timestamp
+}
+
 // ==================== Users Collection ====================
 
 /**
@@ -610,6 +630,8 @@ export interface FirestoreUser {
     postsCount: number
     commentsCount: number
   }
+  /** 2단계 인증 설정 */
+  twoFactor?: TwoFactorSettings
   /** 생성일 */
   createdAt: Timestamp
   /** 수정일 */
@@ -749,6 +771,90 @@ export interface FirestoreComment {
   author: AuthorInfo
   /** 부모 댓글 ID (대댓글인 경우) */
   parentId?: string
+  /** 생성일 */
+  createdAt: Timestamp
+  /** 수정일 */
+  updatedAt: Timestamp
+}
+
+// ==================== Community Posts Collection ====================
+
+/**
+ * 커뮤니티 포스트 카테고리
+ */
+export type PostCategory = 'Analysis' | 'Strategy' | 'Hand Review' | 'General' | 'News'
+
+/**
+ * 포스트 상태
+ */
+export type PostStatus = 'draft' | 'published' | 'deleted'
+
+/**
+ * Post 문서
+ *
+ * Collection: /posts/{postId}
+ */
+export interface FirestorePost {
+  /** 포스트 제목 */
+  title: string
+  /** 포스트 내용 */
+  content: string
+  /** 카테고리 */
+  category: PostCategory
+  /** 작성자 정보 (임베딩) */
+  author: AuthorInfo
+  /** 관련 핸드 ID (선택) */
+  handId?: string
+  /** 태그 목록 */
+  tags: string[]
+  /** 통계 */
+  stats: {
+    likesCount: number
+    dislikesCount: number
+    commentsCount: number
+    viewsCount: number
+  }
+  /** 포스트 상태 */
+  status: PostStatus
+  /** 생성일 */
+  createdAt: Timestamp
+  /** 수정일 */
+  updatedAt: Timestamp
+  /** 발행일 */
+  publishedAt?: Timestamp
+}
+
+/**
+ * PostComment 문서
+ *
+ * Collection: /posts/{postId}/comments/{commentId}
+ */
+export interface FirestorePostComment {
+  /** 댓글 내용 */
+  content: string
+  /** 작성자 (임베딩) */
+  author: AuthorInfo
+  /** 부모 댓글 ID (대댓글인 경우) */
+  parentId?: string
+  /** 좋아요 수 */
+  likesCount: number
+  /** 생성일 */
+  createdAt: Timestamp
+  /** 수정일 */
+  updatedAt: Timestamp
+}
+
+/**
+ * PostLike 문서
+ *
+ * Collection: /posts/{postId}/likes/{likeId}
+ * likeId = userId (for 빠른 조회)
+ */
+export interface FirestorePostLike {
+  /** 사용자 ID */
+  userId: string
+  /** 투표 타입 */
+  voteType: VoteType
   /** 생성일 */
   createdAt: Timestamp
   /** 수정일 */
@@ -1223,4 +1329,6 @@ export const COLLECTION_PATHS = {
   POSTS: 'posts',
   /** Post comments (게시글 댓글 서브컬렉션) */
   POST_COMMENTS: (postId: string) => `posts/${postId}/comments`,
+  /** Post likes (게시글 좋아요 서브컬렉션) */
+  POST_LIKES: (postId: string) => `posts/${postId}/likes`,
 } as const

@@ -68,7 +68,7 @@ npm run analyze
 | Styling | Tailwind CSS 4.1 |
 | State | React Query 5, Zustand 5 |
 | Database | Firebase Firestore (NoSQL) |
-| Auth | Firebase Auth (Google OAuth) |
+| Auth | Firebase Auth (Google OAuth) + TOTP 2FA |
 | AI | Vertex AI Gemini 3 Pro (Phase 2) / Gemini 2.5 Flash (Phase 1) |
 | Background Jobs | Cloud Run + Cloud Tasks |
 | Video | GCS Resumable Upload (청크 업로드) |
@@ -254,6 +254,9 @@ CLOUD_RUN_ORCHESTRATOR_URL=https://video-orchestrator-xxx.run.app
 
 # 선택
 UPSTASH_REDIS_REST_URL=your-url      # Rate Limiting
+
+# 2FA (Two-Factor Authentication)
+TWO_FACTOR_ENCRYPTION_KEY=your-32-byte-hex-key  # openssl rand -hex 32
 ```
 
 ---
