@@ -1,4 +1,4 @@
-```
+
 "use client"
 
 import { useEffect, useState } from "react"
@@ -177,7 +177,7 @@ export default function ProfileClient() {
                 nickname={profile.nickname}
                 onUpload={async (file) => {
                   if (!user) throw new Error('User not authenticated')
-                  
+
                   try {
                     const { uploadAvatar } = await import('@/lib/user-profile')
                     const url = await uploadAvatar(user.id, file)
