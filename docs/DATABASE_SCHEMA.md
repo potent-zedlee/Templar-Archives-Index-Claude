@@ -35,6 +35,9 @@ hands/{handId}           # 플랫 컬렉션 (쿼리 유연성)
 | `analysisJobs` | auto-generated | Cloud Run 분석 작업 |
 | `categories` | auto-generated | 카테고리 마스터 |
 | `systemConfigs` | config key | 시스템 설정 |
+| `posts` | auto-generated | 커뮤니티 포스트 |
+| `posts/{id}/comments` | auto-generated | 포스트 댓글 (서브컬렉션) |
+| `posts/{id}/likes` | auto-generated | 포스트 좋아요 (서브컬렉션) |
 
 ---
 
@@ -201,10 +204,56 @@ type SemanticTag =
   stats: {
     commentsCount: number
   }
+  twoFactor?: TwoFactorSettings   // 2FA 설정
   createdAt: Timestamp
   updatedAt: Timestamp
   lastLoginAt?: Timestamp
 }
+```
+
+### TwoFactorSettings
+
+```typescript
+{
+  enabled: boolean
+  secret: string            // 암호화된 TOTP 시크릿
+  backupCodes: string[]     // 해시된 백업 코드 (1회용)
+  enabledAt: Timestamp
+}
+```
+
+### posts
+
+```typescript
+{
+  title: string
+  content: string
+  category: PostCategory
+  status: 'draft' | 'published' | 'archived'
+  authorId: string
+  authorInfo: {
+    nickname: string
+    avatarUrl?: string
+  }
+  engagement: {
+    likesCount: number
+    commentsCount: number
+    viewsCount: number
+  }
+  createdAt: Timestamp
+  updatedAt: Timestamp
+}
+```
+
+### PostCategory (열거형)
+
+```typescript
+type PostCategory =
+  | 'general'          // 일반 토론
+  | 'strategy'         // 전략 토론
+  | 'hand-analysis'    // 핸드 분석
+  | 'news'             // 뉴스
+  | 'tournament-recap' // 토너먼트 리캡
 ```
 
 ### analysisJobs
@@ -332,6 +381,30 @@ type SemanticTag =
 }
 ```
 
+### posts/{postId}/comments
+
+```typescript
+{
+  content: string
+  authorId: string
+  authorInfo: {
+    nickname: string
+    avatarUrl?: string
+  }
+  createdAt: Timestamp
+  updatedAt?: Timestamp
+}
+```
+
+### posts/{postId}/likes
+
+```typescript
+{
+  userId: string
+  createdAt: Timestamp
+}
+```
+
 ---
 
 ## 컬렉션 경로 상수
@@ -351,6 +424,9 @@ const COLLECTION_PATHS = {
   SYSTEM_CONFIGS: 'systemConfigs',
   HAND_LIKES: (handId) => `hands/${handId}/likes`,
   HAND_TAGS: (handId) => `hands/${handId}/tags`,
+  POSTS: 'posts',
+  POST_COMMENTS: (postId) => `posts/${postId}/comments`,
+  POST_LIKES: (postId) => `posts/${postId}/likes`,
 }
 ```
 
@@ -375,6 +451,9 @@ Firebase Security Rules는 `firestore.rules` 파일에서 관리됩니다.
 
 | 날짜 | 변경 내용 |
 |------|----------|
+| 2025-12-07 | posts 컬렉션 추가 (커뮤니티 기능), users.twoFactor 필드 추가 (2FA) |
 | 2025-12-01 | streams 컬렉션 pipelineStatus 필드 필수화, GCS 업로드 필드 추가 |
 | 2025-11-28 | PostgreSQL → Firestore 완전 마이그레이션 |
 | 2025-11-27 | Supabase 레거시 정리 |
+
+**마지막 업데이트**: 2025-12-07

@@ -1,6 +1,6 @@
 # Templar Archives - 프론트엔드 아키텍처
 
-**마지막 업데이트**: 2025-12-03
+**마지막 업데이트**: 2025-12-07
 
 ---
 
@@ -70,6 +70,10 @@
 | `/profile` | `profile/page.tsx` | 사용자 프로필 |
 | `/bookmarks` | `bookmarks/page.tsx` | 북마크된 핸드 |
 | `/notifications` | `notifications/page.tsx` | 알림 목록 |
+| `/community` | `community/page.tsx` | 커뮤니티 포스트 목록 |
+| `/community/[id]` | `community/[id]/page.tsx` | 포스트 상세 |
+| `/community/new` | `community/new/page.tsx` | 포스트 작성 |
+| `/offline` | `offline/page.tsx` | 오프라인 폴백 페이지 (PWA) |
 
 ### 2.2 Admin 페이지 (`/app/admin/`)
 
@@ -90,6 +94,7 @@
 |------|------|------|
 | `/auth/login` | `login/page.tsx` | Google OAuth 로그인 |
 | `/auth/callback` | `callback/page.tsx` | OAuth 콜백 처리 |
+| `/auth/2fa` | `2fa/page.tsx` | 2단계 인증 페이지 |
 
 ---
 
@@ -184,6 +189,26 @@ getPlatformStats()     // 총 핸드, 토너먼트, 플레이어 수
 getWeeklyHighlights()  // 주간 하이라이트 핸드
 ```
 
+### 4.6 커뮤니티 포스트 (`/app/actions/posts.ts`)
+
+```typescript
+createPost(data)       // 포스트 생성
+updatePost(id, data)   // 포스트 수정
+deletePost(id)         // 포스트 삭제
+togglePostLike(id)     // 좋아요 토글
+addComment(postId, content)   // 댓글 추가
+deleteComment(postId, commentId) // 댓글 삭제
+```
+
+### 4.7 2FA (`/app/actions/two-factor.ts`)
+
+```typescript
+initTwoFactorSetup()   // 2FA 설정 초기화 (QR 코드 생성)
+enableTwoFactor(code)  // 2FA 활성화
+verifyTwoFactor(code)  // 2FA 코드 검증 (로그인 시)
+disableTwoFactor(code) // 2FA 비활성화
+```
+
 ---
 
 ## 5. React Query 훅
@@ -242,9 +267,31 @@ useActiveAnalysisJobsQuery()
 
 useAnalysisHistoryQuery()
 // 완료/실패 이력
+
+useRealtimeActiveJobs()
+// Firestore onSnapshot 기반 실시간 구독
 ```
 
-### 5.5 Admin 쿼리 (`/lib/queries/admin-queries.ts`)
+### 5.5 커뮤니티 포스트 쿼리 (`/lib/queries/posts-queries.ts`)
+
+```typescript
+usePostsQuery(category?)
+// 포스트 목록 (카테고리 필터)
+
+usePostQuery(postId)
+// 포스트 상세
+
+usePostCommentsQuery(postId)
+// 포스트 댓글
+
+useCreatePostMutation()
+// 포스트 생성 mutation
+
+useTogglePostLikeMutation()
+// 좋아요 토글 mutation
+```
+
+### 5.6 Admin 쿼리 (`/lib/queries/admin-queries.ts`)
 
 ```typescript
 useDashboardStatsQuery()    // 대시보드 통계
@@ -427,6 +474,24 @@ isSubmitting: boolean
 | `BoardCards` | 보드 카드 |
 | `PositionBadge` | 포지션 배지 |
 | `CategoryLogo` | 카테고리 로고 |
+| `OfflineIndicator` | 오프라인 상태 배너 |
+| `InstallPWAPrompt` | PWA 설치 프롬프트 |
+| `NotificationBell` | 알림 벨 (접근성 개선됨) |
+
+### 7.10 커뮤니티 (`/components/features/community/`)
+
+| 컴포넌트 | 역할 |
+|---------|------|
+| `PostCard` | 포스트 카드 |
+| `CreatePostForm` | 포스트 작성 폼 |
+| `PostDetail` | 포스트 상세 뷰 |
+| `PostCommentsSection` | 댓글 섹션 |
+
+### 7.11 보안 (`/components/security/`)
+
+| 컴포넌트 | 역할 |
+|---------|------|
+| `TwoFactorSetup` | 2FA 설정 UI (QR 코드, 백업 코드) |
 
 ---
 
@@ -463,6 +528,25 @@ useToast()
 
 useSorting(items, sortBy)
 // 클라이언트 사이드 정렬
+
+useOnlineStatus()
+// 온라인/오프라인 상태 감지 (PWA)
+```
+
+### 8.3 검색 Hooks (`/lib/hooks/use-algolia-search.ts`)
+
+```typescript
+useHandSearch()
+// 핸드 검색 (Algolia / Firestore fallback)
+
+usePlayerSearch()
+// 플레이어 검색
+
+useMultiSearch()
+// 멀티 인덱스 검색
+
+useAutoSearch(query, options)
+// 자동 검색 (debounce 포함)
 ```
 
 ---

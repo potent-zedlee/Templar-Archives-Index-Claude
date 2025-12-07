@@ -415,8 +415,17 @@ hands/                    # 핸드 데이터 (players, actions 임베딩)
   └── likes/              # 좋아요/싫어요
   └── tags/               # 핸드 태그
   └── comments/           # 핸드 댓글
+
+posts/                    # 커뮤니티 포스트
+  ├── category            # general | strategy | hand-analysis | news | tournament-recap
+  ├── status              # draft | published | archived
+  ├── engagement          # { likesCount, commentsCount, viewsCount }
+  └── comments/           # 포스트 댓글 (서브컬렉션)
+  └── likes/              # 포스트 좋아요 (서브컬렉션)
+
 players/                  # 플레이어 프로필
 users/                    # 사용자 정보, 역할
+  ├── twoFactor           # { enabled, secret, backupCodes }
   └── notifications/
   └── bookmarks/
 analysisJobs/             # Cloud Run 분석 작업 상태
@@ -646,5 +655,199 @@ await batchIndexHands(hands)
 
 ---
 
+## 2단계 인증 (2FA)
+
+### TOTP 기반 구현
+
+Time-based One-Time Password (TOTP) 방식으로 구현되었습니다.
+
+**핵심 라이브러리**:
+- `otplib` - TOTP 코드 생성/검증
+- `qrcode` - QR 코드 생성
+
+**핵심 파일**:
+| 파일 | 역할 |
+|------|------|
+| `lib/two-factor.ts` | TOTP 시크릿 생성, QR 코드, 백업 코드 |
+| `app/actions/two-factor.ts` | 2FA 설정/활성화/비활성화 Server Actions |
+| `components/security/TwoFactorSetup.tsx` | 2FA 설정 UI 컴포넌트 |
+| `app/auth/2fa/page.tsx` | 2FA 인증 페이지 |
+
+**사용자 흐름**:
+```
+프로필 → 보안 설정 → 2FA 활성화
+    ↓
+QR 코드 스캔 (Google Authenticator 등)
+    ↓
+6자리 코드 입력하여 검증
+    ↓
+백업 코드 10개 발급 (1회용)
+    ↓
+로그인 시 2FA 코드 입력 필수
+```
+
+**Firestore 저장 (users 컬렉션)**:
+```typescript
+{
+  twoFactor: {
+    enabled: boolean
+    secret: string        // 암호화된 TOTP 시크릿
+    backupCodes: string[] // 해시된 백업 코드
+    enabledAt: Timestamp
+  }
+}
+```
+
+---
+
+## PWA / Offline 모드
+
+### 설정
+
+Serwist (Service Worker 라이브러리) 기반 PWA 구현입니다.
+
+**핵심 파일**:
+| 파일 | 역할 |
+|------|------|
+| `app/sw.ts` | Service Worker 설정 |
+| `public/manifest.json` | PWA 매니페스트 |
+| `lib/hooks/use-online-status.ts` | 온라인/오프라인 감지 훅 |
+| `components/common/OfflineIndicator.tsx` | 오프라인 배너 |
+| `components/common/InstallPWAPrompt.tsx` | PWA 설치 프롬프트 |
+| `app/offline/page.tsx` | 오프라인 폴백 페이지 |
+
+### 기능
+
+- **캐싱 전략**: Network-first (API), Cache-first (정적 자산)
+- **오프라인 감지**: `navigator.onLine` + `online/offline` 이벤트
+- **설치 프롬프트**: iOS Safari, Android Chrome 지원
+- **오프라인 페이지**: 네트워크 없을 때 표시
+
+### 사용 예시
+
+```typescript
+import { useOnlineStatus } from '@/lib/hooks/use-online-status'
+
+function MyComponent() {
+  const isOnline = useOnlineStatus()
+
+  if (!isOnline) {
+    return <OfflineIndicator />
+  }
+
+  return <NormalContent />
+}
+```
+
+---
+
+## 커뮤니티 포스트
+
+### 기능
+
+사용자가 포커 관련 글을 작성하고 토론할 수 있는 커뮤니티 기능입니다.
+
+**카테고리**:
+- `general` - 일반 토론
+- `strategy` - 전략 토론
+- `hand-analysis` - 핸드 분석
+- `news` - 뉴스
+- `tournament-recap` - 토너먼트 리캡
+
+**핵심 파일**:
+| 파일 | 역할 |
+|------|------|
+| `app/(main)/community/page.tsx` | 포스트 목록 |
+| `app/(main)/community/[id]/page.tsx` | 포스트 상세 |
+| `app/(main)/community/new/page.tsx` | 포스트 작성 |
+| `components/features/community/PostCard.tsx` | 포스트 카드 |
+| `components/features/community/CreatePostForm.tsx` | 작성 폼 |
+| `components/features/community/PostDetail.tsx` | 상세 뷰 |
+| `lib/queries/posts-queries.ts` | React Query 훅 |
+| `app/actions/posts.ts` | Server Actions |
+
+### Firestore 구조
+
+```typescript
+// posts 컬렉션
+{
+  title: string
+  content: string
+  category: PostCategory
+  status: 'draft' | 'published' | 'archived'
+  authorId: string
+  authorInfo: { nickname, avatarUrl }
+  engagement: { likesCount, commentsCount, viewsCount }
+  createdAt: Timestamp
+  updatedAt: Timestamp
+}
+
+// posts/{postId}/comments 서브컬렉션
+{
+  content: string
+  authorId: string
+  authorInfo: { nickname, avatarUrl }
+  createdAt: Timestamp
+}
+```
+
+---
+
+## 가상 스크롤 (Virtual Scrolling)
+
+대용량 리스트 성능 최적화를 위해 `@tanstack/react-virtual` 적용.
+
+**적용 컴포넌트**:
+- `FileTreeExplorer` - 아카이브 트리 네비게이션
+- `AdminTreeExplorer` - 관리자 트리 (Drag & Drop 포함)
+
+```typescript
+import { useVirtualizer } from '@tanstack/react-virtual'
+
+const virtualizer = useVirtualizer({
+  count: flatNodes.length,
+  getScrollElement: () => scrollContainerRef.current,
+  estimateSize: () => 36, // 예상 행 높이
+  overscan: 5,           // 화면 밖 추가 렌더링 행 수
+})
+```
+
+---
+
+## 실시간 로그 스트리밍
+
+Admin KAN 모니터링에서 2초 폴링 대신 Firestore `onSnapshot` 사용.
+
+**핵심 파일**:
+| 파일 | 역할 |
+|------|------|
+| `lib/queries/kan-queries.ts` | `useRealtimeActiveJobs()` 훅 |
+| `app/admin/kan/_components/ActiveJobsMonitor.tsx` | 실시간 모니터링 UI |
+
+```typescript
+// 실시간 구독 훅
+export function useRealtimeActiveJobs() {
+  const [jobs, setJobs] = useState<AnalysisJob[]>([])
+
+  useEffect(() => {
+    const unsubscribe = onSnapshot(
+      query(collection(db, 'analysisJobs'), where('status', 'in', ['pending', 'processing'])),
+      (snapshot) => {
+        setJobs(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })))
+      }
+    )
+    return () => unsubscribe()
+  }, [])
+
+  return jobs
+}
+```
+
+**장점**:
+- 지연 시간: 2초 → 실시간 (~100ms)
+- 서버 부하 감소 (폴링 제거)
+
+---
+
 **마지막 업데이트**: 2025-12-07
-**문서 버전**: 8.7 (Algolia 검색 연동 추가)
+**문서 버전**: 8.8 (2FA, PWA, 커뮤니티 포스트, 가상 스크롤, 실시간 로그 추가)
