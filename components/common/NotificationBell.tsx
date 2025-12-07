@@ -110,12 +110,18 @@ export function NotificationBell() {
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative hover:bg-muted">
-          <Bell className="h-5 w-5 text-muted-foreground" />
+        <Button
+          variant="ghost"
+          size="icon"
+          className="relative hover:bg-muted"
+          aria-label={unreadCount > 0 ? `알림 ${unreadCount}개 읽지 않음` : '알림'}
+        >
+          <Bell className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
           {unreadCount > 0 && (
             <Badge
               variant="destructive"
               className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
+              aria-hidden="true"
             >
               {unreadCount > 99 ? "99+" : unreadCount}
             </Badge>
@@ -133,8 +139,9 @@ export function NotificationBell() {
                 onClick={handleMarkAllAsRead}
                 disabled={markAllAsReadMutation.isPending}
                 className="h-8 text-xs hover:bg-muted text-muted-foreground"
+                aria-label="모든 알림을 읽음으로 표시"
               >
-                <Check className="h-3 w-3 mr-1" />
+                <Check className="h-3 w-3 mr-1" aria-hidden="true" />
                 Mark all read
               </Button>
             )}
@@ -149,11 +156,11 @@ export function NotificationBell() {
         <ScrollArea className="h-[400px]">
           {notifications.length === 0 ? (
             <div className="p-8 text-center text-muted-foreground">
-              <Bell className="h-12 w-12 mx-auto mb-2 opacity-50" />
+              <Bell className="h-12 w-12 mx-auto mb-2 opacity-50" aria-hidden="true" />
               <p className="text-sm">No notifications yet</p>
             </div>
           ) : (
-            <div className="py-2">
+            <div className="py-2" role="list" aria-label="알림 목록">
               {notifications.map((notification) => (
                 <div
                   key={notification.id}
@@ -161,6 +168,8 @@ export function NotificationBell() {
                     !notification.is_read ? "bg-gold-50 dark:bg-gold-900/10" : ""
                   }`}
                   onClick={() => handleNotificationClick(notification)}
+                  role="listitem"
+                  aria-label={`${notification.is_read ? '' : '읽지 않음: '}${notification.title}`}
                 >
                   {notification.link ? (
                     <Link href={notification.link} className="block">
@@ -182,8 +191,9 @@ export function NotificationBell() {
                           e.stopPropagation()
                           handleMarkAsRead(notification.id)
                         }}
+                        aria-label="읽음으로 표시"
                       >
-                        <Check className="h-3 w-3 text-muted-foreground" />
+                        <Check className="h-3 w-3 text-muted-foreground" aria-hidden="true" />
                       </Button>
                     )}
                     <Button
@@ -195,8 +205,9 @@ export function NotificationBell() {
                         e.stopPropagation()
                         handleDelete(notification.id)
                       }}
+                      aria-label="알림 삭제"
                     >
-                      <Trash2 className="h-3 w-3 text-muted-foreground" />
+                      <Trash2 className="h-3 w-3 text-muted-foreground" aria-hidden="true" />
                     </Button>
                   </div>
 

@@ -91,24 +91,31 @@ export function ShareHandDialog({ handId, handDescription, handNumber }: ShareHa
                   value={shareUrl}
                   readOnly
                   className="flex-1"
+                  aria-label="공유 링크"
                 />
                 <Button
                   onClick={() => copyToClipboard(shareUrl, setCopied)}
                   variant="outline"
+                  aria-label={copied ? "링크가 복사되었습니다" : "링크 복사하기"}
                 >
                   {copied ? (
                     <>
-                      <Check className="h-4 w-4 mr-2" />
+                      <Check className="h-4 w-4 mr-2" aria-hidden="true" />
                       Copied
                     </>
                   ) : (
                     <>
-                      <Copy className="h-4 w-4 mr-2" />
+                      <Copy className="h-4 w-4 mr-2" aria-hidden="true" />
                       Copy
                     </>
                   )}
                 </Button>
               </div>
+              {copied && (
+                <div role="status" aria-live="polite" className="sr-only">
+                  링크가 클립보드에 복사되었습니다
+                </div>
+              )}
               <p className="text-caption text-muted-foreground">
                 Share this link to let others view this hand
               </p>
@@ -134,8 +141,9 @@ export function ShareHandDialog({ handId, handDescription, handNumber }: ShareHa
                 onClick={shareToTwitter}
                 variant="outline"
                 className="flex flex-col gap-2 h-auto py-6"
+                aria-label="Twitter로 공유하기"
               >
-                <Twitter className="h-8 w-8 text-blue-400" />
+                <Twitter className="h-8 w-8 text-blue-400" aria-hidden="true" />
                 <span className="text-body">Twitter</span>
               </Button>
 
@@ -143,8 +151,9 @@ export function ShareHandDialog({ handId, handDescription, handNumber }: ShareHa
                 onClick={shareToFacebook}
                 variant="outline"
                 className="flex flex-col gap-2 h-auto py-6"
+                aria-label="Facebook으로 공유하기"
               >
-                <Facebook className="h-8 w-8 text-blue-600" />
+                <Facebook className="h-8 w-8 text-blue-600" aria-hidden="true" />
                 <span className="text-body">Facebook</span>
               </Button>
 
@@ -152,8 +161,9 @@ export function ShareHandDialog({ handId, handDescription, handNumber }: ShareHa
                 onClick={shareToKakao}
                 variant="outline"
                 className="flex flex-col gap-2 h-auto py-6"
+                aria-label="KakaoTalk으로 공유하기"
               >
-                <MessageCircle className="h-8 w-8 text-yellow-500" />
+                <MessageCircle className="h-8 w-8 text-yellow-500" aria-hidden="true" />
                 <span className="text-body">KakaoTalk</span>
               </Button>
             </div>
@@ -175,25 +185,32 @@ export function ShareHandDialog({ handId, handDescription, handNumber }: ShareHa
                   readOnly
                   rows={4}
                   className="flex-1 font-mono text-xs"
+                  aria-label="임베드 코드"
                 />
                 <Button
                   onClick={() => copyToClipboard(embedCode, setEmbedCopied)}
                   variant="outline"
                   className="self-start"
+                  aria-label={embedCopied ? "임베드 코드가 복사되었습니다" : "임베드 코드 복사하기"}
                 >
                   {embedCopied ? (
                     <>
-                      <Check className="h-4 w-4 mr-2" />
+                      <Check className="h-4 w-4 mr-2" aria-hidden="true" />
                       Copied
                     </>
                   ) : (
                     <>
-                      <Copy className="h-4 w-4 mr-2" />
+                      <Copy className="h-4 w-4 mr-2" aria-hidden="true" />
                       Copy
                     </>
                   )}
                 </Button>
               </div>
+              {embedCopied && (
+                <div role="status" aria-live="polite" className="sr-only">
+                  임베드 코드가 클립보드에 복사되었습니다
+                </div>
+              )}
               <p className="text-caption text-muted-foreground">
                 Paste this HTML code into your website to embed this hand
               </p>

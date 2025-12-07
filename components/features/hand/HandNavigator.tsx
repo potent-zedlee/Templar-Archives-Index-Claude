@@ -32,10 +32,13 @@ export function HandNavigator({
   const hasNext = currentHand < totalHands
 
   return (
-    <div className={cn(
-      "flex items-center justify-between p-4 bg-card border-b",
-      className
-    )}>
+    <nav
+      className={cn(
+        "flex items-center justify-between p-4 bg-card border-b",
+        className
+      )}
+      aria-label="핸드 네비게이션"
+    >
       {/* Left: Hand navigation */}
       <div className="flex items-center gap-2">
         <Button
@@ -43,11 +46,12 @@ export function HandNavigator({
           size="sm"
           onClick={onPrevious}
           disabled={!hasPrevious}
+          aria-label="이전 핸드로 이동"
         >
-          <ChevronLeft className="h-4 w-4" />
+          <ChevronLeft className="h-4 w-4" aria-hidden="true" />
         </Button>
 
-        <div className="text-lg font-semibold">
+        <div className="text-lg font-semibold" aria-live="polite">
           Hand {currentHand}
         </div>
 
@@ -56,8 +60,9 @@ export function HandNavigator({
           size="sm"
           onClick={onNext}
           disabled={!hasNext}
+          aria-label="다음 핸드로 이동"
         >
-          <ChevronRight className="h-4 w-4" />
+          <ChevronRight className="h-4 w-4" aria-hidden="true" />
         </Button>
       </div>
 
@@ -91,12 +96,12 @@ export function HandNavigator({
       </div>
 
       {/* Right: Pot size */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2" role="status" aria-label={`팟 사이즈: ${potSize.toLocaleString()}`}>
         <span className="text-sm text-muted-foreground">Pot</span>
         <Badge variant="secondary" className="text-base font-mono">
           {potSize.toLocaleString()}
         </Badge>
       </div>
-    </div>
+    </nav>
   )
 }

@@ -517,7 +517,7 @@ export function FileTreeExplorer({
         <div className="flex items-center gap-1.5">
           {/* 검색창 */}
           <div className="relative flex-1">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
             <Input
               ref={searchInputRef}
               type="text"
@@ -525,6 +525,7 @@ export function FileTreeExplorer({
               value={treeSearchQuery}
               onChange={handleSearchChange}
               className="pl-8 pr-8 h-8 text-sm"
+              aria-label="아카이브 검색"
             />
             {treeSearchQuery && (
               <Button
@@ -532,8 +533,9 @@ export function FileTreeExplorer({
                 size="icon"
                 className="absolute right-1 top-1/2 -translate-y-1/2 w-6 h-6"
                 onClick={clearSearch}
+                aria-label="검색 지우기"
               >
-                <X className="w-3.5 h-3.5" />
+                <X className="w-3.5 h-3.5" aria-hidden="true" />
               </Button>
             )}
           </div>
@@ -547,8 +549,9 @@ export function FileTreeExplorer({
                   size="icon"
                   className="h-8 w-8 flex-shrink-0"
                   onClick={expandAll}
+                  aria-label="모두 펼치기"
                 >
-                  <ChevronsUpDown className="w-4 h-4" />
+                  <ChevronsUpDown className="w-4 h-4" aria-hidden="true" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="bottom">
@@ -565,8 +568,9 @@ export function FileTreeExplorer({
                   size="icon"
                   className="h-8 w-8 flex-shrink-0"
                   onClick={collapseAll}
+                  aria-label="모두 접기"
                 >
-                  <ChevronsDownUp className="w-4 h-4" />
+                  <ChevronsDownUp className="w-4 h-4" aria-hidden="true" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="bottom">
@@ -733,18 +737,18 @@ export function FileTreeExplorer({
 
       {/* 트리 컨텐츠 */}
       <ScrollArea className="flex-1 h-0 min-h-0">
-        <div className="py-1">
+        <div className="py-1" aria-busy={loadingNodes.size > 0} aria-live="polite">
           {filteredNodes.length > 0 ? (
             renderTreeNodes(filteredNodes)
           ) : treeSearchQuery ? (
-            <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
-              <Search className="w-8 h-8 mb-2 opacity-50" />
+            <div className="flex flex-col items-center justify-center py-8 text-muted-foreground" role="status">
+              <Search className="w-8 h-8 mb-2 opacity-50" aria-hidden="true" />
               <p className="text-sm">No results found</p>
               <p className="text-xs mt-1">Try a different search term</p>
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
-              <FolderTree className="w-8 h-8 mb-2 opacity-50" />
+            <div className="flex flex-col items-center justify-center py-8 text-muted-foreground" role="status">
+              <FolderTree className="w-8 h-8 mb-2 opacity-50" aria-hidden="true" />
               <p className="text-sm">No tournaments</p>
               <p className="text-xs mt-1">Create a tournament to get started</p>
             </div>
