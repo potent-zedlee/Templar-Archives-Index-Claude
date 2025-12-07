@@ -8,7 +8,7 @@
 import { useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Loader2, CheckCircle2, XCircle, Clock, Sparkles } from 'lucide-react'
-import { useActiveJobs } from '@/lib/queries/kan-queries'
+import { useRealtimeActiveJobs } from '@/lib/queries/kan-queries'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
@@ -29,7 +29,7 @@ export function ActiveJobsMonitor() {
   const searchParams = useSearchParams()
   const highlightJobId = searchParams.get('job')
 
-  const { data: jobs, isLoading, error } = useActiveJobs()
+  const { data: jobs, isLoading, error } = useRealtimeActiveJobs()
 
   // Scroll to highlighted job
   useEffect(() => {
