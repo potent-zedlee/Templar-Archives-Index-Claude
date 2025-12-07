@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="144" height="144" viewBox="0 0 144 144" xmlns="http://www.w3.org/2000/svg">
+  <rect width="144" height="144" fill="#000000"/>
+  <g transform="translate(72, 72)">
+    <!-- Templar Cross -->
+    <rect x="-12" y="-48" width="24" height="96" fill="#F59E0B"/>
+    <rect x="-36" y="-12" width="72" height="24" fill="#F59E0B"/>
+    <!-- Poker Chip Circle -->
+    <circle cx="0" cy="0" r="41.142857142857146" fill="none" stroke="#F59E0B" stroke-width="3.6"/>
+  </g>
+  <text x="50%" y="85%" text-anchor="middle" fill="#F59E0B" font-family="Arial, sans-serif" font-size="14.4" font-weight="bold">TEMPLAR</text>
+</svg>

@@ -4,6 +4,8 @@ import { GeistMono } from "geist/font/mono"
 import { WebVitalsReporter } from "@/components/analytics/WebVitals"
 import { Footer } from "@/components/layout/Footer"
 import { CookieConsentBanner } from "@/components/dialogs/CookieConsentBanner"
+import { OfflineIndicator } from "@/components/common/OfflineIndicator"
+import { InstallPWAPrompt, IOSInstallPrompt } from "@/components/common/InstallPWAPrompt"
 import "./globals.css"
 import { Providers } from "@/components/layout/Providers"
 
@@ -18,6 +20,12 @@ export const metadata: Metadata = {
   authors: [{ name: "Templar Archives Index Team" }],
   creator: "Templar Archives Index",
   publisher: "Templar Archives Index",
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'Templar Archives',
+  },
   openGraph: {
     type: "website",
     locale: "ko_KR",
@@ -64,17 +72,24 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <meta name="theme-color" content="#F59E0B" />
+        <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
+      </head>
       <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable} antialiased bg-textured`}>
         {/* Skip to main content link - WCAG 2.4.1 */}
         <a href="#main-content" className="skip-link">
           Skip to main content
         </a>
         <Providers>
+          <OfflineIndicator />
           <main id="main-content" role="main">
             {children}
           </main>
           <Footer />
           <CookieConsentBanner />
+          <InstallPWAPrompt />
+          <IOSInstallPrompt />
         </Providers>
         <WebVitalsReporter />
       </body>

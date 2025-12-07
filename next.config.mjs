@@ -1,4 +1,5 @@
 import withBundleAnalyzer from '@next/bundle-analyzer'
+import withSerwist from '@serwist/next'
 
 const bundleAnalyzer = withBundleAnalyzer({
   enabled: process.env.ANALYZE === 'true',
@@ -138,4 +139,12 @@ const nextConfig = {
   },
 }
 
-export default bundleAnalyzer(nextConfig)
+const withPWA = withSerwist({
+  swSrc: 'app/sw.ts',
+  swDest: 'public/sw.js',
+  cacheOnNavigation: true,
+  reloadOnOnline: true,
+  disable: process.env.NODE_ENV === 'development', // 개발 환경에서는 비활성화
+})
+
+export default bundleAnalyzer(withPWA(nextConfig))

@@ -227,6 +227,42 @@ service cloud.firestore {
       allow update, delete: if isAdmin();
     }
 
+    // ==================== Community Posts Collection ====================
+
+    /**
+     * 커뮤니티 포스트: 모두 읽기, 인증된 사용자 생성, 작성자/Admin만 수정/삭제
+     */
+    match /posts/{postId} {
+      // 읽기: published 상태만 모두에게 공개, draft는 작성자만
+      allow read: if resource.data.status == 'published' ||
+        (isAuthenticated() && resource.data.author.id == request.auth.uid) ||
+        isAdmin();
+      // 생성: 인증된 사용자만
+      allow create: if isAuthenticated() &&
+        request.resource.data.author.id == request.auth.uid;
+      // 수정: 작성자 또는 Admin만
+      allow update: if isAuthenticated() &&
+        (resource.data.author.id == request.auth.uid || isAdmin());
+      // 삭제: 작성자 또는 Admin만
+      allow delete: if isAuthenticated() &&
+        (resource.data.author.id == request.auth.uid || isAdmin());
+
+      // 포스트 댓글
+      match /comments/{commentId} {
+        allow read: if true;
+        allow create: if isAuthenticated();
+        allow update, delete: if isAuthenticated() &&
+          (resource.data.author.id == request.auth.uid || isAdmin());
+      }
+
+      // 포스트 좋아요
+      match /likes/{likeId} {
+        allow read: if true;
+        allow create: if isAuthenticated() && likeId == request.auth.uid;
+        allow update, delete: if isAuthenticated() && likeId == request.auth.uid;
+      }
+    }
+
     // ==================== Root Notifications (Legacy) ====================
 
     /**
