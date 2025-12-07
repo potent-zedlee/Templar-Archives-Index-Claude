@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { useAuth } from "@/components/layout/AuthProvider"
 import { isAdmin } from "@/lib/admin"
-import { type HandEditRequest } from "@/lib/hand-edit-requests"
+import { type HandEditRequest } from "@/lib/poker/hand-edit-requests"
 import {
   useEditRequestsQuery,
   useApproveEditRequestMutation,

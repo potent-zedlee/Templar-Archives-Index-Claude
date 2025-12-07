@@ -5,7 +5,7 @@
  * - Firestore: 데이터베이스 작업
  * - Auth: 사용자 인증
  *
- * @module lib/firebase
+ * @module lib/db/firebase
  */
 
 import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app'
@@ -52,7 +52,7 @@ export const app: FirebaseApp = getFirebaseApp()
  *
  * @example
  * ```typescript
- * import { firestore } from '@/lib/firebase'
+ * import { firestore } from '@/lib/db/firebase'
  * import { collection, getDocs } from 'firebase/firestore'
  *
  * const snapshot = await getDocs(collection(firestore, 'tournaments'))
@@ -65,7 +65,7 @@ export const firestore: Firestore = getFirestore(app)
  *
  * @example
  * ```typescript
- * import { auth } from '@/lib/firebase'
+ * import { auth } from '@/lib/db/firebase'
  * import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth'
  *
  * await signInWithPopup(auth, new GoogleAuthProvider())
@@ -78,7 +78,7 @@ export const auth: Auth = getAuth(app)
  *
  * @example
  * ```typescript
- * import { storage } from '@/lib/firebase'
+ * import { storage } from '@/lib/db/firebase'
  * import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
  *
  * const storageRef = ref(storage, 'images/photo.jpg')

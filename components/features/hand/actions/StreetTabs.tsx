@@ -2,7 +2,7 @@
 
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
-import type { Street } from "@/lib/hand-actions"
+import type { Street } from "@/lib/poker/hand-actions"
 
 type StreetTabsProps = {
   activeStreet: Street

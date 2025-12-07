@@ -9,8 +9,8 @@
  * @module app/actions/admin/archive-admin
  */
 
-import { adminFirestore, adminAuth } from '@/lib/firebase-admin'
-import { COLLECTION_PATHS } from '@/lib/firestore-types'
+import { adminFirestore, adminAuth } from '@/lib/db/firebase-admin'
+import { COLLECTION_PATHS } from '@/lib/db/firestore-types'
 import { revalidatePath } from 'next/cache'
 import type { ContentStatus } from '@/lib/types/archive'
 import { FieldValue } from 'firebase-admin/firestore'

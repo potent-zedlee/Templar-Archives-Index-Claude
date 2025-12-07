@@ -12,7 +12,7 @@ import { HandHistoryDetail } from "@/components/features/hand/HandHistoryDetail"
 import { Play, ThumbsUp, ThumbsDown, MessageCircle } from "lucide-react"
 import { useAuth } from "@/components/layout/AuthProvider"
 import type { HandHistory } from "@/lib/types/hand-history"
-import { getBatchHandLikeStatus, type HandLikeStatus } from "@/lib/hand-likes"
+import { getBatchHandLikeStatus, type HandLikeStatus } from "@/lib/poker/hand-likes"
 
 type HandListAccordionProps = {
   hands: HandHistory[]

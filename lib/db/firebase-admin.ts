@@ -4,7 +4,7 @@
  * Server Components, API Routes, Server Actions에서 사용됩니다.
  * Admin SDK는 클라이언트에서 절대 사용하면 안 됩니다.
  *
- * @module lib/firebase-admin
+ * @module lib/db/firebase-admin
  */
 
 import {
@@ -95,7 +95,7 @@ export const adminApp: App = getAdminApp()
  *
  * @example
  * ```typescript
- * import { adminFirestore } from '@/lib/firebase-admin'
+ * import { adminFirestore } from '@/lib/db/firebase-admin'
  *
  * // Server Action에서 사용
  * const snapshot = await adminFirestore.collection('tournaments').get()
@@ -110,7 +110,7 @@ export const adminFirestore: Firestore = getFirestore(adminApp)
  *
  * @example
  * ```typescript
- * import { adminAuth } from '@/lib/firebase-admin'
+ * import { adminAuth } from '@/lib/db/firebase-admin'
  *
  * // 토큰 검증
  * const decodedToken = await adminAuth.verifyIdToken(idToken)

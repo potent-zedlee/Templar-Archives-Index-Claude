@@ -25,19 +25,19 @@ export function Footer() {
   ]
 
   return (
-    <footer className="border-t border-border bg-background">
+    <footer className="border-t border-gold-500/20 bg-background/50 backdrop-blur-sm relative z-10">
       <div className="container max-w-7xl mx-auto px-4 md:px-6 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand */}
           <div className="col-span-1">
-            <Link href="/" className="flex items-center gap-2 mb-4">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-gold-400 to-gold-600">
+            <Link href="/" className="flex items-center gap-2 mb-4 group">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-gold-400 to-gold-600 shadow-md group-hover:shadow-glow transition-all duration-300">
                 <span className="font-mono text-lg font-bold text-white dark:text-background">TA</span>
               </div>
-              <span className="text-lg font-bold text-foreground">Templar Archives Index</span>
+              <span className="text-lg font-bold text-foreground group-hover:text-gold-600 transition-colors">Templar Archives Index</span>
             </Link>
-            <p className="text-sm text-muted-foreground mb-4">
-              The ultimate poker hand history archive. Analyze, learn, and improve your game.
+            <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
+              The ultimate poker hand history archive. Analyze, learn, and improve your game with professional data.
             </p>
             <p className="text-xs text-muted-foreground">
               © {currentYear} Templar Archives Index. All rights reserved.
@@ -46,13 +46,13 @@ export function Footer() {
 
           {/* About */}
           <div>
-            <h3 className="font-semibold mb-4 text-foreground">About</h3>
-            <ul className="space-y-2">
+            <h3 className="font-semibold mb-4 text-foreground/80 uppercase tracking-wider text-xs">About</h3>
+            <ul className="space-y-3">
               {aboutLinks.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="text-sm text-muted-foreground hover:text-gold-400 dark:hover:text-gold-300 transition-colors"
+                    className="text-sm text-muted-foreground hover:text-gold-500 dark:hover:text-gold-400 transition-colors"
                   >
                     {link.label}
                   </Link>
@@ -63,13 +63,13 @@ export function Footer() {
 
           {/* Navigation */}
           <div>
-            <h3 className="font-semibold mb-4 text-foreground">Navigation</h3>
-            <ul className="space-y-2">
+            <h3 className="font-semibold mb-4 text-foreground/80 uppercase tracking-wider text-xs">Navigation</h3>
+            <ul className="space-y-3">
               {navigationLinks.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="text-sm text-muted-foreground hover:text-gold-400 dark:hover:text-gold-300 transition-colors"
+                    className="text-sm text-muted-foreground hover:text-gold-500 dark:hover:text-gold-400 transition-colors"
                   >
                     {link.label}
                   </Link>
@@ -80,13 +80,13 @@ export function Footer() {
 
           {/* Legal & Resources */}
           <div>
-            <h3 className="font-semibold mb-4 text-foreground">Legal & Resources</h3>
-            <ul className="space-y-2">
+            <h3 className="font-semibold mb-4 text-foreground/80 uppercase tracking-wider text-xs">Legal & Resources</h3>
+            <ul className="space-y-3">
               {legalLinks.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="text-sm text-muted-foreground hover:text-gold-400 dark:hover:text-gold-300 transition-colors"
+                    className="text-sm text-muted-foreground hover:text-gold-500 dark:hover:text-gold-400 transition-colors"
                   >
                     {link.label}
                   </Link>
@@ -97,7 +97,7 @@ export function Footer() {
                   href="https://github.com/templar-archives"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-sm text-muted-foreground hover:text-gold-400 dark:hover:text-gold-300 transition-colors"
+                  className="text-sm text-muted-foreground hover:text-gold-500 dark:hover:text-gold-400 transition-colors"
                   aria-label="Templar Archives GitHub (새 탭에서 열림)"
                 >
                   GitHub
@@ -106,14 +106,14 @@ export function Footer() {
               <li>
                 <a
                   href="mailto:legal@templararchives.com"
-                  className="text-sm text-muted-foreground hover:text-gold-400 dark:hover:text-gold-300 transition-colors"
+                  className="text-sm text-muted-foreground hover:text-gold-500 dark:hover:text-gold-400 transition-colors"
                 >
                   Contact Legal
                 </a>
               </li>
               <li>
                 <CookieSettingsDialog>
-                  <button className="text-sm text-muted-foreground hover:text-gold-400 dark:hover:text-gold-300 transition-colors text-left">
+                  <button className="text-sm text-muted-foreground hover:text-gold-500 dark:hover:text-gold-400 transition-colors text-left">
                     Cookie Settings
                   </button>
                 </CookieSettingsDialog>
@@ -123,26 +123,26 @@ export function Footer() {
         </div>
 
         {/* Open Source Credits */}
-        <div className="mt-12 pt-8 border-t border-border">
+        <div className="mt-12 pt-8 border-t border-border/50">
           <p className="text-xs text-muted-foreground text-center">
             Built with{" "}
-            <a href="https://nextjs.org" target="_blank" rel="noopener noreferrer" className="hover:text-gold-400 dark:hover:text-gold-300 transition-colors">
+            <a href="https://nextjs.org" target="_blank" rel="noopener noreferrer" className="hover:text-gold-500 dark:hover:text-gold-400 transition-colors font-medium">
               Next.js
             </a>
             {", "}
-            <a href="https://react.dev" target="_blank" rel="noopener noreferrer" className="hover:text-gold-400 dark:hover:text-gold-300 transition-colors">
+            <a href="https://react.dev" target="_blank" rel="noopener noreferrer" className="hover:text-gold-500 dark:hover:text-gold-400 transition-colors font-medium">
               React
             </a>
             {", "}
-            <a href="https://firebase.google.com" target="_blank" rel="noopener noreferrer" className="hover:text-gold-400 dark:hover:text-gold-300 transition-colors">
+            <a href="https://firebase.google.com" target="_blank" rel="noopener noreferrer" className="hover:text-gold-500 dark:hover:text-gold-400 transition-colors font-medium">
               Firebase
             </a>
             {", and "}
-            <a href="https://tailwindcss.com" target="_blank" rel="noopener noreferrer" className="hover:text-gold-400 dark:hover:text-gold-300 transition-colors">
+            <a href="https://tailwindcss.com" target="_blank" rel="noopener noreferrer" className="hover:text-gold-500 dark:hover:text-gold-400 transition-colors font-medium">
               Tailwind CSS
             </a>
             . Powered by{" "}
-            <a href="https://anthropic.com" target="_blank" rel="noopener noreferrer" className="hover:text-gold-400 dark:hover:text-gold-300 transition-colors">
+            <a href="https://anthropic.com" target="_blank" rel="noopener noreferrer" className="hover:text-gold-500 dark:hover:text-gold-400 transition-colors font-medium">
               Claude AI
             </a>
             .

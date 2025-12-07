@@ -7,7 +7,7 @@
  */
 
 import { NextResponse } from 'next/server'
-import { adminFirestore } from '@/lib/firebase-admin'
+import { adminFirestore } from '@/lib/db/firebase-admin'
 import {
   COLLECTION_PATHS,
   type FirestorePlayer,

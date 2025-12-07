@@ -10,7 +10,7 @@
  */
 
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query'
-import { firestore } from '@/lib/firebase'
+import { firestore } from '@/lib/db/firebase'
 import {
   collection,
   doc,

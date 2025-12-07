@@ -16,8 +16,8 @@ import {
   limit as firestoreLimit,
   QueryDocumentSnapshot,
 } from 'firebase/firestore'
-import { firestore } from '@/lib/firebase'
-import type { FirestoreHand, FirestoreTournament, FirestoreEvent, FirestoreStream, FirestorePlayer } from '@/lib/firestore-types'
+import { firestore } from '@/lib/db/firebase'
+import type { FirestoreHand, FirestoreTournament, FirestoreEvent, FirestoreStream, FirestorePlayer } from '@/lib/db/firestore-types'
 
 // ==================== Types ====================
 

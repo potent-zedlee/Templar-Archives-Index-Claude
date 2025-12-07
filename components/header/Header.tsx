@@ -4,7 +4,7 @@ import { useState, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { Menu, X } from "lucide-react"
 import { useAuth } from "@/components/layout/AuthProvider"
-import { signOut } from "@/lib/auth"
+import { signOut } from "@/lib/auth/auth"
 import { NotificationBell } from "@/components/common/NotificationBell"
 import { HeaderLogo } from "./HeaderLogo"
 import { HeaderDesktopNav } from "./HeaderDesktopNav"
@@ -60,8 +60,8 @@ export function Header() {
 
   return (
     <>
-      {/* Flowbite Navbar */}
-      <nav className="sticky top-0 z-[100] w-full border-b-[3px] border-gold-500 bg-background" role="banner">
+      {/* Floating Glass Navbar */}
+      <nav className="sticky top-0 z-[100] w-full glass border-b border-gold-500/30 supports-[backdrop-filter]:bg-background/60" role="banner">
         <div className="w-full px-6 h-16 flex items-center justify-between">
           {/* Left: Logo + Navigation Menu */}
           <div className="flex items-center gap-8">
@@ -91,7 +91,7 @@ export function Header() {
                   <button
                     type="button"
                     data-testid="login-button"
-                    className="hidden md:inline-flex text-foreground bg-transparent border border-border hover:bg-muted focus:ring-4 focus:outline-none focus:ring-ring font-medium rounded-lg text-sm px-4 py-2 transition-colors"
+                    className="hidden md:inline-flex text-foreground bg-transparent border border-border hover:bg-gold-50 hover:border-gold-300 hover:text-gold-700 dark:hover:bg-gold-900/20 dark:hover:text-gold-400 focus:ring-4 focus:outline-none focus:ring-ring font-medium rounded-lg text-sm px-4 py-2 transition-colors"
                     onClick={() => router.push("/auth/login")}
                   >
                     LOGIN

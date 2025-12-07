@@ -8,7 +8,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import type { PlayerStats } from '@/lib/firestore-types'
+import type { PlayerStats } from '@/lib/db/firestore-types'
 
 // ==================== Types ====================
 

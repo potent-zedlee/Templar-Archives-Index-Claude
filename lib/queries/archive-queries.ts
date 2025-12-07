@@ -23,14 +23,14 @@ import {
   startAfter,
   Timestamp,
 } from 'firebase/firestore'
-import { firestore as db } from '@/lib/firebase'
-import { COLLECTION_PATHS } from '@/lib/firestore-types'
+import { firestore as db } from '@/lib/db/firebase'
+import { COLLECTION_PATHS } from '@/lib/db/firestore-types'
 import type {
   FirestoreTournament,
   FirestoreEvent,
   FirestoreStream,
   FirestoreHand,
-} from '@/lib/firestore-types'
+} from '@/lib/db/firestore-types'
 import type { Tournament, Hand, UnsortedVideo, Event, Stream } from '@/lib/types/archive'
 import type { ServerSortParams } from '@/lib/types/sorting'
 

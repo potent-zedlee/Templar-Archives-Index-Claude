@@ -2,7 +2,7 @@ import { Suspense } from 'react'
 import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { adminFirestore } from '@/lib/firebase-admin'
+import { adminFirestore } from '@/lib/db/firebase-admin'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -13,8 +13,8 @@ import { ActionTimeline, type HandAction } from '@/components/features/poker/Act
 import { YouTubePlayer } from '@/components/features/video/YouTubePlayer'
 import { CommentSection } from '@/components/features/community/CommentSection'
 import type { PlayerSeatData } from '@/components/features/poker/PlayerSeat'
-import type { FirestoreHand, FirestoreStream, FirestoreEvent, FirestoreTournament } from '@/lib/firestore-types'
-import { COLLECTION_PATHS } from '@/lib/firestore-types'
+import type { FirestoreHand, FirestoreStream, FirestoreEvent, FirestoreTournament } from '@/lib/db/firestore-types'
+import { COLLECTION_PATHS } from '@/lib/db/firestore-types'
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params

@@ -20,7 +20,7 @@ import {
 import { useAuth } from '@/components/layout/AuthProvider'
 import { usePostsQuery, type SortOption } from '@/lib/queries/posts-queries'
 import { PostCard } from '@/components/features/community/PostCard'
-import type { PostCategory } from '@/lib/firestore-types'
+import type { PostCategory } from '@/lib/db/firestore-types'
 
 const CATEGORIES: { value: PostCategory | 'all'; label: string }[] = [
   { value: 'all', label: 'All Categories' },

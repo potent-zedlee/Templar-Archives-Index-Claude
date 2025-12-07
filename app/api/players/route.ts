@@ -7,8 +7,8 @@
  */
 
 import { NextResponse } from 'next/server'
-import { adminFirestore } from '@/lib/firebase-admin'
-import { COLLECTION_PATHS, type FirestorePlayer, type FirestoreHand } from '@/lib/firestore-types'
+import { adminFirestore } from '@/lib/db/firebase-admin'
+import { COLLECTION_PATHS, type FirestorePlayer, type FirestoreHand } from '@/lib/db/firestore-types'
 import type { Timestamp } from 'firebase-admin/firestore'
 
 /**

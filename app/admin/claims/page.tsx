@@ -12,7 +12,7 @@ import { Check, X, ExternalLink, Clock, CheckCircle2, XCircle } from "lucide-rea
 import { toast } from "sonner"
 import { useAuth } from "@/components/layout/AuthProvider"
 import { useRouter } from "next/navigation"
-import { isAdmin } from "@/lib/auth-utils"
+import { isAdmin } from "@/lib/auth/auth-utils"
 import { type PlayerClaimWithDetails } from "@/lib/player-claims"
 import {
   usePendingClaimsQuery,

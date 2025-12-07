@@ -13,8 +13,8 @@ import {
   removePlayerFromHand,
   updatePlayerInHand,
   searchPlayers,
-} from '@/lib/hand-players'
-import type { HandPlayer } from '@/lib/hand-players'
+} from '@/lib/poker/hand-players'
+import type { HandPlayer } from '@/lib/poker/hand-players'
 import { toast } from 'sonner'
 
 // ==================== Query Keys ====================

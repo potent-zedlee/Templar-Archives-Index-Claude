@@ -1,8 +1,8 @@
+```
 "use client"
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import Image from "next/image"
 import { Loader2, Check, X, AlertTriangle, Trash2, Shield } from "lucide-react"
 import { useAuth } from "@/components/layout/AuthProvider"
 import { toast } from "sonner"
@@ -13,6 +13,7 @@ import {
 } from "@/lib/queries/profile-queries"
 import { TwoFactorSetup } from "@/components/security/TwoFactorSetup"
 import { getTwoFactorStatus } from "@/app/actions/two-factor"
+import { AvatarUpload } from "@/components/profile/AvatarUpload"
 
 export default function ProfileClient() {
   const router = useRouter()
@@ -170,28 +171,37 @@ export default function ProfileClient() {
 
           <div className="p-6 space-y-8">
             {/* Profile Photo */}
-            <div className="flex items-center gap-4">
-              <div className="relative">
-                <div className="h-20 w-20 border-2 border-gold-700 gold-glow overflow-hidden bg-black-200 flex items-center justify-center">
-                  {profile.avatarUrl ? (
-                    <div className="relative w-full h-full">
-                      <Image
-                        src={profile.avatarUrl}
-                        alt={profile.nickname}
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
-                  ) : (
-                    <span className="text-2xl font-bold text-gold-400">
-                      {profile.nickname.charAt(0).toUpperCase()}
-                    </span>
-                  )}
-                </div>
-              </div>
+            <div className="flex items-center gap-6">
+              <AvatarUpload
+                currentImageUrl={profile.avatarUrl}
+                nickname={profile.nickname}
+                onUpload={async (file) => {
+                  if (!user) throw new Error('User not authenticated')
+                  
+                  try {
+                    const { uploadAvatar } = await import('@/lib/user-profile')
+                    const url = await uploadAvatar(user.id, file)
+
+                    // Firestore 업데이트
+                    await updateProfileMutation.mutateAsync({
+                      userId: user.id,
+                      updates: { avatarUrl: url }
+                    })
+
+                    toast.success('Avatar updated successfully')
+                    return url
+                  } catch (error) {
+                    console.error('Avatar upload failed', error)
+                    throw error
+                  }
+                }}
+              />
               <div>
-                <p className="text-caption font-medium">{profile.nickname}</p>
-                <p className="text-xs text-black-600">{profile.email}</p>
+                <p className="text-caption font-medium mb-1">{profile.nickname}</p>
+                <p className="text-xs text-black-600 mb-2">{profile.email}</p>
+                <p className="text-xs text-muted-foreground">
+                  Recommend 500x500px or larger. Max 5MB.
+                </p>
               </div>
             </div>
 

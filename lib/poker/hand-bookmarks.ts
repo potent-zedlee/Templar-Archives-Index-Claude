@@ -4,7 +4,7 @@
  * Firestore를 사용하여 사용자별 핸드 북마크를 관리합니다.
  * Collection: /users/{userId}/bookmarks/{bookmarkId}
  *
- * @module lib/hand-bookmarks
+ * @module lib/poker/hand-bookmarks
  */
 
 import { firestore } from './firebase'

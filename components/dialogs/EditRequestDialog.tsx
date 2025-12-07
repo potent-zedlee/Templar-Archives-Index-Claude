@@ -16,7 +16,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { useAuth } from "@/components/layout/AuthProvider"
 import { useRouter } from "next/navigation"
 import { ChevronRight, ChevronLeft } from "lucide-react"
-import { createEditRequest, getHandDataForEdit, type EditType } from "@/lib/hand-edit-requests"
+import { createEditRequest, getHandDataForEdit, type EditType } from "@/lib/poker/hand-edit-requests"
 import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
 

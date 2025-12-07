@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { Clock, CheckCircle, XCircle } from "lucide-react"
 import Link from "next/link"
 import { useAuth } from "@/components/layout/AuthProvider"
-import { type EditRequestStatus } from "@/lib/hand-edit-requests"
+import { type EditRequestStatus } from "@/lib/poker/hand-edit-requests"
 import { useUserEditRequestsQuery } from "@/lib/queries/edit-requests-queries"
 
 const EDIT_TYPE_LABELS: Record<string, string> = {

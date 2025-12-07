@@ -14,13 +14,13 @@ import {
   isAlgoliaConfigured,
   ALGOLIA_INDICES,
   type AlgoliaIndexName,
-} from '@/lib/algolia'
+} from '@/lib/search/algolia'
 import type { SearchResponse } from 'algoliasearch'
 import type {
   AlgoliaHandRecord,
   AlgoliaPlayerRecord,
   AlgoliaTournamentRecord,
-} from '@/lib/algolia-indexing'
+} from '@/lib/search/algolia-indexing'
 
 // ==================== 타입 정의 ====================
 

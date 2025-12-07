@@ -3,10 +3,10 @@
  *
  * Google OAuth 로그인 및 인증 상태 관리를 제공합니다.
  *
- * @module lib/auth
+ * @module lib/auth/auth
  */
 
-import { auth } from '@/lib/firebase'
+import { auth } from '@/lib/db/firebase'
 import {
   signInWithPopup,
   GoogleAuthProvider,

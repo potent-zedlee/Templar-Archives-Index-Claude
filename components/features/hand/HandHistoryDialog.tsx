@@ -36,7 +36,7 @@ import {
   Copy
 } from "lucide-react"
 import { toast } from "sonner"
-import type { FirestoreStream } from "@/lib/firestore-types"
+import type { FirestoreStream } from "@/lib/db/firestore-types"
 
 // Semantic tag type
 type SemanticTag =

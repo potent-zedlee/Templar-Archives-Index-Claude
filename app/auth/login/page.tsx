@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { signInWithGoogle } from "@/lib/auth"
+import { signInWithGoogle } from "@/lib/auth/auth"
 import { useAuth } from "@/components/layout/AuthProvider"
 import { Loader2, AlertTriangle, ExternalLink } from "lucide-react"
 import { useWebViewDetection, getOpenInBrowserMessage } from "@/lib/utils/webview-detector"

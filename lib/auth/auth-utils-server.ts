@@ -4,11 +4,11 @@
  * Firebase Admin SDK를 사용하는 서버 전용 함수들입니다.
  * 클라이언트 컴포넌트에서는 사용할 수 없습니다.
  *
- * @module lib/auth-utils-server
+ * @module lib/auth/auth-utils-server
  */
 
-import { adminFirestore } from '@/lib/firebase-admin'
-import type { UserRole } from '@/lib/firestore-types'
+import { adminFirestore } from '@/lib/db/firebase-admin'
+import type { UserRole } from '@/lib/db/firestore-types'
 
 // 클라이언트 안전 함수 re-export
 export { isAdminEmail, isAdmin } from './auth-utils'

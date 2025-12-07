@@ -7,12 +7,12 @@
  * 사용자 인증을 서버에서 검증합니다.
  */
 
-import { adminFirestore, adminAuth } from '@/lib/firebase-admin'
+import { adminFirestore, adminAuth } from '@/lib/db/firebase-admin'
 import { revalidatePath } from 'next/cache'
 import { cookies } from 'next/headers'
 import { FieldValue } from 'firebase-admin/firestore'
-import { COLLECTION_PATHS } from '@/lib/firestore-types'
-import type { PostCategory, VoteType } from '@/lib/firestore-types'
+import { COLLECTION_PATHS } from '@/lib/db/firestore-types'
+import type { PostCategory, VoteType } from '@/lib/db/firestore-types'
 
 // ==================== Types ====================
 

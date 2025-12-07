@@ -24,12 +24,12 @@ import {
   onSnapshot,
   type DocumentSnapshot,
 } from 'firebase/firestore'
-import { firestore } from '@/lib/firebase'
+import { firestore } from '@/lib/db/firebase'
 import { toast } from 'sonner'
 import type {
   FirestoreAnalysisJob,
   AnalysisJobStatus,
-} from '@/lib/firestore-types'
+} from '@/lib/db/firestore-types'
 
 // ============================================
 // Types

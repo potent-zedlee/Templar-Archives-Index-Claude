@@ -8,7 +8,7 @@
  * @module app/actions/two-factor
  */
 
-import { adminFirestore, adminAuth } from '@/lib/firebase-admin'
+import { adminFirestore, adminAuth } from '@/lib/db/firebase-admin'
 import { cookies } from 'next/headers'
 import { FieldValue } from 'firebase-admin/firestore'
 import {
@@ -22,7 +22,7 @@ import {
   decryptSecret,
   formatSecret,
 } from '@/lib/two-factor'
-import type { TwoFactorSettings } from '@/lib/firestore-types'
+import type { TwoFactorSettings } from '@/lib/db/firestore-types'
 
 // 임시 시크릿 저장을 위한 Map (메모리 캐시, 프로덕션에서는 Redis 권장)
 // 키: userId, 값: { secret, expiresAt }

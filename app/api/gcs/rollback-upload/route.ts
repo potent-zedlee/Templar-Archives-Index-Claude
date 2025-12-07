@@ -9,7 +9,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { adminFirestore } from '@/lib/firebase-admin'
-import { COLLECTION_PATHS, type UploadStatus } from '@/lib/firestore-types'
+import { COLLECTION_PATHS, type UploadStatus } from '@/lib/db/firestore-types'
 import { FieldValue } from 'firebase-admin/firestore'
 import { verifyAdminFromRequest } from '@/lib/api-auth'
 

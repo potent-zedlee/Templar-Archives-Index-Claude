@@ -38,7 +38,7 @@ const AnalyzeVideoDialog = dynamic(
   () => import('@/components/features/archive/dialogs/AnalyzeVideoDialog').then((mod) => mod.AnalyzeVideoDialog),
   { ssr: false }
 )
-import type { TournamentCategory } from '@/lib/firestore-types'
+import type { TournamentCategory } from '@/lib/db/firestore-types'
 import {
   useStreamsByPipelineStatus,
   usePipelineStatusCounts,

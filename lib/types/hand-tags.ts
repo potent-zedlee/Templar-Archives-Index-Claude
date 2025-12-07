@@ -2,7 +2,7 @@
  * Hand Tags Types (Firestore)
  *
  * 핸드 태그 시스템을 위한 타입 정의
- * Firestore 타입은 lib/firestore-types.ts에 정의되어 있음
+ * Firestore 타입은 lib/db/firestore-types.ts에 정의되어 있음
  */
 
 // Re-export from firestore-types for consistency

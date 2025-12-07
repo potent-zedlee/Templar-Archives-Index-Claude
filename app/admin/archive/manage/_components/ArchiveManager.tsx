@@ -36,7 +36,7 @@ import { Button } from '@/components/ui/button'
 import { Plus } from 'lucide-react'
 import { UploadDialog } from '@/components/features/admin/upload/UploadDialog'
 import { TournamentDialog } from '@/components/features/archive/TournamentDialog'
-import type { TournamentCategory } from '@/lib/firestore-types'
+import type { TournamentCategory } from '@/lib/db/firestore-types'
 
 // 드래그 중인 아이템 타입
 interface DragItem {

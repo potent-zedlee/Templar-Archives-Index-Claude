@@ -7,7 +7,7 @@
  * @module lib/notifications
  */
 
-import { firestore } from '@/lib/firebase'
+import { firestore } from '@/lib/db/firebase'
 import {
   collection,
   query,
@@ -23,7 +23,7 @@ import {
   onSnapshot,
   type Timestamp,
 } from 'firebase/firestore'
-import { auth } from '@/lib/firebase'
+import { auth } from '@/lib/db/firebase'
 
 // ==================== Types ====================
 

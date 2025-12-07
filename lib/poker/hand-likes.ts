@@ -5,7 +5,7 @@
  * - 좋아요 문서: /hands/{handId}/likes/{userId}
  * - 카운트: /hands/{handId}.engagement.likesCount, dislikesCount
  *
- * @module lib/hand-likes
+ * @module lib/poker/hand-likes
  */
 
 import { firestore } from './firebase'

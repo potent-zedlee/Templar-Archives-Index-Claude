@@ -6,7 +6,7 @@
  */
 
 import { useState, useEffect } from 'react'
-import { firestore } from '@/lib/firebase'
+import { firestore } from '@/lib/db/firebase'
 import {
   collection,
   query,
@@ -15,7 +15,7 @@ import {
   orderBy,
   Timestamp,
 } from 'firebase/firestore'
-import { COLLECTION_PATHS } from '@/lib/firestore-types'
+import { COLLECTION_PATHS } from '@/lib/db/firestore-types'
 
 type UserGrowthData = {
   date: string

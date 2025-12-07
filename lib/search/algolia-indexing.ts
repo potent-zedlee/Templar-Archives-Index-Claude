@@ -4,7 +4,7 @@
  * Firestore 데이터를 Algolia에 동기화하는 함수들
  * 서버사이드 전용 (Admin 클라이언트 사용)
  *
- * @module lib/algolia-indexing
+ * @module lib/search/algolia-indexing
  */
 
 import { adminClient, ALGOLIA_INDICES, isAlgoliaAdminConfigured } from './algolia'

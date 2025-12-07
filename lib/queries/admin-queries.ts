@@ -32,7 +32,7 @@ import {
   approveEditRequest,
   rejectEditRequest,
   type EditRequestStatus,
-} from '@/lib/hand-edit-requests'
+} from '@/lib/poker/hand-edit-requests'
 import {
   getAllDeletionRequests,
   getPendingDeletionRequests,

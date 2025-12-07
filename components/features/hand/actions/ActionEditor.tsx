@@ -12,7 +12,7 @@ import {
   useDeleteHandActionMutation,
   useReorderHandActionsMutation,
 } from "@/lib/queries/hand-actions-queries"
-import type { Street, HandActionInput } from "@/lib/hand-actions"
+import type { Street, HandActionInput } from "@/lib/poker/hand-actions"
 import { toast } from "sonner"
 
 type Player = {

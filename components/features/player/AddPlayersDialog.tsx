@@ -30,7 +30,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { useAllPlayersQuery } from "@/lib/queries/hand-players-queries"
 import { useAddPlayerMutation } from "@/lib/queries/hand-players-queries"
-import { POSITIONS } from "@/lib/hand-players"
+import { POSITIONS } from "@/lib/poker/hand-players"
 import { toast } from "sonner"
 
 type AddPlayersDialogProps = {

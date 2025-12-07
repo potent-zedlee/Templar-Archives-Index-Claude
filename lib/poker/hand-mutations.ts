@@ -4,7 +4,7 @@
  * 핸드 데이터 생성, 수정, 삭제를 위한 Firestore 뮤테이션 함수들
  * Supabase PostgreSQL에서 마이그레이션됨
  *
- * @module lib/hand-mutations
+ * @module lib/poker/hand-mutations
  */
 
 import {

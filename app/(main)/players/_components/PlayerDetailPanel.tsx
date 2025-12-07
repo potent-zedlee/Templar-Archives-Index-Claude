@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ArrowLeft, ChevronDown, ChevronRight, Upload, X } from "lucide-react"
 import { toast } from "sonner"
-import { isAdmin } from "@/lib/auth-utils"
+import { isAdmin } from "@/lib/auth/auth-utils"
 import { ClaimPlayerDialog } from "@/components/features/player/ClaimPlayerDialog"
 import { useAuth } from "@/components/layout/AuthProvider"
 import {

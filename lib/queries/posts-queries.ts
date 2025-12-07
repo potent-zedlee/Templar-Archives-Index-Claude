@@ -19,8 +19,8 @@ import {
   QueryDocumentSnapshot,
   DocumentData,
 } from 'firebase/firestore'
-import { firestore } from '@/lib/firebase'
-import type { FirestorePost, PostCategory, AuthorInfo, VoteType } from '@/lib/firestore-types'
+import { firestore } from '@/lib/db/firebase'
+import type { FirestorePost, PostCategory, AuthorInfo, VoteType } from '@/lib/db/firestore-types'
 import {
   createPost as createPostAction,
   updatePost as updatePostAction,

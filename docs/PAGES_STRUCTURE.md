@@ -197,7 +197,7 @@ WSOP, Triton, EPT, APL, Hustler Casino Live, WSOP Classic, GGPOKER
 - 노트 작성 (선택사항)
 
 ### 백엔드 API
-**파일**: `lib/hand-bookmarks.ts`
+**파일**: `lib/poker/hand-bookmarks.ts`
 - `addHandBookmark()`, `removeHandBookmark()`
 - `updateBookmarkFolder()`, `updateBookmarkNotes()`
 - `getUserBookmarks()`, `getUserBookmarkFolders()`

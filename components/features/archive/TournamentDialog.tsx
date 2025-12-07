@@ -20,7 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { toast } from "sonner"
-import type { TournamentCategory } from "@/lib/firestore-types"
+import type { TournamentCategory } from "@/lib/db/firestore-types"
 
 // Local type for component props (using Firestore camelCase)
 type Tournament = {

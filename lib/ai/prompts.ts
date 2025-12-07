@@ -298,6 +298,8 @@ Respond with valid JSON in this exact structure:
 
 Begin your analysis now.`
 
+// ... existing code ...
+
 // Gemini-optimized prompt with additional structure
 export const GEMINI_POKER_PROMPT = `${TRITON_POKER_PROMPT}
 
@@ -318,3 +320,9 @@ Always wrap your JSON response in markdown code blocks:
 \`\`\`
 
 This ensures proper parsing of the response.`
+
+// --- NEW MODULAR PROMPTS (Synced with Cloud Run) ---
+export * from './prompts/phase1-prompt'
+export * from './prompts/phase2-prompt'
+export * from './prompts/phase2-batch-prompt'
+

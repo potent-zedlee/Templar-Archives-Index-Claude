@@ -15,7 +15,7 @@ import {
   orderBy,
   limit,
 } from 'firebase/firestore'
-import { firestore } from '@/lib/firebase'
+import { firestore } from '@/lib/db/firebase'
 import { collectionGroup } from 'firebase/firestore'
 
 /**

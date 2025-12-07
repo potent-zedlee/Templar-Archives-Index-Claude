@@ -2,10 +2,10 @@ import { Suspense } from 'react'
 import { Metadata } from 'next'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { adminFirestore } from '@/lib/firebase-admin'
+import { adminFirestore } from '@/lib/db/firebase-admin'
 import Link from 'next/link'
 import { Badge } from '@/components/ui/badge'
-import type { FirestoreHand, HandPlayerEmbedded } from '@/lib/firestore-types'
+import type { FirestoreHand, HandPlayerEmbedded } from '@/lib/db/firestore-types'
 
 export const metadata: Metadata = {
   title: 'Hand History | Templar Archives Index',

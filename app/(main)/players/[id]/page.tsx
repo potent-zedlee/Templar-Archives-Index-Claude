@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { ArrowLeft, ChevronDown, ChevronRight, Upload } from "lucide-react"
 import { toast } from "sonner"
-import { isAdmin } from "@/lib/auth-utils"
+import { isAdmin } from "@/lib/auth/auth-utils"
 import { ClaimPlayerDialog } from "@/components/features/player/ClaimPlayerDialog"
 import { useAuth } from "@/components/layout/AuthProvider"
 import {

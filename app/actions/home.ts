@@ -6,9 +6,9 @@
  * 메인 페이지 데이터를 위한 Server Actions
  */
 
-import { adminFirestore } from '@/lib/firebase-admin'
+import { adminFirestore } from '@/lib/db/firebase-admin'
 import { Timestamp } from 'firebase-admin/firestore'
-import { COLLECTION_PATHS } from '@/lib/firestore-types'
+import { COLLECTION_PATHS } from '@/lib/db/firestore-types'
 import type { PlatformStats, WeeklyHighlight, TopPlayer } from '@/lib/main-page'
 
 /**

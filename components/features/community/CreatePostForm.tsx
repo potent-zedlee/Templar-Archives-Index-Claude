@@ -24,7 +24,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { useCreatePostMutation, type CreatePostInput } from '@/lib/queries/posts-queries'
-import type { PostCategory } from '@/lib/firestore-types'
+import type { PostCategory } from '@/lib/db/firestore-types'
 import { toast } from 'sonner'
 
 const CATEGORIES: { value: PostCategory; label: string; description: string }[] = [

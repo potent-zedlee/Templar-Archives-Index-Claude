@@ -9,8 +9,8 @@
  * - 서버 사이드 권한 검증
  */
 
-import { adminAuth, adminFirestore } from '@/lib/firebase-admin'
-import { COLLECTION_PATHS } from '@/lib/firestore-types'
+import { adminAuth, adminFirestore } from '@/lib/db/firebase-admin'
+import { COLLECTION_PATHS } from '@/lib/db/firestore-types'
 import { revalidatePath } from 'next/cache'
 import { cookies } from 'next/headers'
 import { FieldValue } from 'firebase-admin/firestore'

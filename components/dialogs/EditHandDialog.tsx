@@ -23,7 +23,7 @@ import {
 import { Card } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { toast } from "sonner"
-import { updateHandComplete } from "@/lib/hand-mutations"
+import { updateHandComplete } from "@/lib/poker/hand-mutations"
 import type { HandHistory } from "@/lib/types/hand-history"
 import { Loader2, Plus, Trash2 } from "lucide-react"
 

@@ -25,12 +25,12 @@ import {
   getDownloadURL,
   deleteObject,
 } from 'firebase/storage'
-import { firestore, storage } from '@/lib/firebase'
-import { COLLECTION_PATHS } from '@/lib/firestore-types'
-import type { FirestoreTournamentCategory, GameType } from '@/lib/firestore-types'
+import { firestore, storage } from '@/lib/db/firebase'
+import { COLLECTION_PATHS } from '@/lib/db/firestore-types'
+import type { FirestoreTournamentCategory, GameType } from '@/lib/db/firestore-types'
 import { CATEGORY_ERRORS, CATEGORY_VALIDATIONS } from './constants/category-errors'
 
-export type { GameType } from '@/lib/firestore-types'
+export type { GameType } from '@/lib/db/firestore-types'
 
 export interface TournamentCategory {
   id: string

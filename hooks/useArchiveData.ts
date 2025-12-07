@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
-import { firestore } from '@/lib/firebase'
-import { auth } from '@/lib/firebase'
+import { firestore } from '@/lib/db/firebase'
+import { auth } from '@/lib/db/firebase'
 import { onAuthStateChanged } from 'firebase/auth'
 import {
   collection,
@@ -9,8 +9,8 @@ import {
   getDocs,
   orderBy,
 } from 'firebase/firestore'
-import { COLLECTION_PATHS } from '@/lib/firestore-types'
-import type { FirestoreHand, FirestoreTournament, FirestoreEvent, FirestoreStream } from '@/lib/firestore-types'
+import { COLLECTION_PATHS } from '@/lib/db/firestore-types'
+import type { FirestoreHand, FirestoreTournament, FirestoreEvent, FirestoreStream } from '@/lib/db/firestore-types'
 import { getUnsortedVideos } from '@/lib/unsorted-videos'
 import type { UnsortedVideo } from '@/lib/unsorted-videos'
 import { toast } from 'sonner'

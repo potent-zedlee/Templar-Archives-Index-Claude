@@ -1,10 +1,10 @@
 "use client"
 
 import { createContext, useContext, useEffect, useState } from 'react'
-import { getUser, onAuthStateChange, type AuthUser } from '@/lib/auth'
+import { getUser, onAuthStateChange, type AuthUser } from '@/lib/auth/auth'
 import { getCurrentUserProfile, createProfile } from '@/lib/user-profile'
 import { syncAdminRole } from '@/app/actions/admin-role'
-import { isAdminEmail } from '@/lib/auth-utils'
+import { isAdminEmail } from '@/lib/auth/auth-utils'
 import { NicknameSetupModal } from '@/components/dialogs/NicknameSetupModal'
 import type { UserProfile } from '@/lib/user-profile'
 

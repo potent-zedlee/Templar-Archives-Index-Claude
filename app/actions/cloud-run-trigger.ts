@@ -9,8 +9,8 @@
  * - CLOUD_RUN_ORCHESTRATOR_URL: Cloud Run Orchestrator 서비스 URL
  */
 
-import { adminFirestore } from '@/lib/firebase-admin'
-import { COLLECTION_PATHS } from '@/lib/firestore-types'
+import { adminFirestore } from '@/lib/db/firebase-admin'
+import { COLLECTION_PATHS } from '@/lib/db/firestore-types'
 import { TimeSegment } from '@/types/segments'
 import { revalidatePath } from 'next/cache'
 

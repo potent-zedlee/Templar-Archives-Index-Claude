@@ -18,7 +18,7 @@ import {
   type HandAction,
   type HandActionInput,
   type Street,
-} from '@/lib/hand-actions'
+} from '@/lib/poker/hand-actions'
 import { playersKeys } from '@/lib/queries/players-queries'
 import { archiveKeys } from '@/lib/queries/archive-queries'
 

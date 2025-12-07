@@ -8,7 +8,7 @@ import { useTheme } from "next-themes"
 import { cn } from "@/lib/utils"
 import { User, LogOut, Shield, Users, LayoutDashboard, FileText, Edit, Bookmark, ChevronDown, Folder, Archive, Sun, Moon, Monitor } from "lucide-react"
 import { motion, AnimatePresence } from "motion/react"
-import type { AuthUser } from "@/lib/auth"
+import type { AuthUser } from "@/lib/auth/auth"
 import type { UserProfile } from "@/lib/user-profile"
 import type { NavLink } from "./HeaderDesktopNav"
 

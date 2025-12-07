@@ -21,7 +21,7 @@ import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Search, ChevronRight } from "lucide-react"
-import { firestore } from "@/lib/firebase"
+import { firestore } from "@/lib/db/firebase"
 import {
   collection,
   query,
@@ -30,13 +30,13 @@ import {
   where,
   limit,
 } from "firebase/firestore"
-import { COLLECTION_PATHS } from "@/lib/firestore-types"
+import { COLLECTION_PATHS } from "@/lib/db/firestore-types"
 import type {
   FirestoreTournament,
   FirestoreEvent,
   FirestoreStream,
   FirestoreHand,
-} from "@/lib/firestore-types"
+} from "@/lib/db/firestore-types"
 
 type Tournament = {
   id: string

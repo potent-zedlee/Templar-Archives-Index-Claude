@@ -7,12 +7,12 @@
  * 관리자 권한을 서버에서 검증합니다.
  */
 
-import { adminFirestore, adminAuth } from '@/lib/firebase-admin'
+import { adminFirestore, adminAuth } from '@/lib/db/firebase-admin'
 import { revalidatePath } from 'next/cache'
 import { cookies } from 'next/headers'
 import { Timestamp, FieldValue, FieldPath } from 'firebase-admin/firestore'
 import type { TournamentCategory } from '@/lib/types/archive'
-import { COLLECTION_PATHS } from '@/lib/firestore-types'
+import { COLLECTION_PATHS } from '@/lib/db/firestore-types'
 import { findMatchingLogos, getCategoryFallbackLogo } from '@/lib/logo-utils'
 
 // ==================== Helper Functions ====================

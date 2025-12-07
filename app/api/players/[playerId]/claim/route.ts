@@ -8,7 +8,7 @@
 
 import { NextResponse } from 'next/server'
 import { adminFirestore } from '@/lib/firebase-admin'
-import { COLLECTION_PATHS, type FirestoreUser } from '@/lib/firestore-types'
+import { COLLECTION_PATHS, type FirestoreUser } from '@/lib/db/firestore-types'
 
 interface RouteParams {
   params: Promise<{ playerId: string }>

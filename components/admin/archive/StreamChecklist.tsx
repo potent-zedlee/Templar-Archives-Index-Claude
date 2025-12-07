@@ -19,10 +19,10 @@ import { Badge } from '@/components/ui/badge'
 import { CheckCircle2, AlertCircle, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { publishStream, unpublishStream } from '@/app/actions/admin/archive-admin'
-import { firestore } from '@/lib/firebase'
+import { firestore } from '@/lib/db/firebase'
 import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore'
-import { COLLECTION_PATHS } from '@/lib/firestore-types'
-import type { FirestoreStream } from '@/lib/firestore-types'
+import { COLLECTION_PATHS } from '@/lib/db/firestore-types'
+import type { FirestoreStream } from '@/lib/db/firestore-types'
 import type { ContentStatus } from '@/lib/types/archive'
 
 interface StreamChecklistProps {

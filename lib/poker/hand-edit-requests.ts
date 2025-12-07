@@ -3,7 +3,7 @@
  *
  * 핸드 수정 요청 관리
  *
- * @module lib/hand-edit-requests
+ * @module lib/poker/hand-edit-requests
  */
 
 import {
@@ -19,11 +19,11 @@ import {
   limit,
   Timestamp,
 } from 'firebase/firestore'
-import { firestore } from '@/lib/firebase'
-import { COLLECTION_PATHS } from '@/lib/firestore-types'
-import type { FirestoreHandEditRequest, EditType, EditRequestStatus } from '@/lib/firestore-types'
+import { firestore } from '@/lib/db/firebase'
+import { COLLECTION_PATHS } from '@/lib/db/firestore-types'
+import type { FirestoreHandEditRequest, EditType, EditRequestStatus } from '@/lib/db/firestore-types'
 
-export type { EditType, EditRequestStatus } from '@/lib/firestore-types'
+export type { EditType, EditRequestStatus } from '@/lib/db/firestore-types'
 
 export type HandEditRequest = {
   id: string

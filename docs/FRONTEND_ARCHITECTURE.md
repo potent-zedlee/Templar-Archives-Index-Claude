@@ -553,7 +553,7 @@ useAutoSearch(query, options)
 
 ## 9. 유틸리티 함수
 
-### 9.1 인증 (`/lib/auth*.ts`)
+### 9.1 인증 (`/lib/auth/auth*.ts`)
 
 ```typescript
 getUser()                    // 현재 사용자
@@ -563,7 +563,7 @@ getCurrentUserProfile()      // 프로필 조회
 isAdminEmail(email)          // 관리자 확인
 ```
 
-### 9.2 Firestore 타입 (`/lib/firestore-types.ts`)
+### 9.2 Firestore 타입 (`/lib/db/firestore-types.ts`)
 
 ```typescript
 // 타입
@@ -581,7 +581,7 @@ FirestoreHand, FirestorePlayer, FirestoreUser
 COLLECTION_PATHS      // 컬렉션 경로
 ```
 
-### 9.3 핸드 관련 (`/lib/hand-*.ts`)
+### 9.3 핸드 관련 (`/lib/poker/hand-*.ts`)
 
 ```typescript
 // hand-actions.ts

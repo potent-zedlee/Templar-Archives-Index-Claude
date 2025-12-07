@@ -4,7 +4,7 @@
  * Firestore를 사용하여 핸드별 액션을 관리합니다.
  * 액션은 /hands/{handId} 문서의 actions 배열에 임베딩됩니다.
  *
- * @module lib/hand-actions
+ * @module lib/poker/hand-actions
  */
 
 import { firestore } from './firebase'

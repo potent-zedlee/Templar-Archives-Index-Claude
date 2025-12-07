@@ -9,9 +9,9 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { firestore } from '@/lib/firebase'
+import { firestore } from '@/lib/db/firebase'
 import { collection, query, where, orderBy, limit, onSnapshot } from 'firebase/firestore'
-import { COLLECTION_PATHS } from '@/lib/firestore-types'
+import { COLLECTION_PATHS } from '@/lib/db/firestore-types'
 import { Loader2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 

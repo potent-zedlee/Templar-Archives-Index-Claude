@@ -34,7 +34,7 @@ import {
   Activity,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import type { AIAnalysis } from '@/lib/firestore-types'
+import type { AIAnalysis } from '@/lib/db/firestore-types'
 
 interface AIAnalysisPanelProps {
   analysis: AIAnalysis | null

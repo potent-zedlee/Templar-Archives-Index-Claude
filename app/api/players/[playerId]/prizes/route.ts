@@ -8,7 +8,7 @@
 
 import { NextResponse } from 'next/server'
 import { adminFirestore } from '@/lib/firebase-admin'
-import { COLLECTION_PATHS, type FirestoreTournament, type FirestoreEvent } from '@/lib/firestore-types'
+import { COLLECTION_PATHS, type FirestoreTournament, type FirestoreEvent } from '@/lib/db/firestore-types'
 import type { Timestamp } from 'firebase-admin/firestore'
 
 interface RouteParams {

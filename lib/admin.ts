@@ -20,9 +20,9 @@ import {
   getCountFromServer,
   Timestamp,
 } from 'firebase/firestore'
-import { firestore, auth } from '@/lib/firebase'
-import { COLLECTION_PATHS } from '@/lib/firestore-types'
-import type { FirestoreAdminLog } from '@/lib/firestore-types'
+import { firestore, auth } from '@/lib/db/firebase'
+import { COLLECTION_PATHS } from '@/lib/db/firestore-types'
+import type { FirestoreAdminLog } from '@/lib/db/firestore-types'
 
 export type AdminRole = 'user' | 'templar' | 'arbiter' | 'high_templar' | 'admin'
 

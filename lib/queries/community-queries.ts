@@ -21,8 +21,8 @@ import {
   serverTimestamp,
   orderBy,
 } from 'firebase/firestore'
-import { firestore } from '@/lib/firebase'
-import type { FirestoreComment, AuthorInfo } from '@/lib/firestore-types'
+import { firestore } from '@/lib/db/firebase'
+import type { FirestoreComment, AuthorInfo } from '@/lib/db/firestore-types'
 
 // ==================== Types ====================
 

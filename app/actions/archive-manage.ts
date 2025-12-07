@@ -11,11 +11,11 @@
 
 'use server'
 
-import { adminFirestore, adminAuth } from '@/lib/firebase-admin'
+import { adminFirestore, adminAuth } from '@/lib/db/firebase-admin'
 import { revalidatePath } from 'next/cache'
 import { cookies } from 'next/headers'
 import { FieldValue, Timestamp } from 'firebase-admin/firestore'
-import { COLLECTION_PATHS } from '@/lib/firestore-types'
+import { COLLECTION_PATHS } from '@/lib/db/firestore-types'
 
 // ==================== Auth Helper ====================
 

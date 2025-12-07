@@ -4,7 +4,7 @@ import {
   getChannelIdFromIdentifier,
   getChannelLiveStreams,
   type YouTubeVideo,
-} from '@/lib/youtube-api'
+} from '@/lib/youtube/youtube-api'
 
 export const runtime = 'edge'
 

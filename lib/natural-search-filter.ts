@@ -3,7 +3,7 @@ import type { Firestore } from 'firebase-admin/firestore'
 import {
   COLLECTION_PATHS,
   type FirestoreHand,
-} from '@/lib/firestore-types'
+} from '@/lib/db/firestore-types'
 
 /**
  * Natural Search Filter Types

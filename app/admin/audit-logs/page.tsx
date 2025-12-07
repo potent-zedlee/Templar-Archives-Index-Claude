@@ -36,8 +36,8 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { FileText, ChevronLeft, ChevronRight, RefreshCw, Download, Eye } from 'lucide-react'
 import { toast } from 'sonner'
-import { firestore } from '@/lib/firebase'
-import { auth } from '@/lib/firebase'
+import { firestore } from '@/lib/db/firebase'
+import { auth } from '@/lib/db/firebase'
 import {
   collection,
   query,
@@ -50,7 +50,7 @@ import {
   DocumentSnapshot,
   getCountFromServer,
 } from 'firebase/firestore'
-import { isAdmin } from '@/lib/auth-utils'
+import { isAdmin } from '@/lib/auth/auth-utils'
 import { exportAuditLogs } from '@/lib/export-utils'
 
 type AuditLog = {

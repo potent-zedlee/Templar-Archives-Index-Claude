@@ -14,7 +14,7 @@ import {
   getUserTagHistory,
   type HandTagName,
   type HandTag,
-} from '@/lib/hand-tags'
+} from '@/lib/poker/hand-tags'
 import { toast } from 'sonner'
 
 // ==================== Query Keys ====================

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { adminFirestore } from '@/lib/firebase-admin'
+import { adminFirestore } from '@/lib/db/firebase-admin'
 import { gcsClient } from '@/lib/gcs/client'
 import { COLLECTION_PATHS, type UploadStatus } from '@/lib/firestore-types'
 import { FieldValue } from 'firebase-admin/firestore'

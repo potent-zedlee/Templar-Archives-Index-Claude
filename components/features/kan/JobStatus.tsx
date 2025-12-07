@@ -6,9 +6,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Progress } from '@/components/ui/progress'
 import { Button } from '@/components/ui/button'
 import { CheckCircle2, XCircle, Loader2 } from 'lucide-react'
-import { firestore } from '@/lib/firebase'
+import { firestore } from '@/lib/db/firebase'
 import { doc, onSnapshot } from 'firebase/firestore'
-import { COLLECTION_PATHS, type FirestoreAnalysisJob } from '@/lib/firestore-types'
+import { COLLECTION_PATHS, type FirestoreAnalysisJob } from '@/lib/db/firestore-types'
 
 interface JobStatusProps {
   jobId: string

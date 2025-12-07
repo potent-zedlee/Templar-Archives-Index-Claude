@@ -25,8 +25,8 @@ import {
   Timestamp,
   type QueryConstraint,
 } from 'firebase/firestore'
-import { firestore as db } from '@/lib/firebase'
-import { COLLECTION_PATHS } from '@/lib/firestore-types'
+import { firestore as db } from '@/lib/db/firebase'
+import { COLLECTION_PATHS } from '@/lib/db/firestore-types'
 import { toast } from 'sonner'
 
 // ==================== Types ====================

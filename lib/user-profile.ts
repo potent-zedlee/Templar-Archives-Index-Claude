@@ -18,10 +18,10 @@ import {
   Timestamp,
   serverTimestamp,
 } from 'firebase/firestore'
-import { firestore, auth } from '@/lib/firebase'
-import type { FirestoreUser } from '@/lib/firestore-types'
-import { COLLECTION_PATHS } from '@/lib/firestore-types'
-import { isAdminEmail } from '@/lib/auth-utils'
+import { firestore, auth } from '@/lib/db/firebase'
+import type { FirestoreUser } from '@/lib/db/firestore-types'
+import { COLLECTION_PATHS } from '@/lib/db/firestore-types'
+import { isAdminEmail } from '@/lib/auth/auth-utils'
 
 /**
  * UserProfile 타입 (API 응답용)
@@ -458,10 +458,12 @@ export async function fetchUserActivity(userId: string) {
 /**
  * 아바타 이미지 업로드
  *
- * TODO: Firebase Storage로 변경 필요
- * 현재는 임시로 에러 반환
+ * Firebase Storage의 `users/{userId}/avatar` 경로에 이미지를 업로드합니다.
+ * 기존 이미지가 있다면 덮어씌워집니다 (파일명이 고정되므로).
+ * 브라우저 캐싱 문제를 방지하기 위해 업로드 후 URL에 타임스탬프를 추가할 수도 있으나,
+ * 여기서는 단순함을 위해 기본 URL을 반환하고 클라이언트에서 캐시 무효화를 처리하는 것을 권장합니다.
  */
-export async function uploadAvatar(_userId: string, file: File): Promise<string> {
+export async function uploadAvatar(userId: string, file: File): Promise<string> {
   // File size validation (max 5MB)
   const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB in bytes
   if (file.size > MAX_FILE_SIZE) {
@@ -481,18 +483,34 @@ export async function uploadAvatar(_userId: string, file: File): Promise<string>
     throw new Error('허용되지 않는 파일 확장자입니다.')
   }
 
-  // TODO: Firebase Storage 업로드 구현
-  throw new Error('아바타 업로드 기능은 Firebase Storage 마이그레이션 후 사용 가능합니다.')
+  try {
+    const { storage } = await import('@/lib/db/firebase')
+    const { ref, uploadBytes, getDownloadURL } = await import('firebase/storage')
 
-  // const fileName = `${userId}-${Date.now()}.${fileExt}`
-  // const filePath = `avatars/${fileName}`
-  //
-  // // Firebase Storage 업로드 코드
-  // import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage'
-  // const storage = getStorage()
-  // const storageRef = ref(storage, filePath)
-  // await uploadBytes(storageRef, file)
-  // const downloadURL = await getDownloadURL(storageRef)
-  //
-  // return downloadURL
+    // 항상 'avatar'라는 이름으로 저장하여 덮어쓰기 (공간 절약 및 관리 용이성)
+    // 확장자는 원본 유지를 위해 포함하지 않거나, 메타데이터로 관리할 수 있음.
+    // 여기서는 단순하게 `avatar`로 저장. Firebase Storage는 Content-Type을 저장하므로 확장자 없어도 서빙 가능.
+    // 하지만 브라우저 호환성을 위해 확장자를 붙이는 것이 좋음.
+    // 여기서는 고정된 이름 'avatar' (확장자 없음)을 사용하여 덮어쓰기를 보장.
+    // 필요하다면 `avatar.${fileExt}` 로 할 수도 있는데, 그러면 이전 파일 삭제 로직이 필요함.
+
+    const storageRef = ref(storage, `users/${userId}/avatar`)
+
+    // 메타데이터 설정
+    const metadata = {
+      contentType: file.type,
+      customMetadata: {
+        originalName: file.name,
+        uploadedAt: new Date().toISOString()
+      }
+    }
+
+    await uploadBytes(storageRef, file, metadata)
+    const downloadURL = await getDownloadURL(storageRef)
+
+    return downloadURL
+  } catch (error) {
+    console.error('Avatar upload error:', error)
+    throw new Error('이미지 업로드에 실패했습니다. 잠시 후 다시 시도해주세요.')
+  }
 }

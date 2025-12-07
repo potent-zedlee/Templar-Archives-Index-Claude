@@ -7,9 +7,9 @@
  * Firestore 버전으로 마이그레이션됨
  */
 
-import { firestore } from '@/lib/firebase'
+import { firestore } from '@/lib/db/firebase'
 import { doc, getDoc } from 'firebase/firestore'
-import { COLLECTION_PATHS } from '@/lib/firestore-types'
+import { COLLECTION_PATHS } from '@/lib/db/firestore-types'
 import { EPT_PROMPT, TRITON_POKER_PROMPT } from '@/lib/ai/prompts'
 
 type Platform = 'ept' | 'triton'

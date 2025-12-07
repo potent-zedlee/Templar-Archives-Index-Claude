@@ -4,7 +4,7 @@
  * 핸드 참여 플레이어 관리를 위한 Firestore 함수들
  * Supabase PostgreSQL에서 마이그레이션됨
  *
- * @module lib/hand-players
+ * @module lib/poker/hand-players
  */
 
 import {

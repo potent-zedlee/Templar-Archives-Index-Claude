@@ -10,8 +10,8 @@
 import { useQuery } from "@tanstack/react-query"
 import { doc, getDoc } from "firebase/firestore"
 import { firestore as db } from "@/lib/firebase"
-import { COLLECTION_PATHS } from "@/lib/firestore-types"
-import type { FirestoreHand, FirestoreStream, FirestoreTournament, FirestoreEvent } from "@/lib/firestore-types"
+import { COLLECTION_PATHS } from "@/lib/db/firestore-types"
+import type { FirestoreHand, FirestoreStream, FirestoreTournament, FirestoreEvent } from "@/lib/db/firestore-types"
 import {
   Dialog,
   DialogContent,

@@ -7,8 +7,8 @@
  * Firestore 기반 데이터베이스 사용
  */
 
-import { adminFirestore } from '@/lib/firebase-admin'
-import { COLLECTION_PATHS } from '@/lib/firestore-types'
+import { adminFirestore } from '@/lib/db/firebase-admin'
+import { COLLECTION_PATHS } from '@/lib/db/firestore-types'
 import type {
   ExtractedHand,
   FirestoreStream,
@@ -18,7 +18,7 @@ import type {
   PokerPosition,
   PokerActionType,
   PokerStreet,
-} from '@/lib/firestore-types'
+} from '@/lib/db/firestore-types'
 import { TimeSegment } from '@/types/segments'
 
 export type KanHand = ExtractedHand

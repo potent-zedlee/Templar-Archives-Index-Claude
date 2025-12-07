@@ -18,7 +18,7 @@ import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Progress } from "@/components/ui/progress"
 import { Sparkles, Loader2, CheckCircle2, AlertCircle, Users, Plus, X, XCircle, Youtube, Link2 } from "lucide-react"
-import type { FirestoreStream } from "@/lib/firestore-types"
+import type { FirestoreStream } from "@/lib/db/firestore-types"
 
 // Extended Stream type with IDs for Firestore path
 // FirestoreStream의 일부 필드만 필요하고, Timestamp 대신 Date 허용

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { auth } from "@/lib/firebase"
+import { auth } from "@/lib/db/firebase"
 import { getRedirectResult } from "firebase/auth"
 import { Loader2 } from "lucide-react"
 

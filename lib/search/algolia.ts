@@ -3,7 +3,7 @@
  *
  * 환경변수가 설정되지 않으면 null 반환 (Firestore fallback용)
  *
- * @module lib/algolia
+ * @module lib/search/algolia
  */
 
 import { algoliasearch } from 'algoliasearch'
@@ -67,7 +67,7 @@ export type AlgoliaIndexName = (typeof ALGOLIA_INDICES)[keyof typeof ALGOLIA_IND
  *
  * 사용 예시:
  * ```typescript
- * import { configureIndices } from '@/lib/algolia'
+ * import { configureIndices } from '@/lib/search/algolia'
  * await configureIndices()
  * ```
  */

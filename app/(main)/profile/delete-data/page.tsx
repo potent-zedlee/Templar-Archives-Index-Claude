@@ -21,7 +21,7 @@ import {
   serverTimestamp,
   Timestamp,
 } from "firebase/firestore"
-import { firestore } from "@/lib/firebase"
+import { firestore } from "@/lib/db/firebase"
 import { toast } from "sonner"
 
 interface DeletionRequest {

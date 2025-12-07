@@ -20,7 +20,7 @@
 
 import { describe, it, expect, vi } from 'vitest'
 
-vi.mock('@/lib/firebase-admin', () => ({
+vi.mock('@/lib/db/firebase-admin', () => ({
   adminFirestore: {
     collection: vi.fn(() => ({
       doc: vi.fn(() => ({

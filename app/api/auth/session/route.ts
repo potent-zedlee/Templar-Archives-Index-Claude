@@ -7,7 +7,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { adminAuth } from '@/lib/firebase-admin'
+import { adminAuth } from '@/lib/db/firebase-admin'
 import { cookies } from 'next/headers'
 
 // 세션 쿠키 유효 기간: 5일 (Firebase 최대 2주)

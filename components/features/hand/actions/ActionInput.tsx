@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/select"
 import { Card } from "@/components/ui/card"
 import { Plus, X } from "lucide-react"
-import type { ActionType, HandActionInput } from "@/lib/hand-actions"
+import type { ActionType, HandActionInput } from "@/lib/poker/hand-actions"
 
 type Player = {
   id: string

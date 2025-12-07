@@ -1,0 +1,40 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function isImage() {
+      return request.resource.contentType.matches('image/.*');
+    }
+    
+    function isLessThan5MB() {
+      return request.resource.size < 5 * 1024 * 1024;
+    }
+
+    // User Avatar Rules
+    // Path: users/{userId}/avatar
+    match /users/{userId}/avatar {
+      // Allow read for everyone (public profiles)
+      allow read: if true;
+      
+      // Allow write only if user is owner, file is an image, and size < 5MB
+      allow write: if isOwner(userId) && isImage() && isLessThan5MB();
+      
+      // Allow delete if user is owner
+      allow delete: if isOwner(userId);
+    }
+    
+    // Default deny
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

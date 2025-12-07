@@ -21,10 +21,10 @@ import {
   useBulkCreateHandActionsMutation,
   useDeleteAllHandActionsMutation,
 } from "@/lib/queries/hand-actions-queries"
-import { firestore } from "@/lib/firebase"
+import { firestore } from "@/lib/db/firebase"
 import { doc, getDoc } from "firebase/firestore"
-import { COLLECTION_PATHS } from "@/lib/firestore-types"
-import type { FirestoreHand, FirestoreTournament, FirestoreEvent, FirestoreStream } from "@/lib/firestore-types"
+import { COLLECTION_PATHS } from "@/lib/db/firestore-types"
+import type { FirestoreHand, FirestoreTournament, FirestoreEvent, FirestoreStream } from "@/lib/db/firestore-types"
 import { toast } from "sonner"
 import { CardSkeleton } from "@/components/ui/skeletons/CardSkeleton"
 import Link from "next/link"

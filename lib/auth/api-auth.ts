@@ -4,9 +4,9 @@
  * Server Actions와 API Routes에서 공통으로 사용하는 인증 검증 함수
  */
 
-import { adminFirestore, adminAuth } from '@/lib/firebase-admin'
+import { adminFirestore, adminAuth } from '@/lib/db/firebase-admin'
 import { cookies } from 'next/headers'
-import { COLLECTION_PATHS } from '@/lib/firestore-types'
+import { COLLECTION_PATHS } from '@/lib/db/firestore-types'
 import { NextRequest } from 'next/server'
 
 export interface AuthResult {

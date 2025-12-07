@@ -7,9 +7,9 @@
  * Security Rules 제한이 있어 Admin SDK로 처리
  */
 
-import { adminFirestore, adminAuth } from '@/lib/firebase-admin'
+import { adminFirestore, adminAuth } from '@/lib/db/firebase-admin'
 import { cookies } from 'next/headers'
-import { COLLECTION_PATHS } from '@/lib/firestore-types'
+import { COLLECTION_PATHS } from '@/lib/db/firestore-types'
 
 // Pipeline 상태 타입 (3단계 단순화)
 export type PipelineStatus =

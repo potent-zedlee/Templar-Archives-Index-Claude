@@ -6,9 +6,9 @@
  * 관리자 이메일을 가진 사용자의 Firestore role을 동기화
  */
 
-import { adminFirestore } from '@/lib/firebase-admin'
-import { COLLECTION_PATHS } from '@/lib/firestore-types'
-import { isAdminEmail } from '@/lib/auth-utils'
+import { adminFirestore } from '@/lib/db/firebase-admin'
+import { COLLECTION_PATHS } from '@/lib/db/firestore-types'
+import { isAdminEmail } from '@/lib/auth/auth-utils'
 import { FieldValue } from 'firebase-admin/firestore'
 
 /**

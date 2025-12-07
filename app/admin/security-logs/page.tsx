@@ -29,7 +29,7 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { Shield, AlertTriangle, Info, XCircle, ChevronLeft, ChevronRight, RefreshCw, Download } from 'lucide-react'
 import { toast } from 'sonner'
-import { firestore, auth } from '@/lib/firebase'
+import { firestore, auth } from '@/lib/db/firebase'
 import {
   collection,
   query,
@@ -42,7 +42,7 @@ import {
   DocumentSnapshot,
   getCountFromServer,
 } from 'firebase/firestore'
-import { isAdmin } from '@/lib/auth-utils'
+import { isAdmin } from '@/lib/auth/auth-utils'
 import { exportSecurityLogs } from '@/lib/export-utils'
 
 type SecurityEvent = {

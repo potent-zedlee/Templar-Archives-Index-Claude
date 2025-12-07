@@ -17,8 +17,8 @@ import {
   Timestamp,
   QueryDocumentSnapshot,
 } from 'firebase/firestore'
-import { firestore } from '@/lib/firebase'
-import type { FirestoreBookmark, FirestoreHand, FirestoreTournament, FirestoreEvent, FirestoreStream } from '@/lib/firestore-types'
+import { firestore } from '@/lib/db/firebase'
+import type { FirestoreBookmark, FirestoreHand, FirestoreTournament, FirestoreEvent, FirestoreStream } from '@/lib/db/firestore-types'
 
 // ==================== Types ====================
 

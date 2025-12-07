@@ -13,7 +13,7 @@ import {
   type FirestoreHand,
   type FirestoreTournament,
   type FirestoreEvent,
-} from '@/lib/firestore-types'
+} from '@/lib/db/firestore-types'
 
 interface RouteParams {
   params: Promise<{ playerId: string }>

@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Trash2, ChevronsUp, ChevronsDown } from "lucide-react"
-import type { HandAction } from "@/lib/hand-actions"
+import type { HandAction } from "@/lib/poker/hand-actions"
 
 type Player = {
   id: string

@@ -3,7 +3,7 @@
  *
  * 쿼리 최적화를 위한 데이터 비정규화 적용
  *
- * @module lib/firestore-types
+ * @module lib/db/firestore-types
  */
 
 import type { Timestamp, FieldValue } from 'firebase/firestore'

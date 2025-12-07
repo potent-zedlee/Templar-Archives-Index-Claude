@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { User, LogOut, LayoutDashboard, Bookmark } from "lucide-react"
-import type { AuthUser } from "@/lib/auth"
+import type { AuthUser } from "@/lib/auth/auth"
 import type { UserProfile } from "@/lib/user-profile"
 import {
   DropdownMenu,

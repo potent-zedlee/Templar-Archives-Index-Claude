@@ -8,7 +8,7 @@
 
 import { NextResponse } from 'next/server'
 import { adminFirestore } from '@/lib/firebase-admin'
-import { COLLECTION_PATHS } from '@/lib/firestore-types'
+import { COLLECTION_PATHS } from '@/lib/db/firestore-types'
 import { Storage } from '@google-cloud/storage'
 
 interface RouteParams {

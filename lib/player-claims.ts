@@ -19,11 +19,11 @@ import {
   orderBy,
   Timestamp,
 } from 'firebase/firestore'
-import { firestore } from '@/lib/firebase'
-import { COLLECTION_PATHS } from '@/lib/firestore-types'
-import type { FirestorePlayerClaim, ClaimStatus, VerificationMethod } from '@/lib/firestore-types'
+import { firestore } from '@/lib/db/firebase'
+import { COLLECTION_PATHS } from '@/lib/db/firestore-types'
+import type { FirestorePlayerClaim, ClaimStatus, VerificationMethod } from '@/lib/db/firestore-types'
 
-export type { ClaimStatus, VerificationMethod } from '@/lib/firestore-types'
+export type { ClaimStatus, VerificationMethod } from '@/lib/db/firestore-types'
 
 export type PlayerClaim = {
   id: string

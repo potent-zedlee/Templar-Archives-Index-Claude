@@ -19,9 +19,9 @@ import {
   writeBatch,
   Timestamp,
 } from 'firebase/firestore'
-import { firestore } from '@/lib/firebase'
-import { COLLECTION_PATHS } from '@/lib/firestore-types'
-import type { FirestoreUnsortedStream } from '@/lib/firestore-types'
+import { firestore } from '@/lib/db/firebase'
+import { COLLECTION_PATHS } from '@/lib/db/firestore-types'
+import type { FirestoreUnsortedStream } from '@/lib/db/firestore-types'
 
 export interface UnsortedVideo {
   id: string
