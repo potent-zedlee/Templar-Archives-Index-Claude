@@ -92,7 +92,7 @@ export function ActionHistory({ hand }: ActionHistoryProps) {
         )
     }
 
-    const streets = ['Preflop', 'Flop', 'Turn', 'River']
+    const streets = ['Preflop', 'Flop', 'Turn', 'River', 'Showdown']
 
     return (
         <div className="h-full flex flex-col bg-card">
@@ -105,7 +105,7 @@ export function ActionHistory({ hand }: ActionHistoryProps) {
             </div>
 
             <ScrollArea className="flex-1">
-                <div className="p-4 grid grid-cols-4 gap-4 min-h-[200px]">
+                <div className="p-4 grid grid-cols-5 gap-4 min-h-[200px]">
                     {/* Preflop Column */}
                     <div className="space-y-2">
                         {sections.preflop?.map((line, i) => (
@@ -152,20 +152,35 @@ export function ActionHistory({ hand }: ActionHistoryProps) {
                             return <ParsedActionItem key={i} raw={line} />
                         })}
                     </div>
+
+                    {/* Showdown Column */}
+                    <div className="space-y-2 border-l border-border/50 pl-4">
+                        {sections.showdown?.map((line, i) => (
+                            <ParsedActionItem key={i} raw={line} isShowdown={true} />
+                        ))}
+                    </div>
                 </div>
             </ScrollArea>
         </div>
     )
 }
 
-function ParsedActionItem({ raw }: { raw: string }) {
+function ParsedActionItem({ raw, isShowdown = false }: { raw: string, isShowdown?: boolean }) {
     const { player, action, amount, isPassive } = parseActionString(raw)
+
+    const isWin = action.toLowerCase().includes('wins')
+    const isMuck = action.toLowerCase().includes('mucks') || action.toLowerCase().includes('shows')
+
+    // Showdown styling overrides
+    const actionColor = isShowdown
+        ? isWin ? 'text-amber-400 font-bold' : isMuck ? 'text-muted-foreground/50 italic' : 'text-muted-foreground'
+        : isPassive ? 'text-muted-foreground' : 'text-emerald-500 font-medium'
 
     return (
         <div className="flex flex-col gap-0.5 animate-in fade-in slide-in-from-top-2 duration-300">
             {player && <div className="text-[10px] font-bold text-foreground">{player}</div>}
             <div className="flex items-center gap-2 flex-wrap">
-                <span className={`text-xs ${isPassive ? 'text-muted-foreground' : 'text-emerald-500 font-medium'}`}>
+                <span className={`text-xs ${actionColor}`}>
                     {action.replace(amount || '', '').trim()}
                 </span>
                 {amount && <Badge variant="outline" className="text-[8px] h-4 px-1 py-0">{amount}</Badge>}
