@@ -227,9 +227,111 @@ async function saveSingleHand(
       dislikesCount: 0,
       bookmarksCount: 0,
     },
+    // PokerKit JSON Format (Frontend UI Requirement)
+    handHistoryFormat: generateHandHistoryJson(hand, playersEmbedded),
     createdAt: FieldValue.serverTimestamp(),
     updatedAt: FieldValue.serverTimestamp(),
   })
+}
+
+/**
+ * Generate ActionHistory-compatible JSON from extracted actions
+ */
+function generateHandHistoryJson(hand: ExtractedHand, players: any[]): any {
+  const sections: Record<string, string[]> = {
+    preflop: [],
+    flop: [],
+    turn: [],
+    river: [],
+    showdown: []
+  }
+
+  // Helper to format action line: "Player: action amount"
+  const formatAction = (action: any) => {
+    const player = action.player
+    let verb = action.action
+    let amountStr = ''
+
+    if (action.amount > 0) {
+      amountStr = ` $${action.amount.toLocaleString()}`
+    }
+
+    // Convert verb to PokerKit style (roughly)
+    switch (action.action) {
+      case 'post-blind': verb = 'posts blind'; break
+      case 'post-ante': verb = 'posts ante'; break
+      case 'bet': verb = 'bets'; break
+      case 'call': verb = 'calls'; break
+      case 'check': verb = 'checks'; break
+      case 'fold': verb = 'folds'; break
+      case 'raise': verb = 'raises to'; break // Assumption: amount is total
+      case 'all-in': verb = 'raises all-in to'; break
+      case 'win': verb = 'wins'; break
+      case 'muck': verb = 'mucks'; break
+    }
+
+    // Special handling for Win action to verify amount
+    if (action.action === 'win') {
+      return `${player}: wins${amountStr} (${action.hand || 'pot'})`
+    }
+
+    return `${player}: ${verb}${amountStr}`
+  }
+
+  // Sort actions by sequence (logic handles original array order)
+  const actions = hand.actions || []
+
+  // Pre-process blind posts (sometimes prompt labels them 'preflop' but they appear first)
+  // We trust the 'street' field from prompt
+
+  actions.forEach(action => {
+    const street = action.street?.toLowerCase() || 'preflop'
+    const line = formatAction(action)
+
+    if (sections[street]) {
+      sections[street].push(line)
+    }
+  })
+
+  // Insert Board Cards at the start of street sections
+  if (hand.board?.flop && hand.board.flop.length > 0) {
+    sections.flop.unshift(`[${hand.board.flop.join(' ')}]`)
+  }
+  if (hand.board?.turn) {
+    sections.turn.unshift(`[${hand.board.turn}]`)
+  }
+  if (hand.board?.river) {
+    sections.river.unshift(`[${hand.board.river}]`)
+  }
+
+  // Handle Winners/Showdown if explicit actions distinct from 'win' enum
+  // If 'win' actions are in the actions array, they are handled above.
+  // If prompt puts winners in 'winners' array but NOT in actions, we need to append them to 'showdown' or 'river'
+  if (hand.winners && hand.winners.length > 0) {
+    // Check if we already have win actions for these winners
+    const hasWinAction = actions.some(a => a.action === 'win')
+
+    if (!hasWinAction) {
+      hand.winners.forEach(w => {
+        const amountStr = w.amount > 0 ? ` $${w.amount.toLocaleString()}` : ''
+        const line = `${w.name}: wins${amountStr} (${w.hand || 'pot'})`
+        // Add to showdown if exists, otherwise river
+        if (sections.showdown.length > 0 || actions.some(a => a.street === 'showdown')) {
+          sections.showdown.push(line)
+        } else {
+          // If no showdown street yet, defaulting to river might be ambiguous, 
+          // but let's put it in a new 'showdown' section if empty?
+          sections.showdown.push(line)
+        }
+      })
+    }
+  }
+
+  // Filter empty sections? No, Keep normalized keys
+  return {
+    variant: "No Limit Hold'em", // Default
+    sections
+  }
 }
 
 function formatSecondsToTimestamp(seconds: number): string {

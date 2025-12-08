@@ -599,3 +599,139 @@ export async function createStream(
     return { success: false, error: 'Failed to create stream' }
   }
 }
+
+/**
+ * Create Hand manually
+ */
+export async function createHand(
+  streamId: string,
+  handData: any // Simplified type for now
+) {
+  const authResult = await verifyAdmin()
+  if (!authResult.isAdmin) {
+    return { success: false, error: 'Unauthorized' }
+  }
+
+  try {
+    const db = adminFirestore
+
+    // 1. Get Stream Info (to link tournament/event IDs)
+    // Try collectionGroup to find the stream
+    const streamsQuery = await db.collectionGroup('streams').where('__name__', '==', streamId).limit(1).get()
+
+    let tournamentId = ''
+    let eventId = ''
+
+    if (!streamsQuery.empty) {
+      const streamRef = streamsQuery.docs[0].ref
+      const pathParts = streamRef.path.split('/')
+      if (pathParts.length >= 6) {
+        tournamentId = pathParts[1]
+        eventId = pathParts[3]
+      }
+    }
+
+    if (!tournamentId || !eventId) {
+      return { success: false, error: 'Stream context not found' }
+    }
+
+    // 2. Prepare Hand Doc
+    // Construct simplified hand history format JSON
+    const handHistoryFormat = {
+      variant: "NT", // No Limit Holdem Tournament
+      blinds: { sb: handData.smallBlind, bb: handData.bigBlind, ante: handData.ante },
+      players: handData.players.map((p: any) => ({
+        seat: p.seat,
+        name: p.name,
+        stack: p.startStack,
+        cards: p.holeCards || []
+      })),
+      sections: {
+        preflop: handData.actions.filter((a: any) => a.street === 'preflop').map((a: any) => formatActionString(a)),
+        flop: handData.actions.filter((a: any) => a.street === 'flop').map((a: any) => formatActionString(a)),
+        turn: handData.actions.filter((a: any) => a.street === 'turn').map((a: any) => formatActionString(a)),
+        river: handData.actions.filter((a: any) => a.street === 'river').map((a: any) => formatActionString(a))
+      },
+      board: {
+        flop: handData.boardFlop || [],
+        turn: handData.boardTurn ? [handData.boardTurn] : [],
+        river: handData.boardRiver ? [handData.boardRiver] : []
+      }
+    }
+
+    const docData = {
+      streamId,
+      eventId,
+      tournamentId,
+      number: handData.number,
+      timestamp: Timestamp.now(), // Recorded at
+      videoTimestampStart: handData.videoTimestampStart,
+      videoTimestampEnd: handData.videoTimestampEnd,
+
+      // Metadata
+      description: `Hand #${handData.number}`,
+      aiSummary: "Manually recorded hand",
+
+      // Blinds
+      smallBlind: handData.smallBlind,
+      bigBlind: handData.bigBlind,
+      ante: handData.ante,
+
+      // Board
+      boardFlop: handData.boardFlop || [],
+      boardTurn: handData.boardTurn ? [handData.boardTurn] : [],
+      boardRiver: handData.boardRiver ? [handData.boardRiver] : [],
+
+      // Players (Simplified for search/display)
+      players: handData.players.map((p: any) => ({
+        playerId: p.playerId,
+        name: p.name,
+        seat: p.seat,
+        position: p.position,
+        holeCards: p.holeCards || [],
+        startStack: p.startStack,
+        isWinner: false // Manual until we add winner logic
+      })),
+
+      // Formats
+      handHistoryFormat: handHistoryFormat,
+
+      createdAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp()
+    }
+
+    // 3. Save to 'hands' collection
+    const handRef = await db.collection('hands').add(docData)
+
+    // 4. Update Stream Stats
+    // Update stats.handsCount on the stream document
+    const streamRef = streamsQuery.docs[0].ref
+    await streamRef.update({
+      'stats.handsCount': FieldValue.increment(1),
+      updatedAt: FieldValue.serverTimestamp()
+    })
+
+    revalidatePath(`/admin/streams/${streamId}/recorder`)
+    revalidatePath('/archive')
+
+    return { success: true, handId: handRef.id }
+
+  } catch (error) {
+    console.error('createHand error:', error)
+    return { success: false, error: 'Failed to create hand' }
+  }
+}
+
+function formatActionString(action: any) {
+  let actionVerb = action.action
+  if (actionVerb === 'bet') actionVerb = 'bets'
+  if (actionVerb === 'raise') actionVerb = 'raises to'
+  if (actionVerb === 'call') actionVerb = 'calls'
+  if (actionVerb === 'check') actionVerb = 'checks'
+  if (actionVerb === 'fold') actionVerb = 'folds'
+
+  if (action.amount > 0 && ['bets', 'raises to', 'calls', 'all-in'].includes(actionVerb)) {
+    return `${action.player} ${actionVerb} ${action.amount}`
+  }
+  return `${action.player} ${actionVerb}`
+}

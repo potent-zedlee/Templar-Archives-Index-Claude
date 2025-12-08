@@ -38,12 +38,14 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import Link from 'next/link'
 import {
   Plus,
   Pencil,
   Trash2,
   FolderInput,
   Copy,
+  Clapperboard,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import {
@@ -234,6 +236,12 @@ export function AdminContextMenu({
               <ContextMenuItem onClick={onMoveToRequest}>
                 <FolderInput className="mr-2 h-4 w-4" />
                 Move to...
+              </ContextMenuItem>
+              <ContextMenuItem asChild>
+                <Link href={`/admin/streams/${nodeId}/recorder`} className="flex items-center cursor-pointer">
+                  <Clapperboard className="mr-2 h-4 w-4" />
+                  Record Hands
+                </Link>
               </ContextMenuItem>
               <ContextMenuSeparator />
             </>

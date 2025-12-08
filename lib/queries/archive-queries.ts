@@ -776,7 +776,6 @@ export function useHandDetailQuery(handId: string | null) {
  */
 async function fetchUnsortedVideosFirestore(): Promise<UnsortedVideo[]> {
   try {
-    // streams 컬렉션 조회 (eventId가 없는 미분류 스트림)
     const unsortedRef = collection(db, 'streams')
     const unsortedQuery = query(unsortedRef, orderBy('createdAt', 'desc'))
     const snapshot = await getDocs(unsortedQuery)
@@ -797,6 +796,85 @@ async function fetchUnsortedVideosFirestore(): Promise<UnsortedVideo[]> {
     console.error('Error fetching unsorted videos from Firestore:', error)
     return []
   }
+}
+
+
+// ==================== Recorder Queries ====================
+
+import { createHand } from '@/app/actions/archive-manage'
+import { collectionGroup } from 'firebase/firestore'
+
+/**
+ * Fetch a single stream by ID using collectionGroup
+ */
+export function useStreamDetailQuery(streamId: string) {
+  return useQuery({
+    queryKey: ['stream', streamId],
+    queryFn: async () => {
+      if (!streamId) return null
+      const q = query(collectionGroup(db, 'streams'), where('__name__', '==', streamId), limit(1))
+      const snapshot = await getDocs(q)
+      if (snapshot.empty) return null
+
+      // We need eventId to map correctly
+      const docSnap = snapshot.docs[0]
+      const pathParts = docSnap.ref.path.split('/')
+      let eventId = ''
+      if (pathParts.length >= 4) {
+        eventId = pathParts[3]
+      }
+
+      return mapFirestoreStream(docSnap, eventId)
+    },
+    enabled: !!streamId
+  })
+}
+
+/**
+ * Search players by name
+ */
+export function useSearchPlayersQuery(term: string) {
+  return useQuery({
+    queryKey: ['players', 'search', term],
+    queryFn: async () => {
+      if (!term || term.length < 2) return []
+      const normalizedTerm = term.toLowerCase().replace(/[^a-z0-9]/g, '')
+
+      const playersRef = collection(db, COLLECTION_PATHS.PLAYERS)
+      const q = query(
+        playersRef,
+        where('normalizedName', '>=', normalizedTerm),
+        where('normalizedName', '<=', normalizedTerm + '\uf8ff'),
+        limit(10)
+      )
+      const snapshot = await getDocs(q)
+      return snapshot.docs.map(doc => ({
+        id: doc.id,
+        name: doc.data().name || 'Unknown',
+        photoUrl: doc.data().photoUrl
+      }))
+    },
+    enabled: !!term && term.length >= 2,
+    staleTime: 60 * 1000
+  })
+}
+
+/**
+ * Create Hand Mutation
+ */
+export function useCreateHandMutation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (handData: any) => {
+      const result = await createHand(handData.streamId, handData)
+      if (!result.success) throw new Error(result.error)
+      return result
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: archiveKeys.hands(variables.streamId) })
+      queryClient.invalidateQueries({ queryKey: archiveKeys.handsInfinite(variables.streamId) })
+    }
+  })
 }
 
 /**

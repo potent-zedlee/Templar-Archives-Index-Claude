@@ -94,6 +94,7 @@
     "react-dropzone": "^14.3.8",
     "react-hook-form": "^7.60.0",
     "react-markdown": "^10.1.0",
+    "react-player": "^3.4.0",
     "react-resizable-panels": "^2.1.9",
     "react-rnd": "^10.5.2",
     "recharts": "^2.15.4",
