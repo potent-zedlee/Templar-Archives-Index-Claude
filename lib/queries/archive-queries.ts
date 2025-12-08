@@ -163,6 +163,26 @@ function mapFirestoreHand(docSnap: DocumentSnapshot | QueryDocumentSnapshot): Ha
   const handNumber = typeof data.number === 'string'
     ? parseInt(data.number, 10) || 0
     : data.number ?? 0
+
+  let handHistoryFormat = data.handHistoryFormat
+  if (typeof handHistoryFormat === 'string') {
+    try {
+      handHistoryFormat = JSON.parse(handHistoryFormat)
+    } catch (e) {
+      console.error('Error parsing handHistoryFormat JSON:', e)
+      handHistoryFormat = null
+    }
+  }
+
+  // Normalize sections keys to lowercase if they exist
+  if (handHistoryFormat?.sections) {
+    const normalizedSections: Record<string, string[]> = {}
+    Object.keys(handHistoryFormat.sections).forEach(key => {
+      normalizedSections[key.toLowerCase()] = handHistoryFormat.sections[key]
+    })
+    handHistoryFormat = { ...handHistoryFormat, sections: normalizedSections }
+  }
+
   return {
     id: docSnap.id,
     streamId: data.streamId,
@@ -209,7 +229,7 @@ function mapFirestoreHand(docSnap: DocumentSnapshot | QueryDocumentSnapshot): Ha
       },
     })),
     pokerkitFormat: data.pokerkitFormat,
-    handHistoryFormat: data.handHistoryFormat,
+    handHistoryFormat: handHistoryFormat,
     checked: false,
   }
 }
