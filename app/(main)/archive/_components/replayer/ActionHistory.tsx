@@ -30,7 +30,7 @@ function parseActionString(raw: string): ParsedAction {
     const fullAction = raw.slice(colonIndex + 1).trim()
 
     // 2. Analyze Action Text
-    const lowerAction = fullAction.toLowerCase()
+    const lowerAction = fullAction?.toLowerCase() || ''
     let amount = undefined
     let isPassive = false
 

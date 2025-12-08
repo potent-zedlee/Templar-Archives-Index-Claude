@@ -118,8 +118,8 @@ export function PokerTable({ hand }: PokerTableProps) {
                                         {player.holeCards.map((card, i) => (
                                             <div key={i} className="w-8 h-10 bg-white rounded shadow-sm border border-gray-300 text-[10px] flex items-center justify-center relative translate-y-[-50%] z-10">
                                                 {/* Simple text representation for now */}
-                                                <span className={card.includes('h') || card.includes('d') ? 'text-red-600' : 'text-black'}>
-                                                    {card}
+                                                <span className={card && (card.includes('h') || card.includes('d')) ? 'text-red-600' : 'text-black'}>
+                                                    {card || '?'}
                                                 </span>
                                             </div>
                                         ))}
