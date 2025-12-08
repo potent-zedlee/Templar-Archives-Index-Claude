@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/sidebar"
 import {
   LayoutDashboard,
+  FolderInput,
   Users,
   Archive,
   FileCheck,
@@ -39,12 +40,13 @@ import type { PipelineStatus } from "@/lib/types/archive"
  */
 interface PipelineSubItem {
   title: string
-  status: PipelineStatus
+  status: PipelineStatus | 'manage'
   icon: LucideIcon
   color?: string
 }
 
 const pipelineSubItems: PipelineSubItem[] = [
+  { title: "Manage", status: "manage" as any, icon: FolderInput, color: "text-foreground" },
   { title: "Uploaded", status: "uploaded", icon: Upload, color: "text-muted-foreground" },
   { title: "Analyzing", status: "analyzing", icon: Sparkles, color: "text-blue-500" },
   { title: "Published", status: "published", icon: Globe, color: "text-emerald-500" },
@@ -140,7 +142,13 @@ function ArchivePipelineSubMenu() {
       {pipelineSubItems.map((item) => {
         const Icon = item.icon
         const count = counts?.[item.status as keyof PipelineStatusCounts] ?? 0
-        const isActive = isPipelinePage && currentStatus === item.status
+
+        const isManage = item.status === "manage"
+        const href = isManage ? "/admin/archive/manage" : `/admin/archive/pipeline?status=${item.status}`
+        const isActive = isManage
+          ? pathname === "/admin/archive/manage"
+          : isPipelinePage && currentStatus === item.status
+
         const isFailed = item.status === "failed"
 
         return (
@@ -149,7 +157,7 @@ function ArchivePipelineSubMenu() {
               asChild
               isActive={isActive}
             >
-              <Link href={`/admin/archive/pipeline?status=${item.status}`}>
+              <Link href={href}>
                 <Icon className={cn("h-4 w-4", item.color)} />
                 <span>{item.title}</span>
                 <CountBadge
