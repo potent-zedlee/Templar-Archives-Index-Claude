@@ -124,9 +124,8 @@ export async function getPipelineStatusCounts(): Promise<{
         .collectionGroup('streams')
         .where('pipelineStatus', '==', status)
 
-      // orderBy 추가하여 기존 복합 인덱스 활용
+      // orderBy removed to avoid missing index error
       const snapshot = await queryRef
-        .orderBy('pipelineUpdatedAt', 'desc')
         .select() // 필드 없이 문서 ID만 가져옴
         .get()
       return { status, count: snapshot.size }
@@ -185,7 +184,6 @@ export async function getStreamsByPipelineStatus(
     }
 
     const snapshot = await queryRef
-      .orderBy('pipelineUpdatedAt', 'desc')
       .limit(pageLimit)
       .get()
 
