@@ -2,14 +2,12 @@
 
 import { cn } from "@/lib/utils"
 import { RecorderPlayer } from "./HandRecorderForm"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
 import { PlayerSearchDialog } from "./PlayerSearchDialog"
 import { useState } from "react"
-import { CreditCard, Database, User } from "lucide-react"
+import { CreditCard, Database, Plus } from "lucide-react"
 
 interface SeatSelectorProps {
     players: RecorderPlayer[]
@@ -28,21 +26,6 @@ export function SeatSelector({
     onUpdatePlayer
 }: SeatSelectorProps) {
 
-    // Layout coordinates for 9-max table (simplified relative positioning)
-    // 0 is bottom center (Hero), clockwise
-    const seatPositions = [
-        { id: 1, label: 'SB', className: 'bottom-2 right-32' }, // 1
-        { id: 2, label: 'BB', className: 'bottom-20 right-4' }, // 2
-        { id: 3, label: 'UTG', className: 'top-1/2 -translate-y-1/2 right-2' }, // 3
-        { id: 4, label: 'UTG+1', className: 'top-20 right-4' }, // 4
-        { id: 5, label: 'MP', className: 'top-2 right-32' }, // 5
-        { id: 6, label: 'MP+1', className: 'top-2 left-32' }, // 6
-        { id: 7, label: 'HJ', className: 'top-20 left-4' }, // 7
-        { id: 8, label: 'CO', className: 'top-1/2 -translate-y-1/2 left-2' }, // 8
-        { id: 9, label: 'BTN', className: 'bottom-20 left-4' }, // 9
-    ]
-
-    // Actually, seat numbers are strictly 1-9. 
     // Let's just use a grid for the admin recorder for simplicity/compactness, 
     // or a pseudo-table CSS. 
     // A grid is often faster for data entry than a visual circle.
@@ -142,7 +125,7 @@ function SeatCard({
             <PlayerSearchDialog
                 open={searchOpen}
                 onOpenChange={setSearchOpen}
-                onSelect={(p) => {
+                onSelect={(p: any) => {
                     onSelectPlayer(p)
                     setSearchOpen(false)
                 }}

@@ -3,9 +3,8 @@
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ArrowDown, Check, Trash, X } from "lucide-react"
+import { Check, Trash } from "lucide-react"
 import { useState, useRef, useEffect } from "react"
 import { RecorderPlayer } from "./HandRecorderForm"
 

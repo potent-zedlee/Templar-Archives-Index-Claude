@@ -2,13 +2,14 @@
 
 import { useState, useRef, useEffect } from "react"
 import { useStreamDetailQuery } from "@/lib/queries/archive-queries"
-import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, Loader2, Save } from "lucide-react"
+import { ArrowLeft, Loader2 } from "lucide-react"
 import Link from "next/link"
-import ReactPlayer from "react-player/youtube"
+import ReactPlayer from "react-player"
 import { HandRecorderForm } from "./HandRecorderForm"
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable"
+
+const ReactPlayerAny = ReactPlayer as any
 
 interface StreamRecorderClientProps {
     streamId: string
@@ -17,7 +18,7 @@ interface StreamRecorderClientProps {
 export function StreamRecorderClient({ streamId }: StreamRecorderClientProps) {
     const { data: stream, isLoading } = useStreamDetailQuery(streamId)
     const [currentTime, setCurrentTime] = useState(0)
-    const playerRef = useRef<ReactPlayer>(null)
+    const playerRef = useRef<any>(null)
 
     // Sync current time periodically (for UI display)
     useEffect(() => {
@@ -53,7 +54,7 @@ export function StreamRecorderClient({ streamId }: StreamRecorderClientProps) {
                     </Link>
                     <div>
                         <h1 className="text-sm font-semibold">
-                            {stream.event?.tournament?.name || 'Tournament'} - {stream.name}
+                            {stream.name}
                         </h1>
                         <p className="text-xs text-muted-foreground">
                             Manual Hand Recorder
@@ -73,7 +74,7 @@ export function StreamRecorderClient({ streamId }: StreamRecorderClientProps) {
                     <ResizablePanel defaultSize={50} minSize={30}>
                         <div className="h-full bg-black flex items-center justify-center relative">
                             <div className="w-full aspect-video">
-                                <ReactPlayer
+                                <ReactPlayerAny
                                     ref={playerRef}
                                     url={stream.videoUrl}
                                     width="100%"
@@ -93,7 +94,7 @@ export function StreamRecorderClient({ streamId }: StreamRecorderClientProps) {
                             <HandRecorderForm
                                 streamId={streamId}
                                 currentTime={currentTime}
-                                onSeek={(time) => playerRef.current?.seekTo(time, 'seconds')}
+                                onSeek={(time: number) => playerRef.current?.seekTo(time, 'seconds')}
                             />
                         </div>
                     </ResizablePanel>

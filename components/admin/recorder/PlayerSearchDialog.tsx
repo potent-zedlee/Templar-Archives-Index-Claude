@@ -23,9 +23,7 @@ export function PlayerSearchDialog({ open, onOpenChange, onSelect }: PlayerSearc
     const { data: searchResults, isLoading } = useSearchPlayersQuery(debouncedSearch)
 
     // TODO: Add "Recent Players" context here
-    const recentPlayers = [
-        // Mock for now, should come from Props or Context
-    ]
+
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>

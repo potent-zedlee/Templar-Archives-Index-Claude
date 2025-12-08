@@ -1,20 +1,16 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
-import { Separator } from "@/components/ui/separator"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { toast } from "sonner"
-import { Clock, Plus, Save, User, UserPlus, X } from "lucide-react"
+import { Clock } from "lucide-react"
 import { useCreateHandMutation } from "@/lib/queries/archive-queries"
 import { SeatSelector } from "./SeatSelector"
-import { PlayerSearchDialog } from "./PlayerSearchDialog"
 import { ActionTimelineInput } from "./ActionTimelineInput"
-import type { HandActionInput } from "@/lib/poker/hand-actions"
 
 // Type definitions for local state
 export type RecorderPlayer = {
@@ -32,7 +28,7 @@ interface HandRecorderFormProps {
     onSeek: (time: number) => void
 }
 
-export function HandRecorderForm({ streamId, currentTime, onSeek }: HandRecorderFormProps) {
+export function HandRecorderForm({ streamId, currentTime }: HandRecorderFormProps) {
     // --- State ---
 
     // Hand Meta
@@ -124,12 +120,8 @@ export function HandRecorderForm({ streamId, currentTime, onSeek }: HandRecorder
             bigBlind: blinds.bb,
             ante: blinds.ante,
             players: activePlayers.map(p => ({
-                playerId: p.playerId!,
-                name: p.name!,
-                seat: p.seat,
-                holeCards: p.holeCards ? splitCards(p.holeCards) : [],
                 startStack: p.stack || 0,
-                position: getPosition(p.seat, dealerSeat, activePlayers.length)
+                position: getPosition(p.seat, dealerSeat)
             })),
             // Board
             boardFlop: boardCards.flop ? splitCards(boardCards.flop) : [],
@@ -193,11 +185,11 @@ export function HandRecorderForm({ streamId, currentTime, onSeek }: HandRecorder
                 <SeatSelector
                     players={players}
                     dealerSeat={dealerSeat}
-                    onSeatClick={(seat) => {
+                    onSeatClick={(_seat: number) => {
                         // Open dialog to select player
                     }}
                     onSetDealer={setDealerSeat}
-                    onPlayerConvert={(seat, player) => handlePlayerAssign(seat, player)}
+                    onPlayerConvert={(seat: number, player: { id: string, name: string }) => handlePlayerAssign(seat, player)}
                     onUpdatePlayer={handlePlayerUpdate}
                 />
             </Card>
@@ -240,8 +232,8 @@ export function HandRecorderForm({ streamId, currentTime, onSeek }: HandRecorder
                         street={activeStreet}
                         players={players.filter(p => p.playerId)}
                         actions={actions}
-                        onAddAction={(action) => setActions([...actions, action])}
-                        onRemoveAction={(index) => setActions(actions.filter((_, i) => i !== index))}
+                        onAddAction={(action: any) => setActions([...actions, action])}
+                        onRemoveAction={(index: number) => setActions(actions.filter((_, i) => i !== index))}
                     />
                 </Tabs>
             </Card>
@@ -268,7 +260,7 @@ function splitCards(str: string) {
     return str.replace(/\s/g, '').match(/.{1,2}/g) || []
 }
 
-function getPosition(seat: number, dealerSeat: number, totalPlayers: number) {
+function getPosition(seat: number, dealerSeat: number) {
     // Simplified Logic
     if (seat === dealerSeat) return 'BTN'
     // ... complete logic needed
