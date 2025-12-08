@@ -487,6 +487,12 @@ export interface FirestoreHand {
   /** 즐겨찾기 */
   favorite?: boolean
 
+  /** PokerKit JSON 데이터 */
+  handHistoryFormat?: any // 복잡한 구조체는 any로 처리하거나 별도 인터페이스 정의 필요
+
+  /** PokerKit 텍스트 포맷 */
+  pokerkitFormat?: string
+
   // ==================== AI Semantic Analysis ====================
 
   /** 시맨틱 태그 배열 */

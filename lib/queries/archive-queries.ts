@@ -203,6 +203,8 @@ function mapFirestoreHand(docSnap: DocumentSnapshot | QueryDocumentSnapshot): Ha
         normalizedName: (p.name || '').toLowerCase().replace(/[^a-z0-9]/g, ''),
       },
     })),
+    pokerkitFormat: data.pokerkitFormat,
+    handHistoryFormat: data.handHistoryFormat,
     checked: false,
   }
 }
