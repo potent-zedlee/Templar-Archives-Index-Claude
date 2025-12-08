@@ -47,7 +47,7 @@ interface DragItem {
 
 export function ArchiveManager() {
   // 데이터 페칭
-  const { data: tournaments = [], refetch: refetchTournaments } = useTournamentsQuery()
+  const { data: tournaments = [], refetch: refetchTournaments } = useTournamentsQuery(undefined, undefined, true)
   const { data: unsortedVideos = [], refetch: refetchUnsorted } = useUnsortedVideosQuery()
 
   // 드래그 상태

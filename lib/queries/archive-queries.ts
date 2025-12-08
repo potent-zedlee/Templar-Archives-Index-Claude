@@ -269,8 +269,10 @@ export const archiveKeys = {
  * @param gameType - 필터링할 게임 타입 (tournament | cash-game)
  * @returns Tournament[] (events는 빈 배열)
  */
+
 async function fetchTournamentsShallow(
-  gameType?: 'tournament' | 'cash-game'
+  gameType?: 'tournament' | 'cash-game',
+  includeHidden: boolean = false
 ): Promise<Tournament[]> {
   try {
     const tournamentsRef = collection(db, COLLECTION_PATHS.TOURNAMENTS)
@@ -284,8 +286,8 @@ async function fetchTournamentsShallow(
       .map((tournamentDoc) => {
         const tournamentData = tournamentDoc.data() as FirestoreTournament
 
-        // 상태 필터: published 또는 status가 없는 경우만 표시
-        if (tournamentData.status && tournamentData.status !== 'published') {
+        // 상태 필터: published 또는 status가 없는 경우만 표시 (includeHidden=true면 통과)
+        if (!includeHidden && tournamentData.status && tournamentData.status !== 'published') {
           return null
         }
 
@@ -365,8 +367,10 @@ async function fetchStreamsByEvent(
  *
  * 참고: 대규모 데이터에서는 fetchTournamentsShallow + useEventsQuery 권장
  */
+
 async function fetchTournamentsTreeFirestore(
-  gameType?: 'tournament' | 'cash-game'
+  gameType?: 'tournament' | 'cash-game',
+  includeHidden: boolean = false
 ): Promise<Tournament[]> {
   try {
     // 1. 토너먼트 목록 조회
@@ -381,8 +385,8 @@ async function fetchTournamentsTreeFirestore(
     const tournamentPromises = tournamentsSnapshot.docs.map(async (tournamentDoc) => {
       const tournamentData = tournamentDoc.data() as FirestoreTournament
 
-      // 상태 필터: published 또는 status가 없는 경우만 표시
-      if (tournamentData.status && tournamentData.status !== 'published') {
+      // 상태 필터: published 또는 status가 없는 경우만 표시 (includeHidden=true면 통과)
+      if (!includeHidden && tournamentData.status && tournamentData.status !== 'published') {
         return null
       }
 
@@ -427,12 +431,13 @@ async function fetchTournamentsTreeFirestore(
  */
 export function useTournamentsQuery(
   gameType?: 'tournament' | 'cash-game',
-  sortParams?: Partial<ServerSortParams>
+  sortParams?: Partial<ServerSortParams>,
+  includeHidden: boolean = false
 ) {
   return useQuery({
-    queryKey: archiveKeys.tournaments(gameType, sortParams),
+    queryKey: [...archiveKeys.tournaments(gameType, sortParams), includeHidden],
     queryFn: async () => {
-      const tournamentsData = await fetchTournamentsTreeFirestore(gameType)
+      const tournamentsData = await fetchTournamentsTreeFirestore(gameType, includeHidden)
       return tournamentsData
     },
     // Client-side sorting via select option
@@ -496,11 +501,12 @@ export function useTournamentsQuery(
  * @param gameType - 필터링할 게임 타입
  */
 export function useTournamentsShallowQuery(
-  gameType?: 'tournament' | 'cash-game'
+  gameType?: 'tournament' | 'cash-game',
+  includeHidden: boolean = false
 ) {
   return useQuery({
-    queryKey: archiveKeys.tournamentsShallow(gameType),
-    queryFn: () => fetchTournamentsShallow(gameType),
+    queryKey: [...archiveKeys.tournamentsShallow(gameType), includeHidden],
+    queryFn: () => fetchTournamentsShallow(gameType, includeHidden),
     staleTime: 10 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
   })
