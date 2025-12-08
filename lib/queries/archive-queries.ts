@@ -76,6 +76,8 @@ function mapFirestoreTournament(
     totalPrize: data.totalPrize,
     status: data.status,
     createdAt: timestampToString(data.createdAt),
+    logoSimpleUrl: data.logoSimpleUrl,
+    logoFullUrl: data.logoFullUrl,
     events,
     expanded: true,
   }
@@ -146,6 +148,8 @@ function mapFirestoreStream(
     pipelineError: data.pipelineError,
     pipelineUpdatedAt: timestampToString(data.pipelineUpdatedAt),
     currentJobId: data.currentJobId,
+    lastAnalysisAt: timestampToString(data.lastAnalysisAt),
+    analysisAttempts: data.analysisAttempts,
     selected: false,
   }
 }
@@ -183,6 +187,7 @@ function mapFirestoreHand(docSnap: DocumentSnapshot | QueryDocumentSnapshot): Ha
     favorite: data.favorite,
     thumbnailUrl: data.thumbnailUrl,
     likesCount: data.engagement?.likesCount,
+    dislikesCount: data.engagement?.dislikesCount,
     bookmarksCount: data.engagement?.bookmarksCount,
     createdAt: timestampToString(data.createdAt),
     handPlayers: data.players?.map((p) => ({
