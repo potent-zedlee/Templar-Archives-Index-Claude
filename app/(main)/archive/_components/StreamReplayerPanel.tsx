@@ -17,21 +17,9 @@ interface StreamReplayerPanelProps {
     stream: Stream
 }
 
-/**
- * YouTube URL에서 video ID 추출
- */
-function extractVideoId(url?: string): string | null {
-    if (!url) return null
-    const patterns = [
-        /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
-        /^([a-zA-Z0-9_-]{11})$/
-    ]
-    for (const pattern of patterns) {
-        const match = url.match(pattern)
-        if (match) return match[1]
-    }
-    return null
-}
+
+
+import { extractYouTubeVideoId } from '@/lib/utils'
 
 export function StreamReplayerPanel({ streamId, stream }: StreamReplayerPanelProps) {
     const [selectedHand, setSelectedHand] = useState<Hand | null>(null)
@@ -45,7 +33,7 @@ export function StreamReplayerPanel({ streamId, stream }: StreamReplayerPanelPro
     const { data: hands = [], isLoading } = useHandsQuery(streamId)
 
     // YouTube Video ID
-    const videoId = useMemo(() => extractVideoId(stream.videoUrl), [stream.videoUrl])
+    const videoId = useMemo(() => extractYouTubeVideoId(stream.videoUrl || ''), [stream.videoUrl])
 
     // Sync selected hand based on video time
     // Optional: Auto-select hand as video plays?
