@@ -45,7 +45,7 @@ export function CompactHandList({ hands, selectedHandId, onHandSelect }: Compact
 
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center justify-between mb-1">
-                                        <span className="text-xs text-muted-foreground font-mono">{hand.timestamp.split('T')[1].slice(0, 5)}</span>
+                                        <span className="text-xs text-muted-foreground font-mono">{hand.timestamp ? hand.timestamp.split('T')[1]?.slice(0, 5) : ''}</span>
                                         {/* Pot size if available */}
                                         {hand.potSize && (
                                             <span className="text-[10px] font-medium text-emerald-500">
