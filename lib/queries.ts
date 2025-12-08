@@ -20,7 +20,7 @@ import {
   DocumentData,
   QueryDocumentSnapshot,
 } from 'firebase/firestore'
-import { firestore } from './firebase'
+import { firestore } from '@/lib/db/firebase'
 import {
   COLLECTION_PATHS,
   type FirestoreTournament,
@@ -29,7 +29,7 @@ import {
   type FirestoreHand,
   type FirestorePlayer,
   type TournamentCategory,
-} from './firestore-types'
+} from '@/lib/db/firestore-types'
 import type { HandHistory } from './types/hand-history'
 
 // ==================== Types ====================

@@ -15,7 +15,7 @@ import {
   serverTimestamp,
   arrayUnion,
 } from 'firebase/firestore'
-import { firestore } from './firebase'
+import { firestore } from '@/lib/db/firebase'
 import {
   COLLECTION_PATHS,
   type FirestoreHand,
@@ -23,7 +23,7 @@ import {
   type HandPlayerEmbedded,
   type PokerStreet,
   type PokerActionType,
-} from './firestore-types'
+} from '@/lib/db/firestore-types'
 
 // ==================== Types ====================
 

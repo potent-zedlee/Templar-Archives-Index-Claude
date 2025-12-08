@@ -26,6 +26,7 @@ const nextConfig = {
         '@ffmpeg-installer/ffmpeg': 'commonjs @ffmpeg-installer/ffmpeg',
       })
     }
+
     return config
   },
   images: {

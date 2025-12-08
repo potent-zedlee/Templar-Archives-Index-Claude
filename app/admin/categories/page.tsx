@@ -17,7 +17,7 @@ import {
 import { useAuth } from "@/components/layout/AuthProvider"
 import { isAdmin } from "@/lib/admin"
 import { toast } from "sonner"
-import type { TournamentCategory } from "@/lib/tournament-categories"
+import type { TournamentCategory } from "@/lib/poker/tournament-categories"
 
 export default function CategoriesPage() {
   const router = useRouter()
@@ -160,124 +160,124 @@ export default function CategoriesPage() {
 
   return (
     <div className="container max-w-7xl mx-auto py-8 px-4">
-        {/* Header */}
-        <header className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">카테고리 관리</h1>
-          <p className="text-muted-foreground">
-            토너먼트 카테고리를 추가, 수정, 삭제하고 순서를 변경할 수 있습니다.
-          </p>
-        </header>
+      {/* Header */}
+      <header className="mb-8">
+        <h1 className="text-3xl font-bold mb-2">카테고리 관리</h1>
+        <p className="text-muted-foreground">
+          토너먼트 카테고리를 추가, 수정, 삭제하고 순서를 변경할 수 있습니다.
+        </p>
+      </header>
 
-        {/* Toolbar */}
-        <div className="border rounded-lg p-4 mb-6">
-          <div className="flex flex-col md:flex-row gap-4">
-            {/* Search */}
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
-              <input
-                type="text"
-                placeholder="카테고리 검색..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-3 py-2 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary"
-                aria-label="카테고리 검색"
-              />
-            </div>
-
-            {/* Active Filter */}
-            <select
-              value={activeFilter}
-              onChange={(e) => {
-                const filter = e.target.value as "all" | "active" | "inactive"
-                setActiveFilter(filter)
-                setIncludeInactive(filter === "all" || filter === "inactive")
-              }}
-              className="px-3 py-2 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary min-w-[180px]"
-              aria-label="활성 상태 필터"
-            >
-              <option value="all">모두</option>
-              <option value="active">활성</option>
-              <option value="inactive">비활성</option>
-            </select>
-
-            {/* Game Type Filter */}
-            <select
-              value={gameTypeFilter}
-              onChange={(e) => setGameTypeFilter(e.target.value)}
-              className="px-3 py-2 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary min-w-[180px]"
-              aria-label="게임 타입 필터"
-            >
-              <option value="all">모든 타입</option>
-              <option value="tournament">토너먼트</option>
-              <option value="cash_game">캐쉬게임</option>
-              <option value="both">둘 다</option>
-            </select>
-
-            {/* Add Category */}
-            <CategoryDialog />
+      {/* Toolbar */}
+      <div className="border rounded-lg p-4 mb-6">
+        <div className="flex flex-col md:flex-row gap-4">
+          {/* Search */}
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
+            <input
+              type="text"
+              placeholder="카테고리 검색..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-3 py-2 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+              aria-label="카테고리 검색"
+            />
           </div>
 
-          {/* Save Order Button */}
-          {hasChanges && (
-            <div className="flex items-center gap-2 mt-4 pt-4 border-t" role="alert" aria-live="polite">
-              <button
-                onClick={handleSaveOrder}
-                disabled={reorderMutation.isPending}
-                className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
-                aria-label="카테고리 순서 저장"
-              >
-                <Save className="h-4 w-4" aria-hidden="true" />
-                순서 저장
-              </button>
-              <button
-                onClick={handleResetOrder}
-                disabled={reorderMutation.isPending}
-                className="px-4 py-2 border border-border rounded-lg hover:bg-accent transition-colors disabled:opacity-50"
-                aria-label="순서 변경 취소"
-              >
-                취소
-              </button>
-              <span className="text-sm text-muted-foreground ml-2">
-                순서가 변경되었습니다. 저장하세요.
-              </span>
-            </div>
-          )}
+          {/* Active Filter */}
+          <select
+            value={activeFilter}
+            onChange={(e) => {
+              const filter = e.target.value as "all" | "active" | "inactive"
+              setActiveFilter(filter)
+              setIncludeInactive(filter === "all" || filter === "inactive")
+            }}
+            className="px-3 py-2 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary min-w-[180px]"
+            aria-label="활성 상태 필터"
+          >
+            <option value="all">모두</option>
+            <option value="active">활성</option>
+            <option value="inactive">비활성</option>
+          </select>
+
+          {/* Game Type Filter */}
+          <select
+            value={gameTypeFilter}
+            onChange={(e) => setGameTypeFilter(e.target.value)}
+            className="px-3 py-2 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary min-w-[180px]"
+            aria-label="게임 타입 필터"
+          >
+            <option value="all">모든 타입</option>
+            <option value="tournament">토너먼트</option>
+            <option value="cash_game">캐쉬게임</option>
+            <option value="both">둘 다</option>
+          </select>
+
+          {/* Add Category */}
+          <CategoryDialog />
         </div>
 
-        {/* Categories Table */}
-        {isLoading ? (
-          <div className="space-y-4" role="status" aria-label="카테고리 목록 로딩 중">
-            <CardSkeleton />
-            <CardSkeleton />
-            <CardSkeleton />
-          </div>
-        ) : (
-          <DndContext
-            collisionDetection={closestCenter}
-            onDragStart={handleDragStart}
-            onDragEnd={handleDragEnd}
-            onDragCancel={handleDragCancel}
-          >
-            <CategoryTable categories={filteredCategories} usageCounts={usageCounts || {}} />
-            <DragOverlay>
-              {activeId ? (
-                <div className="bg-background border rounded-lg p-4 shadow-2xl">
-                  <span className="font-medium">
-                    {localCategories.find((cat) => cat.id === activeId)?.displayName}
-                  </span>
-                </div>
-              ) : null}
-            </DragOverlay>
-          </DndContext>
-        )}
-
-        {/* Results Count */}
-        {!isLoading && (
-          <div className="mt-4 text-sm text-muted-foreground text-center" role="status" aria-live="polite">
-            총 {filteredCategories.length}개의 카테고리
-            {searchQuery && ` (검색 결과)`}
+        {/* Save Order Button */}
+        {hasChanges && (
+          <div className="flex items-center gap-2 mt-4 pt-4 border-t" role="alert" aria-live="polite">
+            <button
+              onClick={handleSaveOrder}
+              disabled={reorderMutation.isPending}
+              className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
+              aria-label="카테고리 순서 저장"
+            >
+              <Save className="h-4 w-4" aria-hidden="true" />
+              순서 저장
+            </button>
+            <button
+              onClick={handleResetOrder}
+              disabled={reorderMutation.isPending}
+              className="px-4 py-2 border border-border rounded-lg hover:bg-accent transition-colors disabled:opacity-50"
+              aria-label="순서 변경 취소"
+            >
+              취소
+            </button>
+            <span className="text-sm text-muted-foreground ml-2">
+              순서가 변경되었습니다. 저장하세요.
+            </span>
           </div>
         )}
       </div>
+
+      {/* Categories Table */}
+      {isLoading ? (
+        <div className="space-y-4" role="status" aria-label="카테고리 목록 로딩 중">
+          <CardSkeleton />
+          <CardSkeleton />
+          <CardSkeleton />
+        </div>
+      ) : (
+        <DndContext
+          collisionDetection={closestCenter}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+          onDragCancel={handleDragCancel}
+        >
+          <CategoryTable categories={filteredCategories} usageCounts={usageCounts || {}} />
+          <DragOverlay>
+            {activeId ? (
+              <div className="bg-background border rounded-lg p-4 shadow-2xl">
+                <span className="font-medium">
+                  {localCategories.find((cat) => cat.id === activeId)?.displayName}
+                </span>
+              </div>
+            ) : null}
+          </DragOverlay>
+        </DndContext>
+      )}
+
+      {/* Results Count */}
+      {!isLoading && (
+        <div className="mt-4 text-sm text-muted-foreground text-center" role="status" aria-live="polite">
+          총 {filteredCategories.length}개의 카테고리
+          {searchQuery && ` (검색 결과)`}
+        </div>
+      )}
+    </div>
   )
 }

@@ -185,7 +185,15 @@ npm run build
 npx tsc --noEmit
 ```
 
-### Firebase 인증 에러 (auth/unauthorized-domain)
+### Vercel 런타임 에러 (firebase-admin)
+ 
+ **증상**: 배포 후 `TypeError: (void 0) is not a function` 에러 발생 (특히 API Routes에서).
+ 
+ **원인**: `firebase-admin` 패키지의 모듈 Resolution 문제.
+ 
+ **해결**: `lib/firebase-auth-loader.js`가 자동으로 처리합니다. 코드를 수정할 때는 반드시 `@/lib/db/firebase-admin`을 import하여 사용하세요.
+ 
+ ### Firebase 인증 에러 (auth/unauthorized-domain)
 
 Firebase Console → Authentication → Settings → Authorized domains에 배포 도메인 추가
 

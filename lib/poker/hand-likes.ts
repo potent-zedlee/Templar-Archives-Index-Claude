@@ -8,7 +8,7 @@
  * @module lib/poker/hand-likes
  */
 
-import { firestore } from './firebase'
+import { firestore } from '@/lib/db/firebase'
 import {
   doc,
   getDoc,
@@ -20,7 +20,7 @@ import {
   COLLECTION_PATHS,
   type FirestoreHandLike,
   type FirestoreHand,
-} from './firestore-types'
+} from '@/lib/db/firestore-types'
 
 export type HandLike = {
   id: string

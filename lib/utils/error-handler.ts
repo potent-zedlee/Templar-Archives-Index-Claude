@@ -3,7 +3,7 @@
  * Sanitizes error messages in production to avoid leaking sensitive information
  */
 
-import { logger } from './logger'
+import { logger } from '@/lib/logger'
 
 const isProduction = process.env.NODE_ENV === 'production'
 

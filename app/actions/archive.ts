@@ -13,7 +13,7 @@ import { cookies } from 'next/headers'
 import { Timestamp, FieldValue, FieldPath } from 'firebase-admin/firestore'
 import type { TournamentCategory } from '@/lib/types/archive'
 import { COLLECTION_PATHS } from '@/lib/db/firestore-types'
-import { findMatchingLogos, getCategoryFallbackLogo } from '@/lib/logo-utils'
+import { findMatchingLogos, getCategoryFallbackLogo } from '@/lib/utils/logo'
 
 // ==================== Helper Functions ====================
 

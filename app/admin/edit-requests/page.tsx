@@ -13,7 +13,7 @@ import {
 } from "@/lib/queries/admin-queries"
 import { CheckCircle, XCircle, Download } from "lucide-react"
 import Link from "next/link"
-import { exportHandEditRequests } from "@/lib/export-utils"
+import { exportHandEditRequests } from "@/lib/utils/export"
 
 const EDIT_TYPE_LABELS: Record<string, string> = {
   "basic_info": "Basic Info",
@@ -190,11 +190,10 @@ export default function EditRequestsClient() {
           <nav className="flex gap-6 -mb-px" aria-label="Edit request tabs">
             <button
               onClick={() => setActiveTab("pending")}
-              className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
-                activeTab === "pending"
+              className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === "pending"
                   ? "border-primary text-foreground"
                   : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
-              }`}
+                }`}
               aria-current={activeTab === "pending" ? "page" : undefined}
             >
               Pending
@@ -206,11 +205,10 @@ export default function EditRequestsClient() {
             </button>
             <button
               onClick={() => setActiveTab("reviewed")}
-              className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
-                activeTab === "reviewed"
+              className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === "reviewed"
                   ? "border-primary text-foreground"
                   : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
-              }`}
+                }`}
               aria-current={activeTab === "reviewed" ? "page" : undefined}
             >
               Reviewed
@@ -479,17 +477,16 @@ export default function EditRequestsClient() {
               <button
                 onClick={handleSubmitReview}
                 disabled={approveEditRequestMutation.isPending || rejectEditRequestMutation.isPending}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 ${
-                  actionType === "approve"
+                className={`px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 ${actionType === "approve"
                     ? "bg-primary text-primary-foreground hover:bg-primary/90"
                     : "bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                }`}
+                  }`}
               >
                 {(approveEditRequestMutation.isPending || rejectEditRequestMutation.isPending)
                   ? "Processing..."
                   : actionType === "approve"
-                  ? "Approve & Apply"
-                  : "Reject"}
+                    ? "Approve & Apply"
+                    : "Reject"}
               </button>
             </div>
           </div>

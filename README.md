@@ -27,7 +27,14 @@ cp .env.local.example .env.local
 npm run dev
 ```
 
----
+```
+ 
+ > [!IMPORTANT]
+ > **Firebase Admin SDK Import Rule**:
+ > `firebase-admin`을 직접 import하면 Vercel 배포 시 런타임 에러가 발생합니다.
+ > 반드시 `@/lib/db/firebase-admin` 경로를 통해 import하세요.
+ 
+ ---
 
 ## 기술 스택
 

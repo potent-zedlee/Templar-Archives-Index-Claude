@@ -7,7 +7,7 @@
  * @module lib/poker/hand-actions
  */
 
-import { firestore } from './firebase'
+import { firestore } from '@/lib/db/firebase'
 import {
   doc,
   getDoc,
@@ -20,13 +20,13 @@ import {
   type HandActionEmbedded,
   type PokerStreet,
   type PokerActionType,
-} from './firestore-types'
+} from '@/lib/db/firestore-types'
 
 /**
  * Hand Action 타입 (레거시 호환)
  */
-export type Street = 'preflop' | 'flop' | 'turn' | 'river'
-export type ActionType = 'fold' | 'check' | 'call' | 'bet' | 'raise' | 'all-in'
+export type Street = PokerStreet
+export type ActionType = PokerActionType
 
 export type HandAction = {
   id: string

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -11,84 +11,20 @@ import { Badge } from "@/components/ui/badge"
 import { AlertCircle, Trash2, ArrowLeft, CheckCircle, XCircle, Clock } from "lucide-react"
 import { useAuth } from "@/components/layout/AuthProvider"
 import {
-  collection,
-  getDocs,
-  addDoc,
-  query,
-  where,
-  orderBy,
-  limit,
-  serverTimestamp,
-  Timestamp,
-} from "firebase/firestore"
-import { firestore } from "@/lib/db/firebase"
+  useDeletionRequestQuery,
+  useCreateDeletionRequestMutation,
+  type DeletionRequest
+} from "@/lib/queries/profile-queries"
 import { toast } from "sonner"
-
-interface DeletionRequest {
-  id: string
-  reason: string
-  status: "pending" | "approved" | "rejected" | "completed"
-  requestedAt: string
-  reviewedAt?: string
-  adminNotes?: string
-}
 
 export default function DeleteDataPage() {
   const router = useRouter()
   const { user } = useAuth()
 
   const [reason, setReason] = useState("")
-  const [submitting, setSubmitting] = useState(false)
-  const [existingRequest, setExistingRequest] = useState<DeletionRequest | null>(null)
-  const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    if (!user) {
-      router.push("/auth/login")
-      return
-    }
-
-    loadExistingRequest()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user])
-
-  const loadExistingRequest = async () => {
-    if (!user) return
-
-    try {
-      const deletionRequestsRef = collection(firestore, "dataDeletionRequests")
-      const q = query(
-        deletionRequestsRef,
-        where("userId", "==", user.id),
-        where("status", "in", ["pending", "approved"]),
-        orderBy("requestedAt", "desc"),
-        limit(1)
-      )
-
-      const querySnapshot = await getDocs(q)
-
-      if (!querySnapshot.empty) {
-        const docData = querySnapshot.docs[0]
-        const data = docData.data()
-        setExistingRequest({
-          id: docData.id,
-          reason: data.reason,
-          status: data.status,
-          requestedAt: data.requestedAt instanceof Timestamp
-            ? data.requestedAt.toDate().toISOString()
-            : data.requestedAt,
-          reviewedAt: data.reviewedAt instanceof Timestamp
-            ? data.reviewedAt.toDate().toISOString()
-            : data.reviewedAt,
-          adminNotes: data.adminNotes,
-        })
-      }
-    } catch (error) {
-      console.error("Error loading deletion request:", error)
-    } finally {
-      setLoading(false)
-    }
-  }
+  const { data: existingRequest, isLoading: loading } = useDeletionRequestQuery(user?.id)
+  const createRequestMutation = useCreateDeletionRequestMutation()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -108,26 +44,19 @@ export default function DeleteDataPage() {
       return
     }
 
-    setSubmitting(true)
-
-    try {
-      const deletionRequestsRef = collection(firestore, "dataDeletionRequests")
-      await addDoc(deletionRequestsRef, {
-        userId: user.id,
-        reason: reason.trim(),
-        status: "pending",
-        requestedAt: serverTimestamp(),
-      })
-
-      toast.success("Deletion request submitted successfully")
-      setReason("")
-      loadExistingRequest()
-    } catch (error) {
-      console.error("Error submitting deletion request:", error)
-      toast.error("Failed to submit deletion request")
-    } finally {
-      setSubmitting(false)
-    }
+    createRequestMutation.mutate(
+      { userId: user.id, reason: reason.trim() },
+      {
+        onSuccess: () => {
+          toast.success("Deletion request submitted successfully")
+          setReason("")
+        },
+        onError: (error) => {
+          console.error("Error submitting deletion request:", error)
+          toast.error("Failed to submit deletion request")
+        }
+      }
+    )
   }
 
   const getStatusBadge = (status: DeletionRequest["status"]) => {
@@ -284,11 +213,11 @@ export default function DeleteDataPage() {
                 <Button
                   type="submit"
                   variant="destructive"
-                  disabled={submitting}
+                  disabled={createRequestMutation.isPending}
                   className="flex-1 gap-2"
                 >
                   <Trash2 className="h-4 w-4" />
-                  {submitting ? "Submitting..." : "Submit Deletion Request"}
+                  {createRequestMutation.isPending ? "Submitting..." : "Submit Deletion Request"}
                 </Button>
               </div>
             </form>

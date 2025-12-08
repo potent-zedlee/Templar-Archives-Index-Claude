@@ -217,3 +217,179 @@ export function useToggleCommentLikeMutation() {
     },
   })
 }
+// ==================== Post Comments Types ====================
+
+export type PostComment = {
+  id: string
+  postId: string
+  parentId?: string
+  author: AuthorInfo
+  content: string
+  likesCount: number
+  createdAt: string
+  updatedAt: string
+  replies?: PostComment[]
+  isLoadingReplies?: boolean
+  hasLiked?: boolean
+}
+
+// ==================== Post Comment Converters ====================
+
+const postCommentConverter = {
+  fromFirestore(snapshot: QueryDocumentSnapshot, postId: string): PostComment {
+    const data = snapshot.data() as FirestoreComment & { likesCount?: number; postId?: string }
+    return {
+      id: snapshot.id,
+      content: data.content,
+      author: data.author,
+      parentId: data.parentId,
+      postId: postId,
+      likesCount: data.likesCount || 0,
+      createdAt: (data.createdAt as Timestamp)?.toDate?.()?.toISOString() || new Date().toISOString(),
+      updatedAt: (data.updatedAt as Timestamp)?.toDate?.()?.toISOString() || new Date().toISOString(),
+    }
+  }
+}
+
+export const postCommentKeys = {
+  all: ['post-comments'] as const,
+  post: (postId: string) => [...postCommentKeys.all, 'post', postId] as const,
+  replies: (commentId: string) => [...postCommentKeys.all, 'replies', commentId] as const,
+}
+
+// ==================== Post Comment Helper Functions ====================
+
+export async function fetchPostComments(postId: string): Promise<PostComment[]> {
+  const commentsRef = collection(firestore, `posts/${postId}/comments`)
+  const q = query(
+    commentsRef,
+    where('parentId', '==', null),
+    orderBy('createdAt', 'asc')
+  )
+  const snapshot = await getDocs(q)
+  return snapshot.docs.map(doc => postCommentConverter.fromFirestore(doc, postId))
+}
+
+export async function fetchPostCommentReplies(postId: string, commentId: string): Promise<PostComment[]> {
+  const commentsRef = collection(firestore, `posts/${postId}/comments`)
+  const q = query(
+    commentsRef,
+    where('parentId', '==', commentId),
+    orderBy('createdAt', 'asc')
+  )
+  const snapshot = await getDocs(q)
+  return snapshot.docs.map(doc => postCommentConverter.fromFirestore(doc, postId))
+}
+
+export async function createPostComment(comment: {
+  postId: string
+  parentId?: string
+  authorId: string
+  authorName: string
+  authorAvatarUrl?: string
+  content: string
+}): Promise<PostComment> {
+  const commentsRef = collection(firestore, `posts/${comment.postId}/comments`)
+
+  const newComment = {
+    content: comment.content,
+    author: {
+      id: comment.authorId,
+      name: comment.authorName,
+      avatarUrl: comment.authorAvatarUrl,
+    },
+    parentId: comment.parentId || null,
+    postId: comment.postId,
+    likesCount: 0,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  }
+
+  const docRef = await addDoc(commentsRef, newComment)
+
+  // Update post comments count
+  const postRef = doc(firestore, 'posts', comment.postId)
+  await updateDoc(postRef, {
+    'stats.commentsCount': increment(1),
+  })
+
+  const snapshot = await getDoc(docRef)
+  return postCommentConverter.fromFirestore(snapshot as QueryDocumentSnapshot, comment.postId)
+}
+
+export async function togglePostCommentLike(
+  commentId: string,
+  userId: string,
+  postId: string
+): Promise<boolean> {
+  const likesPath = `posts/${postId}/comments/${commentId}/likes`
+  const commentPath = `posts/${postId}/comments/${commentId}`
+
+  const likesRef = collection(firestore, likesPath)
+  const likeQuery = query(likesRef, where('userId', '==', userId))
+  const likeSnapshot = await getDocs(likeQuery)
+
+  const commentRef = doc(firestore, commentPath)
+
+  if (!likeSnapshot.empty) {
+    // Unlike
+    const likeDoc = likeSnapshot.docs[0]
+    await deleteDoc(doc(firestore, `${likesPath}/${likeDoc.id}`))
+    await updateDoc(commentRef, {
+      likesCount: increment(-1),
+    })
+    return false
+  } else {
+    // Like
+    await addDoc(likesRef, {
+      userId,
+      createdAt: serverTimestamp(),
+    })
+    await updateDoc(commentRef, {
+      likesCount: increment(1),
+    })
+    return true
+  }
+}
+
+// ==================== Post Comment Queries ====================
+
+export function usePostCommentsQuery(postId: string) {
+  return useQuery({
+    queryKey: postCommentKeys.post(postId),
+    queryFn: async () => {
+      return await fetchPostComments(postId)
+    },
+    staleTime: 1 * 60 * 1000,
+    gcTime: 5 * 60 * 1000,
+    enabled: !!postId,
+  })
+}
+
+// ==================== Post Comment Mutations ====================
+
+export function useCreatePostCommentMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: createPostComment,
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: postCommentKeys.post(variables.postId) })
+    },
+  })
+}
+
+export function useTogglePostCommentLikeMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ commentId, userId, postId }: { commentId: string; userId: string; postId: string }) => {
+      return await togglePostCommentLike(commentId, userId, postId)
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: postCommentKeys.post(variables.postId) })
+      // If we need to invalidate replies, we might need a broader invalidation or specialized one
+      // For now, simpler invalidation
+    },
+  })
+}

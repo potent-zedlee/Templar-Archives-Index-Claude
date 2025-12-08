@@ -194,3 +194,85 @@ export function useUploadAvatarMutation(userId: string) {
     },
   })
 }
+// ==================== Data Deletion Requests ====================
+
+export interface DeletionRequest {
+  id: string
+  userId: string
+  reason: string
+  status: 'pending' | 'approved' | 'rejected' | 'completed'
+  requestedAt: string
+  reviewedAt?: string
+  adminNotes?: string
+}
+
+/**
+ * Fetch existing deletion request for a user
+ */
+import { collection, query, where, orderBy, limit, getDocs, addDoc, serverTimestamp, Timestamp } from 'firebase/firestore'
+import { firestore } from '@/lib/db/firebase'
+
+async function fetchDeletionRequest(userId: string): Promise<DeletionRequest | null> {
+  try {
+    const deletionRequestsRef = collection(firestore, 'dataDeletionRequests')
+    const q = query(
+      deletionRequestsRef,
+      where('userId', '==', userId),
+      where('status', 'in', ['pending', 'approved']), // Check for active requests
+      orderBy('requestedAt', 'desc'),
+      limit(1)
+    )
+
+    const querySnapshot = await getDocs(q)
+
+    if (!querySnapshot.empty) {
+      const docData = querySnapshot.docs[0]
+      const data = docData.data()
+      return {
+        id: docData.id,
+        userId: data.userId,
+        reason: data.reason,
+        status: data.status,
+        requestedAt: data.requestedAt instanceof Timestamp
+          ? data.requestedAt.toDate().toISOString()
+          : data.requestedAt,
+        reviewedAt: data.reviewedAt instanceof Timestamp
+          ? data.reviewedAt.toDate().toISOString()
+          : data.reviewedAt,
+        adminNotes: data.adminNotes,
+      }
+    }
+    return null
+  } catch (error) {
+    console.error("Error loading deletion request:", error)
+    return null
+  }
+}
+
+export function useDeletionRequestQuery(userId: string | undefined) {
+  return useQuery({
+    queryKey: ['deletion-request', userId],
+    queryFn: () => fetchDeletionRequest(userId!),
+    enabled: !!userId,
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
+export function useCreateDeletionRequestMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ userId, reason }: { userId: string; reason: string }) => {
+      const deletionRequestsRef = collection(firestore, 'dataDeletionRequests')
+      await addDoc(deletionRequestsRef, {
+        userId,
+        reason: reason.trim(),
+        status: 'pending',
+        requestedAt: serverTimestamp(),
+      })
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['deletion-request', variables.userId] })
+    },
+  })
+}

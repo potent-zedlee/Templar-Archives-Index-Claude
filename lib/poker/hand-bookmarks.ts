@@ -7,7 +7,7 @@
  * @module lib/poker/hand-bookmarks
  */
 
-import { firestore } from './firebase'
+import { firestore } from '@/lib/db/firebase'
 import {
   collection,
   doc,
@@ -22,7 +22,7 @@ import {
   serverTimestamp,
   Timestamp,
 } from 'firebase/firestore'
-import { COLLECTION_PATHS, type FirestoreBookmark } from './firestore-types'
+import { COLLECTION_PATHS, type FirestoreBookmark } from '@/lib/db/firestore-types'
 
 export type HandBookmark = {
   id: string
@@ -77,30 +77,30 @@ function convertToLegacyFormat(
     created_at: createdAt,
     hand: bookmark.refData
       ? {
-          id: bookmark.refId,
-          number: bookmark.refData.number || '',
-          description: bookmark.refData.description || '',
-          timestamp: bookmark.refData.timestamp || '',
-          stream: bookmark.refData.streamName
-            ? {
+        id: bookmark.refId,
+        number: bookmark.refData.number || '',
+        description: bookmark.refData.description || '',
+        timestamp: bookmark.refData.timestamp || '',
+        stream: bookmark.refData.streamName
+          ? {
+            id: '',
+            name: bookmark.refData.streamName,
+            event: bookmark.refData.eventName
+              ? {
                 id: '',
-                name: bookmark.refData.streamName,
-                event: bookmark.refData.eventName
+                name: bookmark.refData.eventName,
+                tournament: bookmark.refData.tournamentName
                   ? {
-                      id: '',
-                      name: bookmark.refData.eventName,
-                      tournament: bookmark.refData.tournamentName
-                        ? {
-                            id: '',
-                            name: bookmark.refData.tournamentName,
-                            category: bookmark.refData.tournamentCategory || '',
-                          }
-                        : undefined,
-                    }
+                    id: '',
+                    name: bookmark.refData.tournamentName,
+                    category: bookmark.refData.tournamentCategory || '',
+                  }
                   : undefined,
               }
-            : undefined,
-        }
+              : undefined,
+          }
+          : undefined,
+      }
       : undefined,
   }
 }

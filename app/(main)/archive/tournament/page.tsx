@@ -15,7 +15,7 @@ import { useState, useMemo } from "react"
 import { ErrorBoundary } from "@/components/common/ErrorBoundary"
 import { FileTreeExplorer } from "../_components/FileTreeExplorer"
 import { ArchiveDashboard } from "../_components/ArchiveDashboard"
-import { HandsListPanel } from "../_components/HandsListPanel"
+import { StreamReplayerPanel } from "../_components/StreamReplayerPanel"
 import { CategoryTabs } from "../_components/CategoryTabs"
 import { useTournamentsQuery } from "@/lib/queries/archive-queries"
 import type { Tournament, Event, Stream, BreadcrumbItem, TournamentCategory } from "@/lib/types/archive"
@@ -258,7 +258,7 @@ export default function ArchiveTournamentPage() {
             <ResizablePanel defaultSize={sidebarCollapsed ? 100 : 80} className="h-full">
               <main className="h-full overflow-hidden">
                 {selectedNodeType === 'stream' && selectedStream ? (
-                  <HandsListPanel
+                  <StreamReplayerPanel
                     streamId={selectedStream.id}
                     stream={selectedStream}
                   />

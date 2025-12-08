@@ -7,7 +7,7 @@
  */
 
 import { NextResponse } from 'next/server'
-import { adminFirestore } from '@/lib/firebase-admin'
+import { adminFirestore } from '@/lib/db/firebase-admin'
 import {
   COLLECTION_PATHS,
   type FirestoreHand,
@@ -127,10 +127,10 @@ export async function GET(_request: Request, { params }: RouteParams) {
           ...hand,
           playerInfo: indexData
             ? {
-                position: indexData.position,
-                cards: indexData.cards,
-                isWinner: indexData.isWinner,
-              }
+              position: indexData.position,
+              cards: indexData.cards,
+              isWinner: indexData.isWinner,
+            }
             : undefined,
         })
       }

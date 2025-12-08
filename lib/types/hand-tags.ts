@@ -6,10 +6,10 @@
  */
 
 // Re-export from firestore-types for consistency
-export type { HandTagName, HandTagStats } from '../firestore-types'
+export type { HandTagName, HandTagStats } from '@/lib/db/firestore-types'
 
 // Re-export from hand-tags library
-export type { HandTag, UserTagHistory } from '../hand-tags'
+export type { HandTag, UserTagHistory } from '@/lib/poker/hand-tags'
 
 /**
  * 태그 카테고리

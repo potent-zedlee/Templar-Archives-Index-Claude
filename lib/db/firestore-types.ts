@@ -56,7 +56,17 @@ export type PokerStreet = 'preflop' | 'flop' | 'turn' | 'river'
 /**
  * 포커 액션 타입
  */
-export type PokerActionType = 'fold' | 'check' | 'call' | 'bet' | 'raise' | 'all-in'
+export type PokerActionType =
+  | 'fold'
+  | 'check'
+  | 'call'
+  | 'bet'
+  | 'raise'
+  | 'all-in'
+  | 'post-blind'
+  | 'post-ante'
+  | 'muck'
+  | 'win'
 
 /**
  * 시맨틱 태그 타입

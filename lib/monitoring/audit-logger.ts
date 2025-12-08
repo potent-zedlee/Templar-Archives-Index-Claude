@@ -6,7 +6,7 @@
  */
 
 import { collection, addDoc, getDocs, query, where, orderBy, limit, getCountFromServer, Timestamp, doc, getDoc } from 'firebase/firestore'
-import { firestore } from '../firebase'
+import { firestore } from '@/lib/db/firebase'
 
 const AUDIT_LOGS_COLLECTION = 'auditLogs'
 

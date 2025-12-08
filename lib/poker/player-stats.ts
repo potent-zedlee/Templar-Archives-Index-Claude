@@ -1,11 +1,11 @@
 import 'server-only'
 
-import { adminFirestore } from './firebase-admin'
-import type {
-  FirestoreHand,
-  HandActionEmbedded,
-  PokerPosition,
-} from './firestore-types'
+import { adminFirestore } from '@/lib/db/firebase-admin'
+import {
+  type FirestoreHand,
+  type HandActionEmbedded,
+  type PokerPosition,
+} from '@/lib/db/firestore-types'
 import { classifyPlayStyle } from './player-stats-utils'
 
 /**

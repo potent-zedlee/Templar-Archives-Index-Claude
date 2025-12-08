@@ -3,7 +3,7 @@ import { adminFirestore } from '@/lib/db/firebase-admin'
 import { gcsClient } from '@/lib/gcs/client'
 import { COLLECTION_PATHS, type UploadStatus } from '@/lib/db/firestore-types'
 import { FieldValue, Timestamp } from 'firebase-admin/firestore'
-import { verifyAdminFromRequest } from '@/lib/api-auth'
+import { verifyAdminFromRequest } from '@/lib/auth/api-auth'
 
 /**
  * GCS 업로드 세션 시작 API

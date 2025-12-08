@@ -551,7 +551,30 @@ await updateStreamStatus(streamId, 'completed')
 
 ---
 
-## 7. 환경 변수
+### 6.8 Firebase Admin SDK & Vercel Fix
+ 
+ **파일:** `lib/db/firebase-admin.ts`, `lib/firebase-auth-loader.js`
+ 
+ **문제 상황:**
+ Next.js/Vercel 환경에서 `firebase-admin` 패키지의 `exports` 설정 문제로 인해 `import { getAuth } from 'firebase-admin/auth'`가 런타임에 실패하는 문제 발생 (`TypeError: (void 0) is not a function`).
+ 
+ **해결책 (`lib/firebase-auth-loader.js`):**
+ Webpack 번들링을 우회하여 런타임에 모듈을 직접 로드하는 Shim Loader를 구현.
+ 
+ ```javascript
+ // Webpack 정적 분석 우회 (eval)
+ const dynamicRequire = eval('require');
+ // 런타임에 절대 경로로 모듈 로드
+ return dynamicRequire('firebase-admin/lib/auth/index.js');
+ ```
+ 
+ **개발 가이드:**
+ - `firebase-admin`을 직접 import 하지 말고, **반드시 `@/lib/db/firebase-admin`을 사용**하세요.
+ - 내부적으로 `firebase-auth-loader`를 통해 안전하게 `getAuth`를 로드합니다.
+ 
+ ---
+ 
+ ## 7. 환경 변수
 
 ### Orchestrator
 

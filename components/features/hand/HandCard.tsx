@@ -19,6 +19,7 @@ import {
 import { Heart, ThumbsDown, Play, MoreHorizontal, Download, Share2, Bookmark, Sparkles } from 'lucide-react'
 import type { Hand } from '@/lib/types/archive'
 import { cn } from '@/lib/utils'
+import { formatBlinds } from '@/lib/utils/poker-formatting'
 
 interface HandCardProps {
   hand: Hand
@@ -34,23 +35,6 @@ export function HandCard({ hand, onClick, onPlayHand, className }: HandCardProps
 
   // 썸네일 URL (없으면 플레이스홀더)
   const thumbnailUrl = hand.thumbnailUrl || '/placeholder-hand.jpg'
-
-  // 블라인드 포맷팅 함수
-  const formatBlinds = (sb?: number, bb?: number, ante?: number): string => {
-    if (!bb && !sb) return ''
-
-    const formatChips = (chips: number) => {
-      if (chips >= 1000000) return `${(chips / 1000000).toFixed(chips % 1000000 === 0 ? 0 : 1)}M`
-      if (chips >= 1000) return `${(chips / 1000).toFixed(chips % 1000 === 0 ? 0 : 1)}k`
-      return chips.toString()
-    }
-
-    const parts = []
-    if (sb) parts.push(formatChips(sb))
-    if (bb) parts.push(formatChips(bb))
-    if (ante && ante > 0) parts.push(formatChips(ante))
-    return parts.join('/')
-  }
 
   // 좋아요/싫어요 토글
   const handleLikeToggle = (e: React.MouseEvent) => {

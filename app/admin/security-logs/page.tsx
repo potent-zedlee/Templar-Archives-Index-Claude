@@ -29,40 +29,14 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { Shield, AlertTriangle, Info, XCircle, ChevronLeft, ChevronRight, RefreshCw, Download } from 'lucide-react'
 import { toast } from 'sonner'
-import { firestore, auth } from '@/lib/db/firebase'
-import {
-  collection,
-  query,
-  orderBy,
-  limit,
-  getDocs,
-  where,
-  Timestamp,
-  startAfter,
-  DocumentSnapshot,
-  getCountFromServer,
-} from 'firebase/firestore'
+import { auth } from '@/lib/db/firebase'
 import { isAdmin } from '@/lib/auth/auth-utils'
-import { exportSecurityLogs } from '@/lib/export-utils'
-
-type SecurityEvent = {
-  id: string
-  eventType: string
-  severity: 'low' | 'medium' | 'high' | 'critical'
-  userId: string | null
-  ipAddress: string | null
-  userAgent: string | null
-  requestMethod: string | null
-  requestPath: string | null
-  responseStatus: number | null
-  details: Record<string, unknown> | null
-  createdAt: string
-  user: {
-    id: string
-    email: string
-    name: string | null
-  } | null
-}
+import { exportSecurityLogs } from '@/lib/utils/export'
+import {
+  useSecurityEventsQuery,
+  useSecurityStatsQuery,
+  type LogCursor,
+} from '@/lib/queries/admin-queries'
 
 const EVENT_TYPE_LABELS: Record<string, string> = {
   sql_injection: 'SQL Injection',
@@ -91,212 +65,60 @@ const SEVERITY_ICONS: Record<string, React.ComponentType<{ className?: string }>
 
 export default function SecurityLogsPage() {
   const router = useRouter()
-  const [loading, setLoading] = useState(true)
-  const [events, setEvents] = useState<SecurityEvent[]>([])
-  const [totalCount, setTotalCount] = useState(0)
+  // Pagination State
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize] = useState(50)
-  const [pageSnapshots, setPageSnapshots] = useState<(DocumentSnapshot | null)[]>([null])
+  const [pageCursors, setPageCursors] = useState<Record<number, LogCursor | null>>({ 1: null })
 
-  // Filters
-  const [eventTypeFilter, setEventTypeFilter] = useState<string>('all')
-  const [severityFilter, setSeverityFilter] = useState<string>('all')
+  const [eventTypeFilter, setEventTypeFilter] = useState('all')
+  const [severityFilter, setSeverityFilter] = useState('all')
 
-  // Stats
-  const [stats, setStats] = useState<{
-    total: number
-    by_severity: Record<string, number>
-    recent_24h: number
-    recent_7d: number
-  } | null>(null)
+  const { data: stats, refetch: refetchStats } = useSecurityStatsQuery()
+  const { data: eventsData, isLoading: loading, refetch: refetchEvents } = useSecurityEventsQuery(
+    { eventType: eventTypeFilter, severity: severityFilter },
+    { pageSize, cursor: pageCursors[currentPage] }
+  )
 
-  // Check admin access
+  const events = eventsData?.events || []
+  const nextCursor = eventsData?.nextCursor || null
+  const totalCount = stats?.total || 0
+  const totalPages = Math.ceil(totalCount / pageSize)
+
+  // Update next page cursor
   useEffect(() => {
-    const checkAccess = async () => {
-      const currentUser = auth.currentUser
-
-      if (!currentUser) {
-        router.push('/auth/login')
-        return
-      }
-
-      if (!isAdmin(currentUser.email)) {
-        router.push('/')
-        toast.error('관리자 권한이 필요합니다')
-        return
-      }
-
-      loadSecurityEvents()
-      loadStats()
+    if (nextCursor) {
+      setPageCursors(prev => ({ ...prev, [currentPage + 1]: nextCursor }))
     }
+  }, [nextCursor, currentPage])
 
-    // Wait for auth state to be ready
+  // Reset pagination when filters change
+  useEffect(() => {
+    setCurrentPage(1)
+    setPageCursors({ 1: null })
+  }, [eventTypeFilter, severityFilter])
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage > currentPage && !pageCursors[newPage]) return
+    if (newPage < 1) return
+    setCurrentPage(newPage)
+  }
+
+  const checkAccess = async () => {
+    const currentUser = auth.currentUser
+    if (!currentUser) router.push('/auth/login')
+    else if (!isAdmin(currentUser.email)) {
+      router.push('/')
+      toast.error('관리자 권한이 필요합니다')
+    }
+  }
+
+  useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
-      if (user) {
-        checkAccess()
-      } else {
-        router.push('/auth/login')
-      }
+      if (user) checkAccess()
+      else router.push('/auth/login')
     })
-
     return () => unsubscribe()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
-
-  // Reload when filters or page changes
-  useEffect(() => {
-    if (auth.currentUser && isAdmin(auth.currentUser.email)) {
-      loadSecurityEvents()
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage, eventTypeFilter, severityFilter])
-
-  const loadSecurityEvents = async () => {
-    setLoading(true)
-    try {
-      const securityEventsRef = collection(firestore, 'securityEvents')
-
-      // Build query constraints
-      const constraints: Parameters<typeof query>[1][] = []
-
-      if (eventTypeFilter !== 'all') {
-        constraints.push(where('eventType', '==', eventTypeFilter))
-      }
-
-      if (severityFilter !== 'all') {
-        constraints.push(where('severity', '==', severityFilter))
-      }
-
-      constraints.push(orderBy('createdAt', 'desc'))
-      constraints.push(limit(pageSize))
-
-      // Add pagination cursor if not first page
-      if (currentPage > 1 && pageSnapshots[currentPage - 1]) {
-        constraints.push(startAfter(pageSnapshots[currentPage - 1]))
-      }
-
-      const q = query(securityEventsRef, ...constraints)
-      const snapshot = await getDocs(q)
-
-      // Store the last document for next page
-      if (snapshot.docs.length > 0) {
-        const newLastDoc = snapshot.docs[snapshot.docs.length - 1]
-
-        // Store snapshot for this page
-        const newPageSnapshots = [...pageSnapshots]
-        newPageSnapshots[currentPage] = newLastDoc
-        setPageSnapshots(newPageSnapshots)
-      }
-
-      // Fetch user info for each event
-      const eventsData: SecurityEvent[] = await Promise.all(
-        snapshot.docs.map(async (doc) => {
-          const data = doc.data()
-
-          // Try to get user info
-          let userInfo: SecurityEvent['user'] = null
-          if (data.userId) {
-            try {
-              const usersRef = collection(firestore, 'users')
-              const userQuery = query(usersRef, where('__name__', '==', data.userId), limit(1))
-              const userSnapshot = await getDocs(userQuery)
-              if (!userSnapshot.empty) {
-                const userData = userSnapshot.docs[0].data()
-                userInfo = {
-                  id: userSnapshot.docs[0].id,
-                  email: userData.email || '',
-                  name: userData.nickname || null,
-                }
-              }
-            } catch {
-              // User not found, ignore
-            }
-          }
-
-          return {
-            id: doc.id,
-            eventType: data.eventType || '',
-            severity: data.severity || 'low',
-            userId: data.userId || null,
-            ipAddress: data.ipAddress || null,
-            userAgent: data.userAgent || null,
-            requestMethod: data.requestMethod || null,
-            requestPath: data.requestPath || null,
-            responseStatus: data.responseStatus || null,
-            details: data.details || null,
-            createdAt: data.createdAt instanceof Timestamp
-              ? data.createdAt.toDate().toISOString()
-              : data.createdAt || new Date().toISOString(),
-            user: userInfo,
-          }
-        })
-      )
-
-      setEvents(eventsData)
-
-      // Get total count
-      const countQuery = query(
-        securityEventsRef,
-        ...(eventTypeFilter !== 'all' ? [where('eventType', '==', eventTypeFilter)] : []),
-        ...(severityFilter !== 'all' ? [where('severity', '==', severityFilter)] : [])
-      )
-      const countSnapshot = await getCountFromServer(countQuery)
-      setTotalCount(countSnapshot.data().count)
-    } catch (error) {
-      console.error('Failed to load security events:', error)
-      toast.error('보안 이벤트를 불러오는데 실패했습니다')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const loadStats = async () => {
-    try {
-      const securityEventsRef = collection(firestore, 'securityEvents')
-
-      // Get total count
-      const totalSnapshot = await getCountFromServer(securityEventsRef)
-      const total = totalSnapshot.data().count
-
-      // Get count by severity (sample approach - fetch limited docs)
-      const severitySnapshot = await getDocs(query(securityEventsRef, limit(500)))
-      const bySeverity: Record<string, number> = { low: 0, medium: 0, high: 0, critical: 0 }
-      severitySnapshot.forEach((doc) => {
-        const data = doc.data()
-        if (data.severity) {
-          bySeverity[data.severity] = (bySeverity[data.severity] || 0) + 1
-        }
-      })
-
-      // Get count in last 24 hours
-      const now = new Date()
-      const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000)
-      const recent24hQuery = query(
-        securityEventsRef,
-        where('createdAt', '>=', Timestamp.fromDate(twentyFourHoursAgo))
-      )
-      const recent24hSnapshot = await getCountFromServer(recent24hQuery)
-      const recent24h = recent24hSnapshot.data().count
-
-      // Get count in last 7 days
-      const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
-      const recent7dQuery = query(
-        securityEventsRef,
-        where('createdAt', '>=', Timestamp.fromDate(sevenDaysAgo))
-      )
-      const recent7dSnapshot = await getCountFromServer(recent7dQuery)
-      const recent7d = recent7dSnapshot.data().count
-
-      setStats({
-        total,
-        by_severity: bySeverity,
-        recent_24h: recent24h,
-        recent_7d: recent7d,
-      })
-    } catch (error) {
-      console.error('Failed to load stats:', error)
-    }
-  }
 
   const getSeverityIcon = (severity: string) => {
     const Icon = SEVERITY_ICONS[severity] || Info
@@ -314,18 +136,7 @@ export default function SecurityLogsPage() {
     })
   }
 
-  const totalPages = Math.ceil(totalCount / pageSize)
 
-  const handlePageChange = (newPage: number) => {
-    if (newPage < 1 || newPage > totalPages) return
-
-    // If going back, we need to reset the snapshots
-    if (newPage < currentPage) {
-      setPageSnapshots(pageSnapshots.slice(0, newPage))
-    }
-
-    setCurrentPage(newPage)
-  }
 
   const handleExportCSV = () => {
     if (events.length === 0) {
@@ -389,11 +200,11 @@ export default function SecurityLogsPage() {
           </Card>
           <Card className="p-4">
             <div className="text-sm text-muted-foreground">Last 24 Hours</div>
-            <div className="text-2xl font-bold">{stats.recent_24h.toLocaleString()}</div>
+            <div className="text-2xl font-bold">{stats.recent24h.toLocaleString()}</div>
           </Card>
           <Card className="p-4">
             <div className="text-sm text-muted-foreground">Last 7 Days</div>
-            <div className="text-2xl font-bold">{stats.recent_7d.toLocaleString()}</div>
+            <div className="text-2xl font-bold">{stats.recent7d.toLocaleString()}</div>
           </Card>
           <Card className="p-4">
             <div className="text-sm text-muted-foreground">Critical Events</div>
@@ -439,9 +250,9 @@ export default function SecurityLogsPage() {
             size="sm"
             onClick={() => {
               setCurrentPage(1)
-              setPageSnapshots([null])
-              loadSecurityEvents()
-              loadStats()
+              setPageCursors({ 1: null })
+              refetchEvents()
+              refetchStats()
             }}
           >
             <RefreshCw className="w-4 h-4 mr-2" />

@@ -12,7 +12,7 @@ import {
   COLLECTION_PATHS,
   type FirestorePlayer,
   type FirestoreHand,
-} from '@/lib/firestore-types'
+} from '@/lib/db/firestore-types'
 
 interface RouteParams {
   params: Promise<{ playerId: string }>

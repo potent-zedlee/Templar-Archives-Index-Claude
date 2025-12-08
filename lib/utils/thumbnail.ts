@@ -6,7 +6,7 @@
  * @module thumbnail-utils
  */
 
-import type { VideoSource } from './types/archive'
+import type { VideoSource } from '@/lib/types/archive'
 
 /**
  * YouTube thumbnail quality levels

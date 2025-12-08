@@ -149,7 +149,7 @@ export function validateAndSanitize(input: {
  */
 import { NextRequest, NextResponse } from "next/server"
 import { Ratelimit } from "@upstash/ratelimit"
-import { applyRateLimit } from "../rate-limit"
+import { applyRateLimit } from "@/lib/utils/rate-limit"
 import { verifyCSRF } from "./csrf"
 import { isValidUUID, isValidDateFormat } from "./sql-sanitizer"
 import { sanitizeText, detectDangerousHtml, escapeHtml, isSafeUrl } from "./xss-sanitizer"
@@ -229,9 +229,9 @@ export function logSecurityEvent(
         // Determine severity based on event type
         const severity =
           event === 'sql_injection' || event === 'permission_violation' ? 'critical' :
-          event === 'xss_attempt' || event === 'csrf_violation' ? 'high' :
-          event === 'failed_login_attempt' || event === 'suspicious_file_upload' ? 'medium' :
-          'low'
+            event === 'xss_attempt' || event === 'csrf_violation' ? 'high' :
+              event === 'failed_login_attempt' || event === 'suspicious_file_upload' ? 'medium' :
+                'low'
 
         logSecurityEventToDb({
           eventType: event,

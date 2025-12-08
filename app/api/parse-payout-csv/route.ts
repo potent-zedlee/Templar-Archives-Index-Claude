@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Papa from 'papaparse'
-import { sanitizeErrorMessage, logError } from '@/lib/error-handler'
-import { applyRateLimit, rateLimiters } from '@/lib/rate-limit'
+import { sanitizeErrorMessage, logError } from '@/lib/utils/error-handler'
+import { applyRateLimit, rateLimiters } from '@/lib/utils/rate-limit'
 import { sanitizeText } from '@/lib/security'
 
 export async function POST(request: NextRequest) {
@@ -51,11 +51,11 @@ export async function POST(request: NextRequest) {
     const hasHeader = firstRow.some((cell: string) =>
       typeof cell === 'string' &&
       (cell.toLowerCase().includes('rank') ||
-       cell.toLowerCase().includes('place') ||
-       cell.toLowerCase().includes('pos') ||
-       cell.toLowerCase().includes('name') ||
-       cell.toLowerCase().includes('player') ||
-       cell.toLowerCase().includes('prize'))
+        cell.toLowerCase().includes('place') ||
+        cell.toLowerCase().includes('pos') ||
+        cell.toLowerCase().includes('name') ||
+        cell.toLowerCase().includes('player') ||
+        cell.toLowerCase().includes('prize'))
     )
 
     const dataStartIndex = hasHeader ? 1 : 0

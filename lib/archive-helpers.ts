@@ -20,12 +20,12 @@ import {
   writeBatch,
   Timestamp,
 } from 'firebase/firestore'
-import { firestore } from './firebase'
+import { firestore } from '@/lib/db/firebase'
 import {
   COLLECTION_PATHS,
   type FirestoreHand,
   type FirestoreUser,
-} from './firestore-types'
+} from '@/lib/db/firestore-types'
 import { fetchTournamentsTree } from './queries'
 import { toast } from 'sonner'
 
@@ -169,11 +169,11 @@ export function toggleEventHelper(
       const tournament = t as { id: string; events?: Array<{ id: string; expanded?: boolean }> }
       return tournament.id === tournamentId
         ? {
-            ...tournament,
-            events: tournament.events?.map((e) =>
-              e.id === eventId ? { ...e, expanded: !e.expanded } : e,
-            ),
-          }
+          ...tournament,
+          events: tournament.events?.map((e) =>
+            e.id === eventId ? { ...e, expanded: !e.expanded } : e,
+          ),
+        }
         : tournament
     }),
   )

@@ -5,11 +5,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 
+import { type PokerActionType } from '@/lib/db/firestore-types'
+
 export interface HandAction {
   id: string
   hand_player_id: string
   street: 'preflop' | 'flop' | 'turn' | 'river'
-  action_type: 'fold' | 'call' | 'raise' | 'check' | 'bet' | 'all-in'
+  action_type: PokerActionType
   amount: number
   timestamp?: number
   action_sequence: number
@@ -34,6 +36,10 @@ const ACTION_COLORS: Record<string, string> = {
   check: 'bg-green-500 text-white',
   bet: 'bg-purple-500 text-white',
   'all-in': 'bg-red-500 text-white animate-pulse',
+  'post-blind': 'bg-gray-400 text-white',
+  'post-ante': 'bg-gray-300 text-gray-700',
+  'muck': 'bg-gray-600 text-white',
+  'win': 'bg-yellow-500 text-black font-bold',
 }
 
 const STREET_DISPLAY: Record<string, string> = {

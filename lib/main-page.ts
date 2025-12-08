@@ -5,8 +5,8 @@
  */
 
 import { collection, query, orderBy, limit, getDocs, getCountFromServer, where, Timestamp } from 'firebase/firestore'
-import { firestore } from './firebase'
-import { COLLECTION_PATHS } from './firestore-types'
+import { firestore } from '@/lib/db/firebase'
+import { COLLECTION_PATHS } from '@/lib/db/firestore-types'
 
 export type PlatformStats = {
   totalHands: number

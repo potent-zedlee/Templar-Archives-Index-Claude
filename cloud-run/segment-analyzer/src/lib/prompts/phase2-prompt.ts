@@ -19,6 +19,7 @@ Analyze this poker hand video clip using a systematic Chain-of-Thought approach.
 - Identify all players, their positions, and stack sizes
 - Extract hole cards when visible
 - Track all actions (preflop, flop, turn, river)
+- **Distinguish Blinds**: Clearly identify the Small Blind and Big Blind posting. Label these as 'post-blind', NOT 'bet'.
 - Note the final board and pot size
 
 ### Step 1.5: Data Validation (Math Check)
@@ -74,6 +75,32 @@ IMPORTANT: Output valid JSON using camelCase keys ONLY. Never use snake_case.
       "amount": 225000
     }
   ],
+
+ ## Strict Data Schema & Logic Rules
+
+ ### 1. Poker Actions (enum)
+ The "action" field MUST be one of the following exact string values. Do NOT use "unknown".
+ - "fold": Player folds data.
+ - "check": Player checks.
+ - "call": Player calls a bet.
+ - "bet": Player makes the first bet on a street.
+ - "raise": Player raises a previous bet.
+ - "all-in": Player commits all chips.
+ - "post-blind": Automatic small blind / big blind posting.
+ - "post-ante": Automatic ante posting.
+ - "muck": Player mucks hand at showdown.
+ - "win": Player wins pot (use ONLY if 'winners' array is insufficient, generally inferred).
+
+ ### 2. VPIP/PFR Logic
+ - **VPIP (Voluntarily Put In Pot)**: Calculated from "bet", "call", "raise", "all-in" actions on "preflop".
+ - **Blinds**: "post-blind" is NOT VPIP. Do not label the initial Big Blind post as a "bet". It is a "post-blind".
+ - **Straddles**: Label as "straddle" (if supported) or "post-blind".
+
+ ### 3. Street Names
+ - "preflop", "flop", "turn", "river", "showdown"
+
+ ### 4. Amount
+ - Must be a number (integer). If unknown, use 0. Do NOT use null or strings.
   "winners": [
     {
       "name": "Player Name",

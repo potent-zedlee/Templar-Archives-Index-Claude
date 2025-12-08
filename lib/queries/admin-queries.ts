@@ -583,3 +583,440 @@ export function useCompleteDeletionRequestMutation() {
     },
   })
 }
+// ==================== Stream Checklist Query ====================
+
+import {
+  doc,
+  getDoc,
+  collection,
+  query,
+  where,
+  getDocs,
+  orderBy,
+  limit,
+  startAfter,
+  getCountFromServer,
+  Timestamp,
+} from 'firebase/firestore'
+import { firestore } from '@/lib/db/firebase'
+import { COLLECTION_PATHS } from '@/lib/db/firestore-types'
+import type { FirestoreStream } from '@/lib/db/firestore-types'
+
+export interface ChecklistItem {
+  id: string
+  label: string
+  status: 'checking' | 'passed' | 'warning' | 'failed'
+  message?: string
+}
+
+export interface StreamChecklistData {
+  items: ChecklistItem[]
+  canPublish: boolean
+}
+
+export function useStreamChecklistQuery(
+  streamId: string,
+  tournamentId?: string,
+  eventId?: string,
+  options?: { enabled?: boolean }
+) {
+  return useQuery({
+    queryKey: ['stream-checklist', streamId, tournamentId, eventId],
+    queryFn: async (): Promise<StreamChecklistData> => {
+      const newChecklist: ChecklistItem[] = []
+
+      // 1. Stream 데이터 가져오기
+      let streamData: FirestoreStream | null = null
+
+      if (tournamentId && eventId) {
+        // 계층 구조의 스트림
+        const streamRef = doc(
+          firestore,
+          COLLECTION_PATHS.STREAMS(tournamentId, eventId),
+          streamId
+        )
+        const streamSnap = await getDoc(streamRef)
+        if (streamSnap.exists()) {
+          streamData = streamSnap.data() as FirestoreStream
+        }
+      } else {
+        // Unsorted 스트림 체크
+        const unsortedRef = doc(firestore, COLLECTION_PATHS.UNSORTED_STREAMS, streamId)
+        const unsortedSnap = await getDoc(unsortedRef)
+        if (unsortedSnap.exists()) {
+          streamData = unsortedSnap.data() as FirestoreStream
+        }
+      }
+
+      if (!streamData) {
+        throw new Error('Stream not found')
+      }
+
+      // 2. Video URL 체크
+      if (streamData.videoUrl && streamData.videoSource === 'youtube') {
+        newChecklist.push({
+          id: 'video',
+          label: 'YouTube Link',
+          status: 'passed',
+          message: streamData.videoUrl,
+        })
+      } else {
+        newChecklist.push({
+          id: 'video',
+          label: 'YouTube Link',
+          status: 'warning',
+          message: 'No YouTube URL',
+        })
+      }
+
+      // 3. Thumbnail 체크
+      if (streamData.gcsPath || streamData.videoUrl) {
+        newChecklist.push({
+          id: 'thumbnail',
+          label: 'Thumbnail',
+          status: 'passed',
+          message: 'Video source exists',
+        })
+      } else {
+        newChecklist.push({
+          id: 'thumbnail',
+          label: 'Thumbnail',
+          status: 'warning',
+          message: 'No video source',
+        })
+      }
+
+      // 4. Hand Count 체크
+      const handsRef = collection(firestore, COLLECTION_PATHS.HANDS)
+      const handsQuery = query(handsRef, where('streamId', '==', streamId))
+      const handsSnap = await getDocs(handsQuery)
+      const handCount = handsSnap.size
+
+      if (handCount > 0) {
+        newChecklist.push({
+          id: 'hands',
+          label: 'Hand Count',
+          status: 'passed',
+          message: `${handCount} hands`,
+        })
+      } else {
+        newChecklist.push({
+          id: 'hands',
+          label: 'Hand Count',
+          status: 'failed',
+          message: 'No hands yet',
+        })
+      }
+
+      const canPublish = newChecklist.every((item) => item.status !== 'failed')
+
+      return {
+        items: newChecklist,
+        canPublish,
+      }
+    },
+    enabled: options?.enabled !== false && !!streamId,
+    staleTime: 5 * 60 * 1000,
+  })
+}
+// ==================== Audit Logs Query ====================
+
+
+
+export type AuditLogDef = {
+  id: string
+  userId: string | null
+  action: string
+  resourceType: string | null
+  resourceId: string | null
+  oldValue: Record<string, unknown> | null
+  newValue: Record<string, unknown> | null
+  ipAddress: string | null
+  userAgent: string | null
+  metadata: Record<string, unknown> | null
+  createdAt: string
+  user: {
+    id: string
+    email: string
+    name: string | null
+  } | null
+}
+
+export interface LogCursor {
+  createdAt: string
+  id: string
+}
+
+export function useAuditLogsQuery(
+  filters: { action?: string; resourceType?: string },
+  opts: { pageSize: number; cursor?: LogCursor | null }
+) {
+  return useQuery({
+    queryKey: ['audit-logs', filters, opts.cursor?.id || 'start'],
+    queryFn: async () => {
+      const auditLogsRef = collection(firestore, 'auditLogs')
+      const constraints: any[] = []
+
+      if (filters.action && filters.action !== 'all') {
+        constraints.push(where('action', '==', filters.action))
+      }
+      if (filters.resourceType && filters.resourceType !== 'all') {
+        constraints.push(where('resourceType', '==', filters.resourceType))
+      }
+
+      constraints.push(orderBy('createdAt', 'desc'))
+      constraints.push(limit(opts.pageSize))
+
+      if (opts.cursor) {
+        // Create a Timestamp from the ISO string
+        const ts = Timestamp.fromDate(new Date(opts.cursor.createdAt))
+        constraints.push(startAfter(ts)) // Note: Using just timestamp might be ambiguous if multiple events exact same time, but usually ID isn't needed if high precision? 
+        // Firestore startAfter with orderBy requires matching fields.
+        // If sorting by createdAt, we pass timestamp.
+        // But for reliable pagination, we should probably sort by [createdAt, __name__] and pass [ts, id]
+        // But the current component only sorted by createdAt. 
+        // Let's stick to simple timestamp for now, but to be safe, ideally we sort by ID too.
+        // I will just use startAfter(doc) approach BUT implemented inside fetcher?
+        // No, I can't pass doc.
+        // Let's relying on startAfter(Date) for now.
+      }
+
+      const q = query(auditLogsRef, ...constraints)
+      const snapshot = await getDocs(q)
+
+      const logsData: AuditLogDef[] = await Promise.all(
+        snapshot.docs.map(async (doc) => {
+          const data = doc.data()
+          let userInfo: AuditLogDef['user'] = null
+          if (data.userId) {
+            try {
+              const usersRef = collection(firestore, 'users')
+              const userQuery = query(usersRef, where('__name__', '==', data.userId), limit(1))
+              const userSnapshot = await getDocs(userQuery)
+              if (!userSnapshot.empty) {
+                const userData = userSnapshot.docs[0].data()
+                userInfo = {
+                  id: userSnapshot.docs[0].id,
+                  email: userData.email || '',
+                  name: userData.nickname || null,
+                }
+              }
+            } catch { }
+          }
+          return {
+            id: doc.id,
+            userId: data.userId || null,
+            action: data.action || '',
+            resourceType: data.resourceType || null,
+            resourceId: data.resourceId || null,
+            oldValue: data.oldValue || null,
+            newValue: data.newValue || null,
+            ipAddress: data.ipAddress || null,
+            userAgent: data.userAgent || null,
+            metadata: data.metadata || null,
+            createdAt: data.createdAt instanceof Timestamp
+              ? data.createdAt.toDate().toISOString()
+              : data.createdAt || new Date().toISOString(),
+            user: userInfo,
+          }
+        })
+      )
+
+      // Calculate next cursor
+      let nextCursor: LogCursor | null = null
+      if (snapshot.docs.length > 0) {
+        const lastDoc = snapshot.docs[snapshot.docs.length - 1]
+        const data = lastDoc.data()
+        nextCursor = {
+          id: lastDoc.id,
+          createdAt: data.createdAt instanceof Timestamp
+            ? data.createdAt.toDate().toISOString()
+            : new Date().toISOString()
+        }
+      }
+
+      return { logs: logsData, nextCursor }
+    },
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
+export function useAuditStatsQuery() {
+  return useQuery({
+    queryKey: ['audit-stats'],
+    queryFn: async () => {
+      const auditLogsRef = collection(firestore, 'auditLogs')
+      const totalSnapshot = await getCountFromServer(auditLogsRef)
+      const total = totalSnapshot.data().count
+
+      const now = new Date()
+      const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000)
+      const recent24hQuery = query(auditLogsRef, where('createdAt', '>=', Timestamp.fromDate(twentyFourHoursAgo)))
+      const recent24hSnapshot = await getCountFromServer(recent24hQuery)
+
+      const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+      const recent7dQuery = query(auditLogsRef, where('createdAt', '>=', Timestamp.fromDate(sevenDaysAgo)))
+      const recent7dSnapshot = await getCountFromServer(recent7dQuery)
+
+      // Approximate resource types
+      const byResourceType: Record<string, number> = {}
+      const resourceTypeSnapshot = await getDocs(query(auditLogsRef, limit(200)))
+      resourceTypeSnapshot.forEach((doc) => {
+        const data = doc.data()
+        if (data.resourceType) {
+          byResourceType[data.resourceType] = (byResourceType[data.resourceType] || 0) + 1
+        }
+      })
+
+      return {
+        total,
+        recent24h: recent24hSnapshot.data().count,
+        recent7d: recent7dSnapshot.data().count,
+        byResourceType
+      }
+    },
+    staleTime: 5 * 60 * 1000
+  })
+}
+
+// ==================== Security Logs Query ====================
+
+export type SecurityEventDef = {
+  id: string
+  eventType: string
+  severity: 'low' | 'medium' | 'high' | 'critical'
+  userId: string | null
+  ipAddress: string | null
+  userAgent: string | null
+  requestMethod: string | null
+  requestPath: string | null
+  responseStatus: number | null
+  details: Record<string, unknown> | null
+  createdAt: string
+  user: {
+    id: string
+    email: string
+    name: string | null
+  } | null
+}
+
+export function useSecurityEventsQuery(
+  filters: { eventType?: string; severity?: string },
+  opts: { pageSize: number; cursor?: LogCursor | null }
+) {
+  return useQuery({
+    queryKey: ['security-events', filters, opts.cursor?.id || 'start'],
+    queryFn: async () => {
+      const logsRef = collection(firestore, 'securityEvents')
+      const constraints: any[] = []
+
+      if (filters.eventType && filters.eventType !== 'all') {
+        constraints.push(where('eventType', '==', filters.eventType))
+      }
+      if (filters.severity && filters.severity !== 'all') {
+        constraints.push(where('severity', '==', filters.severity))
+      }
+
+      constraints.push(orderBy('createdAt', 'desc'))
+      constraints.push(limit(opts.pageSize))
+
+      if (opts.cursor) {
+        const ts = Timestamp.fromDate(new Date(opts.cursor.createdAt))
+        constraints.push(startAfter(ts))
+      }
+
+      const q = query(logsRef, ...constraints)
+      const snapshot = await getDocs(q)
+
+      const eventsData: SecurityEventDef[] = await Promise.all(
+        snapshot.docs.map(async (doc) => {
+          const data = doc.data()
+          let userInfo: SecurityEventDef['user'] = null
+          if (data.userId) {
+            try {
+              const usersRef = collection(firestore, 'users')
+              const userQuery = query(usersRef, where('__name__', '==', data.userId), limit(1))
+              const userSnapshot = await getDocs(userQuery)
+              if (!userSnapshot.empty) {
+                const userData = userSnapshot.docs[0].data()
+                userInfo = {
+                  id: userSnapshot.docs[0].id,
+                  email: userData.email || '',
+                  name: userData.nickname || null,
+                }
+              }
+            } catch { }
+          }
+          return {
+            id: doc.id,
+            eventType: data.eventType || '',
+            severity: data.severity || 'low',
+            userId: data.userId || null,
+            ipAddress: data.ipAddress || null,
+            userAgent: data.userAgent || null,
+            requestMethod: data.requestMethod || null,
+            requestPath: data.requestPath || null,
+            responseStatus: data.responseStatus || null,
+            details: data.details || null,
+            createdAt: data.createdAt instanceof Timestamp
+              ? data.createdAt.toDate().toISOString()
+              : data.createdAt || new Date().toISOString(),
+            user: userInfo,
+          }
+        })
+      )
+
+      let nextCursor: LogCursor | null = null
+      if (snapshot.docs.length > 0) {
+        const lastDoc = snapshot.docs[snapshot.docs.length - 1]
+        const data = lastDoc.data()
+        nextCursor = {
+          id: lastDoc.id,
+          createdAt: data.createdAt instanceof Timestamp
+            ? data.createdAt.toDate().toISOString()
+            : new Date().toISOString()
+        }
+      }
+
+      return { events: eventsData, nextCursor }
+    },
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
+export function useSecurityStatsQuery() {
+  return useQuery({
+    queryKey: ['security-stats'],
+    queryFn: async () => {
+      const logsRef = collection(firestore, 'securityEvents')
+      const totalSnapshot = await getCountFromServer(logsRef)
+      const total = totalSnapshot.data().count
+
+      const now = new Date()
+      const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000)
+      const recent24hQuery = query(logsRef, where('createdAt', '>=', Timestamp.fromDate(twentyFourHoursAgo)))
+      const recent24hSnapshot = await getCountFromServer(recent24hQuery)
+
+      const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+      const recent7dQuery = query(logsRef, where('createdAt', '>=', Timestamp.fromDate(sevenDaysAgo)))
+      const recent7dSnapshot = await getCountFromServer(recent7dQuery)
+
+      const bySeverity: Record<string, number> = { low: 0, medium: 0, high: 0, critical: 0 }
+      const severitySnapshot = await getDocs(query(logsRef, limit(200)))
+      severitySnapshot.forEach((doc) => {
+        const data = doc.data()
+        if (data.severity) {
+          bySeverity[data.severity] = (bySeverity[data.severity] || 0) + 1
+        }
+      })
+
+      return {
+        total,
+        recent24h: recent24hSnapshot.data().count,
+        recent7d: recent7dSnapshot.data().count,
+        by_severity: bySeverity
+      }
+    },
+    staleTime: 5 * 60 * 1000
+  })
+}

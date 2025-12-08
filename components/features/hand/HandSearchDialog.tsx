@@ -4,7 +4,7 @@
  * Hand Search Dialog
  *
  * 핸드 검색 다이얼로그
- * Firestore 버전으로 마이그레이션됨
+ * React Query hooks 사용으로 리팩토링됨
  */
 
 import { useState, useEffect } from "react"
@@ -20,23 +20,13 @@ import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Search, ChevronRight } from "lucide-react"
-import { firestore } from "@/lib/db/firebase"
+import { Search, ChevronRight, Loader2 } from "lucide-react"
 import {
-  collection,
-  query,
-  getDocs,
-  orderBy,
-  where,
-  limit,
-} from "firebase/firestore"
-import { COLLECTION_PATHS } from "@/lib/db/firestore-types"
-import type {
-  FirestoreTournament,
-  FirestoreEvent,
-  FirestoreStream,
-  FirestoreHand,
-} from "@/lib/db/firestore-types"
+  useTournamentsShallowQuery,
+  useEventsQuery,
+  useStreamsQuery,
+  useHandsQuery,
+} from "@/lib/queries/archive-queries"
 
 type Tournament = {
   id: string
@@ -76,13 +66,28 @@ export function HandSearchDialog({ open, onOpenChange, onSelect }: HandSearchDia
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null)
   const [selectedStream, setSelectedStream] = useState<Stream | null>(null)
 
-  const [tournaments, setTournaments] = useState<Tournament[]>([])
-  const [events, setEvents] = useState<Event[]>([])
-  const [streams, setStreams] = useState<Stream[]>([])
-  const [hands, setHands] = useState<Hand[]>([])
-
   const [searchQuery, setSearchQuery] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
+
+  // 1. Tournaments Query
+  const { data: tournamentsData = [], isLoading: isLoadingTournaments } = useTournamentsShallowQuery('tournament')
+
+  // 2. Events Query
+  const { data: eventsData = [], isLoading: isLoadingEvents } = useEventsQuery(
+    selectedTournament?.id || null,
+    !!selectedTournament
+  )
+
+  // 3. Streams Query
+  const { data: streamsData = [], isLoading: isLoadingStreams } = useStreamsQuery(
+    selectedTournament?.id || null,
+    selectedEvent?.id || null,
+    !!selectedEvent
+  )
+
+  // 4. Hands Query
+  const { data: handsData = [], isLoading: isLoadingHands } = useHandsQuery(
+    selectedStream?.id || null
+  )
 
   // 다이얼로그가 열릴 때 초기화
   useEffect(() => {
@@ -92,136 +97,28 @@ export function HandSearchDialog({ open, onOpenChange, onSelect }: HandSearchDia
       setSelectedEvent(null)
       setSelectedStream(null)
       setSearchQuery('')
-      loadTournaments()
     }
   }, [open])
-
-  // 토너먼트 목록 로드 (Firestore)
-  const loadTournaments = async () => {
-    setIsLoading(true)
-    try {
-      const tournamentsRef = collection(firestore, COLLECTION_PATHS.TOURNAMENTS)
-      const q = query(tournamentsRef, orderBy('startDate', 'desc'), limit(20))
-      const snapshot = await getDocs(q)
-
-      const data = snapshot.docs.map((doc) => {
-        const d = doc.data() as FirestoreTournament
-        return {
-          id: doc.id,
-          name: d.name,
-          category: d.category,
-          location: d.location,
-          startDate: d.startDate?.toDate?.()?.toISOString() || '',
-        }
-      })
-      setTournaments(data)
-    } catch (error) {
-      console.error('토너먼트 로드 실패:', error)
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  // Event 목록 로드 (Firestore)
-  const loadEvents = async (tournamentId: string) => {
-    setIsLoading(true)
-    try {
-      const eventsRef = collection(firestore, COLLECTION_PATHS.EVENTS(tournamentId))
-      const q = query(eventsRef, orderBy('date', 'desc'))
-      const snapshot = await getDocs(q)
-
-      const data = snapshot.docs.map((doc) => {
-        const d = doc.data() as FirestoreEvent
-        return {
-          id: doc.id,
-          name: d.name,
-          buyIn: d.buyIn,
-        }
-      })
-      setEvents(data)
-    } catch (error) {
-      console.error('Event 로드 실패:', error)
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  // Stream 목록 로드 (Firestore)
-  const loadStreams = async (eventId: string) => {
-    setIsLoading(true)
-    try {
-      if (!selectedTournament) return
-
-      const streamsRef = collection(
-        firestore,
-        COLLECTION_PATHS.STREAMS(selectedTournament.id, eventId)
-      )
-      const q = query(streamsRef, orderBy('name'))
-      const snapshot = await getDocs(q)
-
-      const data = snapshot.docs.map((doc) => {
-        const d = doc.data() as FirestoreStream
-        return {
-          id: doc.id,
-          name: d.name,
-        }
-      })
-      setStreams(data)
-    } catch (error) {
-      console.error('Stream 로드 실패:', error)
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  // Hand 목록 로드 (Firestore)
-  const loadHands = async (streamId: string) => {
-    setIsLoading(true)
-    try {
-      const handsRef = collection(firestore, COLLECTION_PATHS.HANDS)
-      const q = query(
-        handsRef,
-        where('streamId', '==', streamId),
-        orderBy('number')
-      )
-      const snapshot = await getDocs(q)
-
-      const data = snapshot.docs.map((doc) => {
-        const d = doc.data() as FirestoreHand
-        return {
-          id: doc.id,
-          number: d.number,
-          description: d.description,
-          timestamp: d.timestamp,
-        }
-      })
-      setHands(data)
-    } catch (error) {
-      console.error('Hand 로드 실패:', error)
-    } finally {
-      setIsLoading(false)
-    }
-  }
 
   // Tournament 선택
   const handleSelectTournament = (tournament: Tournament) => {
     setSelectedTournament(tournament)
     setStep('event')
-    loadEvents(tournament.id)
+    setSearchQuery('')
   }
 
   // Event 선택
   const handleSelectEvent = (event: Event) => {
     setSelectedEvent(event)
     setStep('stream')
-    loadStreams(event.id)
+    setSearchQuery('')
   }
 
   // Stream 선택
   const handleSelectStream = (stream: Stream) => {
     setSelectedStream(stream)
     setStep('hand')
-    loadHands(stream.id)
+    setSearchQuery('')
   }
 
   // Hand 선택
@@ -231,15 +128,16 @@ export function HandSearchDialog({ open, onOpenChange, onSelect }: HandSearchDia
     onSelect({
       id: hand.id,
       number: hand.number,
-      description: hand.description,
+      description: hand.description || '',
       tournament: selectedTournament.name,
       stream: selectedStream.name,
-    })
+    }) // 
     onOpenChange(false)
   }
 
   // 뒤로 가기
   const handleBack = () => {
+    setSearchQuery('')
     if (step === 'hand') {
       setStep('stream')
       setSelectedStream(null)
@@ -257,15 +155,15 @@ export function HandSearchDialog({ open, onOpenChange, onSelect }: HandSearchDia
     const query = searchQuery.toLowerCase()
 
     if (step === 'tournament') {
-      return tournaments.filter((t) => t.name.toLowerCase().includes(query))
+      return tournamentsData.filter((t) => t.name.toLowerCase().includes(query))
     } else if (step === 'event') {
-      return events.filter((e) => e.name.toLowerCase().includes(query))
+      return eventsData.filter((e) => e.name.toLowerCase().includes(query))
     } else if (step === 'stream') {
-      return streams.filter((s) => s.name.toLowerCase().includes(query))
+      return streamsData.filter((s) => s.name.toLowerCase().includes(query))
     } else if (step === 'hand') {
-      return hands.filter((h) =>
+      return handsData.filter((h) =>
         String(h.number).toLowerCase().includes(query) ||
-        h.description.toLowerCase().includes(query)
+        (h.description || '').toLowerCase().includes(query)
       )
     }
     return []
@@ -291,6 +189,14 @@ export function HandSearchDialog({ open, onOpenChange, onSelect }: HandSearchDia
     if (selectedStream) parts.push(selectedStream.name)
     return parts.join(' > ')
   }
+
+  const isLoading =
+    (step === 'tournament' && isLoadingTournaments) ||
+    (step === 'event' && isLoadingEvents) ||
+    (step === 'stream' && isLoadingStreams) ||
+    (step === 'hand' && isLoadingHands)
+
+  const items = filteredItems()
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -323,17 +229,18 @@ export function HandSearchDialog({ open, onOpenChange, onSelect }: HandSearchDia
         {/* 목록 */}
         <ScrollArea className="h-[400px]">
           {isLoading ? (
-            <div className="text-center py-12 text-muted-foreground">
-              로딩 중...
+            <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+              <Loader2 className="w-6 h-6 animate-spin mb-2" />
+              <span>로딩 중...</span>
             </div>
-          ) : filteredItems().length === 0 ? (
+          ) : items.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               결과가 없습니다
             </div>
           ) : (
             <div className="space-y-2">
               {step === 'tournament' &&
-                (filteredItems() as Tournament[]).map((tournament) => (
+                (items as Tournament[]).map((tournament) => (
                   <Card
                     key={tournament.id}
                     className="p-4 cursor-pointer hover:bg-accent transition-colors"
@@ -352,7 +259,7 @@ export function HandSearchDialog({ open, onOpenChange, onSelect }: HandSearchDia
                 ))}
 
               {step === 'event' &&
-                (filteredItems() as Event[]).map((event) => (
+                (items as Event[]).map((event) => (
                   <Card
                     key={event.id}
                     className="p-4 cursor-pointer hover:bg-accent transition-colors"
@@ -371,7 +278,7 @@ export function HandSearchDialog({ open, onOpenChange, onSelect }: HandSearchDia
                 ))}
 
               {step === 'stream' &&
-                (filteredItems() as Stream[]).map((stream) => (
+                (items as Stream[]).map((stream) => (
                   <Card
                     key={stream.id}
                     className="p-4 cursor-pointer hover:bg-accent transition-colors"
@@ -385,7 +292,7 @@ export function HandSearchDialog({ open, onOpenChange, onSelect }: HandSearchDia
                 ))}
 
               {step === 'hand' &&
-                (filteredItems() as Hand[]).map((hand) => (
+                (items as Hand[]).map((hand) => (
                   <Card
                     key={hand.id}
                     className="p-4 cursor-pointer hover:bg-accent transition-colors"
@@ -395,7 +302,10 @@ export function HandSearchDialog({ open, onOpenChange, onSelect }: HandSearchDia
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
                           <Badge>#{hand.number}</Badge>
-                          <span className="text-caption text-muted-foreground">{hand.timestamp}</span>
+                          <span className="text-caption text-muted-foreground">
+                            {/* Timestamp formatting if needed */}
+                            {hand.timestamp}
+                          </span>
                         </div>
                         {hand.description && (
                           <p className="text-body mt-1 line-clamp-2">{hand.description}</p>

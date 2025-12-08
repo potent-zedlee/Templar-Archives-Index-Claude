@@ -4,13 +4,13 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import type {
   PlayerStatistics,
   PositionStats,
-} from '@/lib/player-stats'
+} from '@/lib/poker/player-stats'
 import {
   classifyPlayStyle,
   getPlayStyleDescription,
   getPlayStyleColor,
   type PlayStyle,
-} from '@/lib/player-stats-utils'
+} from '@/lib/poker/player-stats-utils'
 
 /**
  * 플레이어 통계 조회 훅
@@ -93,27 +93,27 @@ export function usePlayStyleQuery(playerId: string | undefined) {
     ...statsQuery,
     data: statsQuery.data
       ? {
-          style: classifyPlayStyle(
+        style: classifyPlayStyle(
+          statsQuery.data.vpip,
+          statsQuery.data.pfr,
+          statsQuery.data.totalHands
+        ),
+        description: getPlayStyleDescription(
+          classifyPlayStyle(
             statsQuery.data.vpip,
             statsQuery.data.pfr,
             statsQuery.data.totalHands
-          ),
-          description: getPlayStyleDescription(
-            classifyPlayStyle(
-              statsQuery.data.vpip,
-              statsQuery.data.pfr,
-              statsQuery.data.totalHands
-            )
-          ),
-          color: getPlayStyleColor(
-            classifyPlayStyle(
-              statsQuery.data.vpip,
-              statsQuery.data.pfr,
-              statsQuery.data.totalHands
-            )
-          ),
-          stats: statsQuery.data,
-        }
+          )
+        ),
+        color: getPlayStyleColor(
+          classifyPlayStyle(
+            statsQuery.data.vpip,
+            statsQuery.data.pfr,
+            statsQuery.data.totalHands
+          )
+        ),
+        stats: statsQuery.data,
+      }
       : undefined,
   }
 }

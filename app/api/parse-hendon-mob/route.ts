@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import * as cheerio from 'cheerio'
 import type { Element } from 'domhandler'
-import { sanitizeErrorMessage, logError } from '@/lib/error-handler'
-import { applyRateLimit, rateLimiters } from '@/lib/rate-limit'
+import { sanitizeErrorMessage, logError } from '@/lib/utils/error-handler'
+import { applyRateLimit, rateLimiters } from '@/lib/utils/rate-limit'
 import { isSafeUrl, sanitizeText, logSecurityEvent } from '@/lib/security'
 
 export async function POST(request: NextRequest) {

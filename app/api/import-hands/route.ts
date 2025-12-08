@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { adminFirestore } from '@/lib/db/firebase-admin'
-import { sanitizeErrorMessage, logError } from '@/lib/error-handler'
-import { applyRateLimit, rateLimiters } from '@/lib/rate-limit'
+import { sanitizeErrorMessage, logError } from '@/lib/utils/error-handler'
+import { applyRateLimit, rateLimiters } from '@/lib/utils/rate-limit'
 import { importHandsSchema, validateInput, formatValidationErrors } from '@/lib/validation/api-schemas'
 import { sanitizeText, logSecurityEvent } from '@/lib/security'
 import { verifyCSRF } from '@/lib/security/csrf'
-import { findBestMatch } from '@/lib/name-matching'
+import { findBestMatch } from '@/lib/utils/name-matching'
 import {
   COLLECTION_PATHS,
   type FirestoreHand,
@@ -15,7 +15,7 @@ import {
   type PokerStreet,
   type PokerActionType,
   type PokerPosition,
-} from '@/lib/firestore-types'
+} from '@/lib/db/firestore-types'
 import { FieldValue } from 'firebase-admin/firestore'
 
 export const dynamic = 'force-dynamic'

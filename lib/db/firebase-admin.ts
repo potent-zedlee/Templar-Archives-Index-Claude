@@ -16,7 +16,7 @@ import {
   type ServiceAccount,
 } from 'firebase-admin/app'
 import { getFirestore, type Firestore } from 'firebase-admin/firestore'
-import { getAuth, type Auth } from 'firebase-admin/auth'
+import { getAuth, type Auth } from '@/lib/firebase-auth-loader'
 
 /**
  * Admin SDK 서비스 계정 설정
@@ -59,7 +59,7 @@ function getAdminApp(): App {
   if (credential) {
     return initializeApp({
       credential: cert(credential),
-      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'templar-archives-index',
+      projectId: credential.projectId,
     })
   }
 
@@ -101,7 +101,7 @@ export const adminApp: App = getAdminApp()
  * const snapshot = await adminFirestore.collection('tournaments').get()
  * ```
  */
-export const adminFirestore: Firestore = getFirestore(adminApp)
+export const adminFirestore = getFirestore(adminApp)
 
 /**
  * Admin Auth 인스턴스
@@ -121,20 +121,6 @@ export const adminFirestore: Firestore = getFirestore(adminApp)
  */
 export const adminAuth: Auth = getAuth(adminApp)
 
-/**
- * Admin SDK 초기화 상태 확인
- *
- * @returns 초기화 완료 여부
- */
-export function isAdminInitialized(): boolean {
-  return getApps().length > 0
-}
-
-/**
- * 서버용 Firestore 인스턴스 생성 (새 연결)
- *
- * @returns Admin Firestore 인스턴스
- */
 export function createServerFirestore(): Firestore {
   return getFirestore(getAdminApp())
 }

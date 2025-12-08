@@ -8,7 +8,7 @@
  * @module lib/logo-utils
  */
 
-import { storage } from './firebase'
+import { storage } from '@/lib/db/firebase'
 import { ref, listAll, getDownloadURL, getMetadata } from 'firebase/storage'
 
 export interface LogoFile {
@@ -245,7 +245,7 @@ export function getCategoryFallbackLogo(category: string): string {
   // 정적 로고 목록에서 검색
   const staticLogo = STATIC_LOGOS.find(
     logo => logo.path.includes(`/${categorySlug}.`) ||
-            logo.name.toLowerCase() === categorySlug
+      logo.name.toLowerCase() === categorySlug
   )
 
   return staticLogo?.url || '/logos/placeholder.svg'

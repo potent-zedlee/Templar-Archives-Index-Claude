@@ -36,8 +36,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { useCreateCategoryMutation, useUpdateCategoryMutation, useCategoriesQuery } from "@/lib/queries/category-queries"
-import type { TournamentCategory } from "@/lib/tournament-categories"
-import { uploadCategoryLogo } from "@/lib/tournament-categories"
+import type { TournamentCategory } from "@/lib/poker/tournament-categories"
+import { uploadCategoryLogo } from "@/lib/poker/tournament-categories"
 import Image from "next/image"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
@@ -634,8 +634,8 @@ export function CategoryDialog({ category, trigger }: CategoryDialogProps) {
                 {(createMutation.isPending ||
                   updateMutation.isPending ||
                   isUploading) && (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                )}
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  )}
                 {isEditing ? "수정" : "추가"}
               </Button>
             </div>

@@ -18,7 +18,7 @@ import {
   POPULAR_CATEGORIES,
   CATEGORIES_BY_REGION,
   searchCategories,
-} from "@/lib/tournament-categories-static"
+} from "@/lib/poker/tournament-categories-static"
 
 interface ArchiveUnifiedFiltersProps {
   selectedCategory: string
@@ -357,115 +357,115 @@ export function ArchiveUnifiedFilters({
             {/* Category Filter */}
             {showCategoryFilter && (
               <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <Label className="text-sm font-semibold text-foreground">Tournament Category ({filteredCategories.length})</Label>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowOnlyPopular(!showOnlyPopular)}
-                  className="h-7 text-xs gap-1.5"
-                >
-                  <Star className={cn("h-3.5 w-3.5", showOnlyPopular && "fill-current")} />
-                  {showOnlyPopular ? "Show All" : "Popular Only"}
-                </Button>
-              </div>
-
-              {/* Search */}
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search tournaments..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 h-10"
-                />
-              </div>
-
-              {/* All Category Button */}
-              <Button
-                variant={selectedCategory === "All" ? "default" : "outline"}
-                size="sm"
-                onClick={() => onCategoryChange("All")}
-                className={cn(
-                  "w-full h-10 justify-start font-medium transition-all duration-200",
-                  selectedCategory === "All"
-                    ? "bg-gradient-to-r from-primary to-purple-600 shadow-md"
-                    : "hover:bg-gradient-to-r hover:from-primary/10 hover:to-purple-500/5"
-                )}
-              >
-                All Tournaments
-              </Button>
-
-              {/* Category List */}
-              <ScrollArea className="h-[400px]">
-                <div className="space-y-3 pr-4">
-                  {!searchQuery && !showOnlyPopular ? (
-                    // Grouped by region
-                    Object.entries(CATEGORIES_BY_REGION).map(([region, categories]) => (
-                      <div key={region} className="space-y-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => toggleGroup(region)}
-                          className="w-full justify-between h-8 px-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground hover:text-foreground"
-                        >
-                          <span>{region} ({categories.length})</span>
-                          {expandedGroups.has(region) ? (
-                            <ChevronUp className="h-3.5 w-3.5" />
-                          ) : (
-                            <ChevronDown className="h-3.5 w-3.5" />
-                          )}
-                        </Button>
-
-                        {expandedGroups.has(region) && (
-                          <div className="space-y-1 pl-2">
-                            {categories.map((cat) => (
-                              <Button
-                                key={cat.id}
-                                variant={selectedCategory === cat.id || selectedCategory === cat.name ? "default" : "ghost"}
-                                size="sm"
-                                onClick={() => onCategoryChange(cat.id)}
-                                className={cn(
-                                  "w-full justify-start h-9 gap-2 text-sm",
-                                  (selectedCategory === cat.id || selectedCategory === cat.name)
-                                    ? "bg-primary/90 text-primary-foreground"
-                                    : "hover:bg-muted"
-                                )}
-                              >
-                                <CategoryLogo category={cat.id} size="sm" />
-                                <span className="flex-1 text-left truncate">{cat.displayName}</span>
-                                {cat.priority <= 10 && <Star className="h-3 w-3 fill-current text-yellow-500" />}
-                              </Button>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    ))
-                  ) : (
-                    // Flat list (search or popular)
-                    <div className="space-y-1">
-                      {filteredCategories.map((cat) => (
-                        <Button
-                          key={cat.id}
-                          variant={selectedCategory === cat.id || selectedCategory === cat.name ? "default" : "ghost"}
-                          size="sm"
-                          onClick={() => onCategoryChange(cat.id)}
-                          className={cn(
-                            "w-full justify-start h-9 gap-2 text-sm",
-                            (selectedCategory === cat.id || selectedCategory === cat.name)
-                              ? "bg-primary/90 text-primary-foreground"
-                              : "hover:bg-muted"
-                          )}
-                        >
-                          <CategoryLogo category={cat.id} size="sm" />
-                          <span className="flex-1 text-left truncate">{cat.displayName}</span>
-                          <span className="text-xs text-muted-foreground capitalize">{cat.region}</span>
-                        </Button>
-                      ))}
-                    </div>
-                  )}
+                <div className="flex items-center justify-between">
+                  <Label className="text-sm font-semibold text-foreground">Tournament Category ({filteredCategories.length})</Label>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowOnlyPopular(!showOnlyPopular)}
+                    className="h-7 text-xs gap-1.5"
+                  >
+                    <Star className={cn("h-3.5 w-3.5", showOnlyPopular && "fill-current")} />
+                    {showOnlyPopular ? "Show All" : "Popular Only"}
+                  </Button>
                 </div>
-              </ScrollArea>
+
+                {/* Search */}
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search tournaments..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-9 h-10"
+                  />
+                </div>
+
+                {/* All Category Button */}
+                <Button
+                  variant={selectedCategory === "All" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => onCategoryChange("All")}
+                  className={cn(
+                    "w-full h-10 justify-start font-medium transition-all duration-200",
+                    selectedCategory === "All"
+                      ? "bg-gradient-to-r from-primary to-purple-600 shadow-md"
+                      : "hover:bg-gradient-to-r hover:from-primary/10 hover:to-purple-500/5"
+                  )}
+                >
+                  All Tournaments
+                </Button>
+
+                {/* Category List */}
+                <ScrollArea className="h-[400px]">
+                  <div className="space-y-3 pr-4">
+                    {!searchQuery && !showOnlyPopular ? (
+                      // Grouped by region
+                      Object.entries(CATEGORIES_BY_REGION).map(([region, categories]) => (
+                        <div key={region} className="space-y-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => toggleGroup(region)}
+                            className="w-full justify-between h-8 px-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground hover:text-foreground"
+                          >
+                            <span>{region} ({categories.length})</span>
+                            {expandedGroups.has(region) ? (
+                              <ChevronUp className="h-3.5 w-3.5" />
+                            ) : (
+                              <ChevronDown className="h-3.5 w-3.5" />
+                            )}
+                          </Button>
+
+                          {expandedGroups.has(region) && (
+                            <div className="space-y-1 pl-2">
+                              {categories.map((cat) => (
+                                <Button
+                                  key={cat.id}
+                                  variant={selectedCategory === cat.id || selectedCategory === cat.name ? "default" : "ghost"}
+                                  size="sm"
+                                  onClick={() => onCategoryChange(cat.id)}
+                                  className={cn(
+                                    "w-full justify-start h-9 gap-2 text-sm",
+                                    (selectedCategory === cat.id || selectedCategory === cat.name)
+                                      ? "bg-primary/90 text-primary-foreground"
+                                      : "hover:bg-muted"
+                                  )}
+                                >
+                                  <CategoryLogo category={cat.id} size="sm" />
+                                  <span className="flex-1 text-left truncate">{cat.displayName}</span>
+                                  {cat.priority <= 10 && <Star className="h-3 w-3 fill-current text-yellow-500" />}
+                                </Button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ))
+                    ) : (
+                      // Flat list (search or popular)
+                      <div className="space-y-1">
+                        {filteredCategories.map((cat) => (
+                          <Button
+                            key={cat.id}
+                            variant={selectedCategory === cat.id || selectedCategory === cat.name ? "default" : "ghost"}
+                            size="sm"
+                            onClick={() => onCategoryChange(cat.id)}
+                            className={cn(
+                              "w-full justify-start h-9 gap-2 text-sm",
+                              (selectedCategory === cat.id || selectedCategory === cat.name)
+                                ? "bg-primary/90 text-primary-foreground"
+                                : "hover:bg-muted"
+                            )}
+                          >
+                            <CategoryLogo category={cat.id} size="sm" />
+                            <span className="flex-1 text-left truncate">{cat.displayName}</span>
+                            <span className="text-xs text-muted-foreground capitalize">{cat.region}</span>
+                          </Button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </ScrollArea>
               </div>
             )}
 

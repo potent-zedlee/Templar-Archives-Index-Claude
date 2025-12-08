@@ -4,7 +4,7 @@
  * 핸드 특징 판단 및 필터링 로직
  */
 
-import type { Hand } from './types/archive'
+import type { Hand } from '@/lib/types/archive'
 
 export type MomentFilter = 'all' | 'highlighted' | 'big-pot' | 'all-in'
 

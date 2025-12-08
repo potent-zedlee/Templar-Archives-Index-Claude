@@ -15,7 +15,7 @@ import {
   ChevronDown,
   MoreVertical
 } from "lucide-react"
-import { ArchiveStatsBadge } from "@/components/features/archive/ArchiveStatsBadge"
+import { IconBadge } from "@/components/common/IconBadge"
 import { Progress } from "@/components/ui/progress"
 import type { FolderItem } from "@/lib/types/archive"
 import { cn } from "@/lib/utils"
@@ -219,7 +219,7 @@ export function ArchiveEventCard({
           {/* Stats */}
           <div className="flex flex-wrap gap-2 mb-4">
             {item.itemCount !== undefined && item.itemCount > 0 && (
-              <ArchiveStatsBadge
+              <IconBadge
                 icon={item.type === 'tournament' ? Folder : FileVideo}
                 value={item.itemCount}
                 variant="default"
@@ -227,7 +227,7 @@ export function ArchiveEventCard({
               />
             )}
             {data?.total_hands && (
-              <ArchiveStatsBadge
+              <IconBadge
                 icon={PlayCircle}
                 value={data.total_hands}
                 variant="primary"
@@ -235,7 +235,7 @@ export function ArchiveEventCard({
               />
             )}
             {data?.total_players && (
-              <ArchiveStatsBadge
+              <IconBadge
                 icon={Users}
                 value={data.total_players}
                 variant="success"
@@ -323,7 +323,7 @@ export function ArchiveEventCard({
               </div>
             )}
             {item.itemCount !== undefined && item.itemCount > 0 && (
-              <ArchiveStatsBadge
+              <IconBadge
                 icon={item.type === 'tournament' ? Folder : FileVideo}
                 value={item.itemCount}
                 variant="default"
@@ -331,7 +331,7 @@ export function ArchiveEventCard({
               />
             )}
             {data?.total_hands && (
-              <ArchiveStatsBadge
+              <IconBadge
                 icon={PlayCircle}
                 value={data.total_hands}
                 variant="primary"

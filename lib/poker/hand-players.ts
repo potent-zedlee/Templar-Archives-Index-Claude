@@ -22,14 +22,14 @@ import {
   writeBatch,
   Timestamp,
 } from 'firebase/firestore'
-import { firestore } from './firebase'
+import { firestore } from '@/lib/db/firebase'
 import {
   COLLECTION_PATHS,
   type FirestoreHand,
   type FirestorePlayer,
   type HandPlayerEmbedded,
   type PokerPosition,
-} from './firestore-types'
+} from '@/lib/db/firestore-types'
 
 // ==================== Types ====================
 
@@ -139,19 +139,19 @@ export async function fetchHandPlayers(handId: string): Promise<HandPlayer[]> {
         createdAt: timestampToString(hand.createdAt as Timestamp),
         player: player
           ? {
-              id: hp.playerId,
-              name: player.name,
-              normalizedName: player.normalizedName || normalizeName(player.name),
-              photoUrl: player.photoUrl || undefined,
-              country: player.country || undefined,
-            }
+            id: hp.playerId,
+            name: player.name,
+            normalizedName: player.normalizedName || normalizeName(player.name),
+            photoUrl: player.photoUrl || undefined,
+            country: player.country || undefined,
+          }
           : {
-              id: hp.playerId,
-              name: hp.name,
-              normalizedName: normalizeName(hp.name),
-              photoUrl: undefined,
-              country: undefined,
-            },
+            id: hp.playerId,
+            name: hp.name,
+            normalizedName: normalizeName(hp.name),
+            photoUrl: undefined,
+            country: undefined,
+          },
       })
     }
 

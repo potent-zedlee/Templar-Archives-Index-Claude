@@ -43,7 +43,7 @@ import {
   useDeleteCategoryMutation,
   useToggleActiveMutation,
 } from "@/lib/queries/category-queries"
-import type { TournamentCategory } from "@/lib/tournament-categories"
+import type { TournamentCategory } from "@/lib/poker/tournament-categories"
 
 interface CategoryRowProps {
   category: TournamentCategory

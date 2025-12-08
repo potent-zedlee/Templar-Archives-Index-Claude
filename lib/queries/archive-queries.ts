@@ -616,6 +616,129 @@ export function useHandsInfiniteQuery(streamId: string | null) {
   })
 }
 
+// ==================== Hand Detail Query ====================
+
+export interface HandDetail extends Hand {
+  stream?: {
+    name: string
+    videoUrl?: string
+    event?: {
+      name: string
+      tournament?: {
+        name: string
+      }
+    }
+  }
+}
+
+/**
+ * Fetch detailed hand info including relations
+ */
+export async function fetchHandDetail(handId: string): Promise<HandDetail | null> {
+  // 1. Fetch Hand
+  const handRef = doc(db, COLLECTION_PATHS.HANDS, handId)
+  const handSnap = await getDoc(handRef)
+
+  if (!handSnap.exists()) {
+    return null
+  }
+
+  const handData = handSnap.data() as FirestoreHand
+  const handBasic = mapFirestoreHand(handSnap)
+
+  // 2. Fetch Stream/Event/Tournament Info
+  let streamInfo: HandDetail["stream"] = undefined
+
+  if (handData.streamId && handData.eventId && handData.tournamentId) {
+    try {
+      const streamRef = doc(
+        db,
+        COLLECTION_PATHS.STREAMS(handData.tournamentId, handData.eventId),
+        handData.streamId
+      )
+      const streamSnap = await getDoc(streamRef)
+
+      if (streamSnap.exists()) {
+        const streamData = streamSnap.data() as FirestoreStream
+
+        const eventRef = doc(
+          db,
+          COLLECTION_PATHS.EVENTS(handData.tournamentId),
+          handData.eventId
+        )
+        const eventSnap = await getDoc(eventRef)
+        const eventData = eventSnap.exists() ? eventSnap.data() as FirestoreEvent : null
+
+        const tournamentRef = doc(db, COLLECTION_PATHS.TOURNAMENTS, handData.tournamentId)
+        const tournamentSnap = await getDoc(tournamentRef)
+        const tournamentData = tournamentSnap.exists() ? tournamentSnap.data() as FirestoreTournament : null
+
+        streamInfo = {
+          name: streamData.name,
+          videoUrl: streamData.videoUrl,
+          event: eventData ? {
+            name: eventData.name,
+            tournament: tournamentData ? {
+              name: tournamentData.name
+            } : undefined
+          } : undefined
+        }
+      }
+    } catch (err) {
+      console.error("Error fetching stream info:", err)
+    }
+  }
+
+  // 3. Fetch Player details (photos) - merge with handBasic.handPlayers
+  // handBasic.handPlayers already has some info, but maybe not photos if they are not on hand doc?
+  // mapFirestoreHand does NOT seem to fetch player photos from 'players' collection, it uses data on the hand header/players array.
+  // The dialog explicitly fetches player photos.
+
+  const playersWithPhotos = await Promise.all(
+    (handBasic.handPlayers || []).map(async (p) => {
+      let photoUrl = undefined
+      try {
+        const playerRef = doc(db, COLLECTION_PATHS.PLAYERS, p.playerId)
+        const playerSnap = await getDoc(playerRef)
+        if (playerSnap.exists()) {
+          photoUrl = playerSnap.data().photoUrl
+        }
+      } catch { }
+
+      return {
+        ...p,
+        player: {
+          ...p.player,
+          photoUrl // Add photoUrl to player object if the type supports it or just extend locally
+          // Actually HandPlayer type in types/archive might not have photoUrl on player object?
+          // Let's check types. For now we assume we return what we need.
+        },
+        photoUrl // Return at top level of player item for compatibility with dialog
+      }
+    })
+  )
+
+  // We return a slightly extended object. 
+  // Note: The dialog expects `players` array with flat structure. 
+  // `handBasic.handPlayers` is what we have. 
+  // We can just override handPlayers with enriched data.
+
+  return {
+    ...handBasic,
+    stream: streamInfo,
+    handPlayers: playersWithPhotos as any // functionality over type perfection for now
+  }
+}
+
+export function useHandDetailQuery(handId: string | null) {
+  return useQuery({
+    queryKey: ['hand-detail', handId],
+    queryFn: () => fetchHandDetail(handId!),
+    enabled: !!handId,
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
 // ==================== Unsorted Videos Query ====================
 
 /**

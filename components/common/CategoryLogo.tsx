@@ -2,7 +2,7 @@
 
 import Image from 'next/image'
 import { cn } from '@/lib/utils'
-import { getCategoryById, getCategoryByAlias } from '@/lib/tournament-categories'
+import { getCategoryById, getCategoryByAlias } from '@/lib/poker/tournament-categories'
 
 interface CategoryLogoProps {
   category: string | { id: string; logoUrl?: string | null; name?: string }

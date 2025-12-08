@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { AlertCircle, RefreshCcw, Home } from 'lucide-react'
 import Link from 'next/link'
-import { logError } from '@/lib/error-handler'
+import { logError } from '@/lib/utils/error-handler'
 
 interface ErrorBoundaryProps {
   children: ReactNode

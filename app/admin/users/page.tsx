@@ -23,7 +23,7 @@ import {
 } from "@/lib/queries/admin-queries"
 import { toast } from "sonner"
 import Link from "next/link"
-import { exportUsers } from "@/lib/export-utils"
+import { exportUsers } from "@/lib/utils/export"
 
 type User = {
   id: string
@@ -188,248 +188,247 @@ export default function UsersClient() {
 
   return (
     <div className="container max-w-7xl mx-auto py-8 px-4">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-heading mb-2">USER MANAGEMENT</h1>
-            <p className="text-text-secondary">
-              View and manage all users
-            </p>
-          </div>
-          <Link href="/admin/dashboard" className="btn-secondary">
-            BACK TO DASHBOARD
-          </Link>
+      {/* Header */}
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-heading mb-2">USER MANAGEMENT</h1>
+          <p className="text-text-secondary">
+            View and manage all users
+          </p>
         </div>
+        <Link href="/admin/dashboard" className="btn-secondary">
+          BACK TO DASHBOARD
+        </Link>
+      </div>
 
-        {/* Filters */}
-        <div className="card-postmodern p-6 mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="md:col-span-2">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gold-400" />
-                <input
-                  type="text"
-                  placeholder="SEARCH BY NICKNAME OR EMAIL..."
-                  value={searchQuery}
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value)
-                    setCurrentPage(1)
-                  }}
-                  className="input-postmodern pl-10 w-full"
-                />
-              </div>
+      {/* Filters */}
+      <div className="card-postmodern p-6 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="md:col-span-2">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gold-400" />
+              <input
+                type="text"
+                placeholder="SEARCH BY NICKNAME OR EMAIL..."
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value)
+                  setCurrentPage(1)
+                }}
+                className="input-postmodern pl-10 w-full"
+              />
             </div>
-
-            <select
-              value={roleFilter}
-              onChange={(e) => {
-                setRoleFilter(e.target.value as AdminRole | "all")
-                setCurrentPage(1)
-              }}
-              className="input-postmodern"
-            >
-              <option value="all">ALL ROLES</option>
-              <option value="user">USER</option>
-              <option value="templar">TEMPLAR</option>
-              <option value="arbiter">ARBITER</option>
-              <option value="high_templar">HIGH TEMPLAR</option>
-              <option value="admin">ADMIN</option>
-            </select>
-
-            <select
-              value={bannedFilter}
-              onChange={(e) => {
-                setBannedFilter(e.target.value as "all" | "banned" | "active")
-                setCurrentPage(1)
-              }}
-              className="input-postmodern"
-            >
-              <option value="all">ALL STATUS</option>
-              <option value="active">ACTIVE</option>
-              <option value="banned">BANNED</option>
-            </select>
           </div>
 
-          <div className="md:col-span-4 flex justify-end mt-4">
-            <button
-              onClick={() => {
-                if (users.length === 0) {
-                  toast.error('No data to export')
-                  return
-                }
-                const exportData = users.map(u => ({
-                  id: u.id,
-                  email: u.email,
-                  name: u.nickname,
-                  role: u.role,
-                  createdAt: u.created_at,
-                  lastSignInAt: (u as any).last_sign_in_at || null,
-                  bannedAt: u.is_banned ? new Date().toISOString() : null,
-                }))
-                exportUsers(exportData as any, 'csv')
-                toast.success('CSV downloaded')
-              }}
-              className="btn-secondary text-sm"
-            >
-              <Download className="h-4 w-4 mr-2" />
-              EXPORT CSV
-            </button>
-          </div>
+          <select
+            value={roleFilter}
+            onChange={(e) => {
+              setRoleFilter(e.target.value as AdminRole | "all")
+              setCurrentPage(1)
+            }}
+            className="input-postmodern"
+          >
+            <option value="all">ALL ROLES</option>
+            <option value="user">USER</option>
+            <option value="templar">TEMPLAR</option>
+            <option value="arbiter">ARBITER</option>
+            <option value="high_templar">HIGH TEMPLAR</option>
+            <option value="admin">ADMIN</option>
+          </select>
+
+          <select
+            value={bannedFilter}
+            onChange={(e) => {
+              setBannedFilter(e.target.value as "all" | "banned" | "active")
+              setCurrentPage(1)
+            }}
+            className="input-postmodern"
+          >
+            <option value="all">ALL STATUS</option>
+            <option value="active">ACTIVE</option>
+            <option value="banned">BANNED</option>
+          </select>
         </div>
 
-        {/* Users List */}
-        {loading ? (
-          <CardSkeleton count={5} />
-        ) : users.length === 0 ? (
-          <div className="card-postmodern p-8 text-center">
-            <p className="text-text-secondary">
-              No users match the criteria
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-4 mb-6">
-            {users.map((targetUser) => (
-              <div key={targetUser.id} className="card-postmodern p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4 flex-1">
-                    <div className="h-12 w-12 rounded-full bg-gold-700/20 flex items-center justify-center text-gold-400 font-bold">
-                      {targetUser.nickname.slice(0, 2).toUpperCase()}
-                    </div>
+        <div className="md:col-span-4 flex justify-end mt-4">
+          <button
+            onClick={() => {
+              if (users.length === 0) {
+                toast.error('No data to export')
+                return
+              }
+              const exportData = users.map(u => ({
+                id: u.id,
+                email: u.email,
+                name: u.nickname,
+                role: u.role,
+                createdAt: u.created_at,
+                lastSignInAt: (u as any).last_sign_in_at || null,
+                bannedAt: u.is_banned ? new Date().toISOString() : null,
+              }))
+              exportUsers(exportData as any, 'csv')
+              toast.success('CSV downloaded')
+            }}
+            className="btn-secondary text-sm"
+          >
+            <Download className="h-4 w-4 mr-2" />
+            EXPORT CSV
+          </button>
+        </div>
+      </div>
 
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="text-body font-semibold text-foreground">
-                          {targetUser.nickname}
-                        </h3>
-                        <span className={`px-2 py-1 rounded text-xs font-medium ${
-                          targetUser.role === "admin" ? "bg-gold-700 text-black-0" :
-                          targetUser.role === "high_templar" ? "bg-purple-700 text-white" :
-                          targetUser.role === "arbiter" ? "bg-blue-700 text-white" :
-                          targetUser.role === "templar" ? "bg-green-700 text-white" :
-                          "bg-muted text-foreground"
-                        }`}>
-                          {targetUser.role === "admin" ? "ADMIN" :
-                           targetUser.role === "high_templar" ? "HIGH TEMPLAR" :
-                           targetUser.role === "arbiter" ? "ARBITER" :
-                           targetUser.role === "templar" ? "TEMPLAR" :
-                           "USER"}
-                        </span>
-                        {targetUser.is_banned && (
-                          <span className="px-2 py-1 rounded bg-red-700 text-white text-xs font-medium">
-                            BANNED
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-caption text-text-secondary mb-1">
-                        {targetUser.email}
-                      </p>
-                      <div className="flex gap-4 text-caption text-text-secondary">
-                        <span>POSTS: {(targetUser as any).posts_count || 0}</span>
-                        <span>COMMENTS: {(targetUser as any).comments_count || 0}</span>
-                        <span>JOINED: {new Date(targetUser.created_at).toLocaleDateString("ko-KR")}</span>
-                        {(targetUser as any).last_sign_in_at ? (
-                          <span className={
-                            new Date().getTime() - new Date((targetUser as any).last_sign_in_at).getTime() < 7 * 24 * 60 * 60 * 1000
-                              ? "text-green-400"
-                              : new Date().getTime() - new Date((targetUser as any).last_sign_in_at).getTime() > 30 * 24 * 60 * 60 * 1000
-                              ? "text-muted-foreground"
-                              : ""
-                          }>
-                            LAST SIGN IN: {new Date((targetUser as any).last_sign_in_at).toLocaleDateString("ko-KR")}
-                          </span>
-                        ) : (
-                          <span className="text-muted-foreground">LAST SIGN IN: NEVER</span>
-                        )}
-                      </div>
-                      {targetUser.is_banned && targetUser.ban_reason && (
-                        <p className="text-caption text-red-400 mt-1">
-                          Ban reason: {targetUser.ban_reason}
-                        </p>
-                      )}
-                    </div>
+      {/* Users List */}
+      {loading ? (
+        <CardSkeleton count={5} />
+      ) : users.length === 0 ? (
+        <div className="card-postmodern p-8 text-center">
+          <p className="text-text-secondary">
+            No users match the criteria
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-4 mb-6">
+          {users.map((targetUser) => (
+            <div key={targetUser.id} className="card-postmodern p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4 flex-1">
+                  <div className="h-12 w-12 rounded-full bg-gold-700/20 flex items-center justify-center text-gold-400 font-bold">
+                    {targetUser.nickname.slice(0, 2).toUpperCase()}
                   </div>
 
-                  {/* Dropdown Menu */}
-                  <div className="relative">
-                    <button
-                      onClick={() => setOpenDropdownId(openDropdownId === targetUser.id ? null : targetUser.id)}
-                      className="btn-ghost p-2"
-                    >
-                      <MoreVertical className="h-4 w-4" />
-                    </button>
-                    {openDropdownId === targetUser.id && (
-                      <div className="absolute right-0 mt-2 w-48 card-postmodern py-2 z-10">
-                        <Link
-                          href={`/profile/${targetUser.id}`}
-                          className="block px-4 py-2 text-sm hover:bg-gold-700/20 text-foreground"
-                          onClick={() => setOpenDropdownId(null)}
-                        >
-                          VIEW PROFILE
-                        </Link>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="text-body font-semibold text-foreground">
+                        {targetUser.nickname}
+                      </h3>
+                      <span className={`px-2 py-1 rounded text-xs font-medium ${targetUser.role === "admin" ? "bg-gold-700 text-black-0" :
+                          targetUser.role === "high_templar" ? "bg-purple-700 text-white" :
+                            targetUser.role === "arbiter" ? "bg-blue-700 text-white" :
+                              targetUser.role === "templar" ? "bg-green-700 text-white" :
+                                "bg-muted text-foreground"
+                        }`}>
+                        {targetUser.role === "admin" ? "ADMIN" :
+                          targetUser.role === "high_templar" ? "HIGH TEMPLAR" :
+                            targetUser.role === "arbiter" ? "ARBITER" :
+                              targetUser.role === "templar" ? "TEMPLAR" :
+                                "USER"}
+                      </span>
+                      {targetUser.is_banned && (
+                        <span className="px-2 py-1 rounded bg-red-700 text-white text-xs font-medium">
+                          BANNED
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-caption text-text-secondary mb-1">
+                      {targetUser.email}
+                    </p>
+                    <div className="flex gap-4 text-caption text-text-secondary">
+                      <span>POSTS: {(targetUser as any).posts_count || 0}</span>
+                      <span>COMMENTS: {(targetUser as any).comments_count || 0}</span>
+                      <span>JOINED: {new Date(targetUser.created_at).toLocaleDateString("ko-KR")}</span>
+                      {(targetUser as any).last_sign_in_at ? (
+                        <span className={
+                          new Date().getTime() - new Date((targetUser as any).last_sign_in_at).getTime() < 7 * 24 * 60 * 60 * 1000
+                            ? "text-green-400"
+                            : new Date().getTime() - new Date((targetUser as any).last_sign_in_at).getTime() > 30 * 24 * 60 * 60 * 1000
+                              ? "text-muted-foreground"
+                              : ""
+                        }>
+                          LAST SIGN IN: {new Date((targetUser as any).last_sign_in_at).toLocaleDateString("ko-KR")}
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground">LAST SIGN IN: NEVER</span>
+                      )}
+                    </div>
+                    {targetUser.is_banned && targetUser.ban_reason && (
+                      <p className="text-caption text-red-400 mt-1">
+                        Ban reason: {targetUser.ban_reason}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Dropdown Menu */}
+                <div className="relative">
+                  <button
+                    onClick={() => setOpenDropdownId(openDropdownId === targetUser.id ? null : targetUser.id)}
+                    className="btn-ghost p-2"
+                  >
+                    <MoreVertical className="h-4 w-4" />
+                  </button>
+                  {openDropdownId === targetUser.id && (
+                    <div className="absolute right-0 mt-2 w-48 card-postmodern py-2 z-10">
+                      <Link
+                        href={`/profile/${targetUser.id}`}
+                        className="block px-4 py-2 text-sm hover:bg-gold-700/20 text-foreground"
+                        onClick={() => setOpenDropdownId(null)}
+                      >
+                        VIEW PROFILE
+                      </Link>
+                      <button
+                        onClick={() => {
+                          openRoleDialog(targetUser)
+                          setOpenDropdownId(null)
+                        }}
+                        className="w-full text-left px-4 py-2 text-sm hover:bg-gold-700/20 text-foreground flex items-center"
+                      >
+                        <Shield className="h-4 w-4 mr-2" />
+                        CHANGE ROLE
+                      </button>
+                      {targetUser.is_banned ? (
                         <button
                           onClick={() => {
-                            openRoleDialog(targetUser)
+                            handleUnbanUser(targetUser)
                             setOpenDropdownId(null)
                           }}
                           className="w-full text-left px-4 py-2 text-sm hover:bg-gold-700/20 text-foreground flex items-center"
                         >
-                          <Shield className="h-4 w-4 mr-2" />
-                          CHANGE ROLE
+                          <UserCheck className="h-4 w-4 mr-2" />
+                          UNBAN
                         </button>
-                        {targetUser.is_banned ? (
-                          <button
-                            onClick={() => {
-                              handleUnbanUser(targetUser)
-                              setOpenDropdownId(null)
-                            }}
-                            className="w-full text-left px-4 py-2 text-sm hover:bg-gold-700/20 text-foreground flex items-center"
-                          >
-                            <UserCheck className="h-4 w-4 mr-2" />
-                            UNBAN
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => {
-                              openBanDialog(targetUser)
-                              setOpenDropdownId(null)
-                            }}
-                            className="w-full text-left px-4 py-2 text-sm hover:bg-gold-700/20 text-red-400 flex items-center"
-                          >
-                            <UserX className="h-4 w-4 mr-2" />
-                            BAN USER
-                          </button>
-                        )}
-                      </div>
-                    )}
-                  </div>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            openBanDialog(targetUser)
+                            setOpenDropdownId(null)
+                          }}
+                          className="w-full text-left px-4 py-2 text-sm hover:bg-gold-700/20 text-red-400 flex items-center"
+                        >
+                          <UserX className="h-4 w-4 mr-2" />
+                          BAN USER
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
-            ))}
-          </div>
-        )}
+            </div>
+          ))}
+        </div>
+      )}
 
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="flex items-center justify-center gap-2">
-            <button
-              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
-              className="btn-secondary p-2"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </button>
-            <span className="text-body text-foreground">
-              {currentPage} / {totalPages}
-            </span>
-            <button
-              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-              disabled={currentPage === totalPages}
-              className="btn-secondary p-2"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </button>
-          </div>
-        )}
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2">
+          <button
+            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+            disabled={currentPage === 1}
+            className="btn-secondary p-2"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+          <span className="text-body text-foreground">
+            {currentPage} / {totalPages}
+          </span>
+          <button
+            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+            disabled={currentPage === totalPages}
+            className="btn-secondary p-2"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
+        </div>
+      )}
 
       {/* Ban Dialog */}
       {banDialogOpen && (

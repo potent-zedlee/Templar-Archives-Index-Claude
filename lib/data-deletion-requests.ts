@@ -17,12 +17,12 @@ import {
   writeBatch,
   serverTimestamp,
 } from 'firebase/firestore'
-import { firestore } from './firebase'
+import { firestore } from '@/lib/db/firebase'
 import {
   COLLECTION_PATHS,
   type DeletionRequestStatus,
   type FirestoreDataDeletionRequest,
-} from './firestore-types'
+} from '@/lib/db/firestore-types'
 
 export type { DeletionRequestStatus }
 
@@ -81,10 +81,10 @@ function toLegacyFormat(
     },
     reviewed_by_user: data.reviewedByUser
       ? {
-          id: data.reviewedByUser.id,
-          email: data.reviewedByUser.email,
-          nickname: data.reviewedByUser.nickname,
-        }
+        id: data.reviewedByUser.id,
+        email: data.reviewedByUser.email,
+        nickname: data.reviewedByUser.nickname,
+      }
       : undefined,
   }
 }

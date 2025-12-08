@@ -15,7 +15,7 @@ import { useRef, useEffect, useState, useMemo } from 'react'
 import { cn } from '@/lib/utils'
 import { CategoryLogo } from '@/components/common/CategoryLogo'
 import { useActiveCategoriesQuery } from '@/lib/queries/category-queries'
-import type { TournamentCategory as DatabaseCategory, GameType } from '@/lib/tournament-categories'
+import type { TournamentCategory as DatabaseCategory, GameType } from '@/lib/poker/tournament-categories'
 import { ChevronDown, ChevronRight, LayoutGrid } from 'lucide-react'
 
 interface ArchiveTournamentLogosBarProps {

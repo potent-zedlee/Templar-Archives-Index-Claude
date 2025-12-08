@@ -36,41 +36,15 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { FileText, ChevronLeft, ChevronRight, RefreshCw, Download, Eye } from 'lucide-react'
 import { toast } from 'sonner'
-import { firestore } from '@/lib/db/firebase'
 import { auth } from '@/lib/db/firebase'
-import {
-  collection,
-  query,
-  orderBy,
-  limit,
-  getDocs,
-  where,
-  Timestamp,
-  startAfter,
-  DocumentSnapshot,
-  getCountFromServer,
-} from 'firebase/firestore'
 import { isAdmin } from '@/lib/auth/auth-utils'
-import { exportAuditLogs } from '@/lib/export-utils'
-
-type AuditLog = {
-  id: string
-  userId: string | null
-  action: string
-  resourceType: string | null
-  resourceId: string | null
-  oldValue: Record<string, unknown> | null
-  newValue: Record<string, unknown> | null
-  ipAddress: string | null
-  userAgent: string | null
-  metadata: Record<string, unknown> | null
-  createdAt: string
-  user: {
-    id: string
-    email: string
-    name: string | null
-  } | null
-}
+import { exportAuditLogs } from '@/lib/utils/export'
+import {
+  useAuditLogsQuery,
+  useAuditStatsQuery,
+  type LogCursor,
+  type AuditLogDef as AuditLog
+} from '@/lib/queries/admin-queries'
 
 const ACTION_LABELS: Record<string, string> = {
   create_tournament: 'Create Tournament',
@@ -112,216 +86,66 @@ const RESOURCE_TYPE_COLORS: Record<string, string> = {
 
 export default function AuditLogsPage() {
   const router = useRouter()
-  const [loading, setLoading] = useState(true)
-  const [logs, setLogs] = useState<AuditLog[]>([])
-  const [totalCount, setTotalCount] = useState(0)
-  const [currentPage, setCurrentPage] = useState(1)
+  const { data: stats, refetch: refetchStats } = useAuditStatsQuery()
+
+  // Filter and Modal State
+  const [actionFilter, setActionFilter] = useState('all')
+  const [resourceTypeFilter, setResourceTypeFilter] = useState('all')
   const [pageSize] = useState(50)
-  const [pageSnapshots, setPageSnapshots] = useState<(DocumentSnapshot | null)[]>([null])
-
-  // Filters
-  const [actionFilter, setActionFilter] = useState<string>('all')
-  const [resourceTypeFilter, setResourceTypeFilter] = useState<string>('all')
-
-  // Detail modal
   const [selectedLog, setSelectedLog] = useState<AuditLog | null>(null)
   const [detailModalOpen, setDetailModalOpen] = useState(false)
 
-  // Stats
-  const [stats, setStats] = useState<{
-    total: number
-    recent24h: number
-    recent7d: number
-    byResourceType: Record<string, number>
-  } | null>(null)
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1)
 
-  // Check admin access
+  const [pageCursors, setPageCursors] = useState<Record<number, LogCursor | null>>({ 1: null })
+
+  const { data: logsData, isLoading: loading, refetch: refetchLogs } = useAuditLogsQuery(
+    { action: actionFilter, resourceType: resourceTypeFilter },
+    { pageSize, cursor: pageCursors[currentPage] }
+  )
+
+  const logs = logsData?.logs || []
+  const nextCursor = logsData?.nextCursor || null
+  const totalCount = stats?.total || 0
+  const totalPages = Math.ceil(totalCount / pageSize)
+
+  // Update next page cursor when data loads
   useEffect(() => {
-    const checkAccess = async () => {
-      const currentUser = auth.currentUser
-
-      if (!currentUser) {
-        router.push('/auth/login')
-        return
-      }
-
-      if (!isAdmin(currentUser.email)) {
-        router.push('/')
-        toast.error('관리자 권한이 필요합니다')
-        return
-      }
-
-      loadAuditLogs()
-      loadStats()
+    if (nextCursor) {
+      setPageCursors(prev => ({ ...prev, [currentPage + 1]: nextCursor }))
     }
+  }, [nextCursor, currentPage])
 
-    // Wait for auth state to be ready
+  // Reset pagination when filters change
+  useEffect(() => {
+    setCurrentPage(1)
+    setPageCursors({ 1: null })
+  }, [actionFilter, resourceTypeFilter])
+
+  const handlePageChange = (newPage: number) => {
+    // Allow going to next page only if we have the cursor
+    if (newPage > currentPage && !pageCursors[newPage]) return
+    if (newPage < 1) return
+    setCurrentPage(newPage)
+  }
+
+  const checkAccess = async () => {
+    const currentUser = auth.currentUser
+    if (!currentUser) router.push('/auth/login')
+    else if (!isAdmin(currentUser.email)) {
+      router.push('/')
+      toast.error('관리자 권한이 필요합니다')
+    }
+  }
+
+  useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
-      if (user) {
-        checkAccess()
-      } else {
-        router.push('/auth/login')
-      }
+      if (user) checkAccess()
+      else router.push('/auth/login')
     })
-
     return () => unsubscribe()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
-
-  // Reload when filters or page changes
-  useEffect(() => {
-    if (auth.currentUser && isAdmin(auth.currentUser.email)) {
-      loadAuditLogs()
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage, actionFilter, resourceTypeFilter])
-
-  const loadAuditLogs = async () => {
-    setLoading(true)
-    try {
-      const auditLogsRef = collection(firestore, 'auditLogs')
-
-      // Build query constraints
-      const constraints: Parameters<typeof query>[1][] = []
-
-      if (actionFilter !== 'all') {
-        constraints.push(where('action', '==', actionFilter))
-      }
-
-      if (resourceTypeFilter !== 'all') {
-        constraints.push(where('resourceType', '==', resourceTypeFilter))
-      }
-
-      constraints.push(orderBy('createdAt', 'desc'))
-      constraints.push(limit(pageSize))
-
-      // Add pagination cursor if not first page
-      if (currentPage > 1 && pageSnapshots[currentPage - 1]) {
-        constraints.push(startAfter(pageSnapshots[currentPage - 1]))
-      }
-
-      const q = query(auditLogsRef, ...constraints)
-      const snapshot = await getDocs(q)
-
-      // Store the last document for next page
-      if (snapshot.docs.length > 0) {
-        const newLastDoc = snapshot.docs[snapshot.docs.length - 1]
-
-        // Store snapshot for this page
-        const newPageSnapshots = [...pageSnapshots]
-        newPageSnapshots[currentPage] = newLastDoc
-        setPageSnapshots(newPageSnapshots)
-      }
-
-      // Fetch user info for each log
-      const logsData: AuditLog[] = await Promise.all(
-        snapshot.docs.map(async (doc) => {
-          const data = doc.data()
-
-          // Try to get user info
-          let userInfo: AuditLog['user'] = null
-          if (data.userId) {
-            try {
-              const usersRef = collection(firestore, 'users')
-              const userQuery = query(usersRef, where('__name__', '==', data.userId), limit(1))
-              const userSnapshot = await getDocs(userQuery)
-              if (!userSnapshot.empty) {
-                const userData = userSnapshot.docs[0].data()
-                userInfo = {
-                  id: userSnapshot.docs[0].id,
-                  email: userData.email || '',
-                  name: userData.nickname || null,
-                }
-              }
-            } catch {
-              // User not found, ignore
-            }
-          }
-
-          return {
-            id: doc.id,
-            userId: data.userId || null,
-            action: data.action || '',
-            resourceType: data.resourceType || null,
-            resourceId: data.resourceId || null,
-            oldValue: data.oldValue || null,
-            newValue: data.newValue || null,
-            ipAddress: data.ipAddress || null,
-            userAgent: data.userAgent || null,
-            metadata: data.metadata || null,
-            createdAt: data.createdAt instanceof Timestamp
-              ? data.createdAt.toDate().toISOString()
-              : data.createdAt || new Date().toISOString(),
-            user: userInfo,
-          }
-        })
-      )
-
-      setLogs(logsData)
-
-      // Get total count
-      const countQuery = query(
-        auditLogsRef,
-        ...(actionFilter !== 'all' ? [where('action', '==', actionFilter)] : []),
-        ...(resourceTypeFilter !== 'all' ? [where('resourceType', '==', resourceTypeFilter)] : [])
-      )
-      const countSnapshot = await getCountFromServer(countQuery)
-      setTotalCount(countSnapshot.data().count)
-    } catch (error) {
-      console.error('Failed to load audit logs:', error)
-      toast.error('Audit 로그를 불러오는데 실패했습니다')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const loadStats = async () => {
-    try {
-      const auditLogsRef = collection(firestore, 'auditLogs')
-
-      // Get total count
-      const totalSnapshot = await getCountFromServer(auditLogsRef)
-      const total = totalSnapshot.data().count
-
-      // Get count in last 24 hours
-      const now = new Date()
-      const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000)
-      const recent24hQuery = query(
-        auditLogsRef,
-        where('createdAt', '>=', Timestamp.fromDate(twentyFourHoursAgo))
-      )
-      const recent24hSnapshot = await getCountFromServer(recent24hQuery)
-      const recent24h = recent24hSnapshot.data().count
-
-      // Get count in last 7 days
-      const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
-      const recent7dQuery = query(
-        auditLogsRef,
-        where('createdAt', '>=', Timestamp.fromDate(sevenDaysAgo))
-      )
-      const recent7dSnapshot = await getCountFromServer(recent7dQuery)
-      const recent7d = recent7dSnapshot.data().count
-
-      // Get count by resource type (sample approach - fetch limited docs)
-      const resourceTypeSnapshot = await getDocs(query(auditLogsRef, limit(500)))
-      const byResourceType: Record<string, number> = {}
-      resourceTypeSnapshot.forEach((doc) => {
-        const data = doc.data()
-        if (data.resourceType) {
-          byResourceType[data.resourceType] = (byResourceType[data.resourceType] || 0) + 1
-        }
-      })
-
-      setStats({
-        total,
-        recent24h: recent24h,
-        recent7d: recent7d,
-        byResourceType: byResourceType,
-      })
-    } catch (error) {
-      console.error('Failed to load stats:', error)
-    }
-  }
 
   const handleExportCSV = () => {
     if (logs.length === 0) {
@@ -359,19 +183,6 @@ export default function AuditLogsPage() {
       minute: '2-digit',
       second: '2-digit',
     })
-  }
-
-  const totalPages = Math.ceil(totalCount / pageSize)
-
-  const handlePageChange = (newPage: number) => {
-    if (newPage < 1 || newPage > totalPages) return
-
-    // If going back, we need to reset the snapshots
-    if (newPage < currentPage) {
-      setPageSnapshots(pageSnapshots.slice(0, newPage))
-    }
-
-    setCurrentPage(newPage)
   }
 
   return (
@@ -452,9 +263,9 @@ export default function AuditLogsPage() {
             size="sm"
             onClick={() => {
               setCurrentPage(1)
-              setPageSnapshots([null])
-              loadAuditLogs()
-              loadStats()
+              setPageCursors({ 1: null })
+              refetchLogs()
+              refetchStats()
             }}
           >
             <RefreshCw className="w-4 h-4 mr-2" />

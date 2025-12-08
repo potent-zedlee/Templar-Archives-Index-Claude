@@ -5,7 +5,7 @@ export { ArchiveEventCard } from './ArchiveEventCard'
 export { ArchiveGridView } from './ArchiveGridView'
 export { ArchiveInfoDialog } from './ArchiveInfoDialog'
 export { ArchiveSearchSort } from './ArchiveSearchSort'
-export { ArchiveStatsBadge } from './ArchiveStatsBadge'
+
 export { ArchiveStatsWidget } from './ArchiveStatsWidget'
 export { ArchiveTournamentLogosBar } from './ArchiveTournamentLogosBar'
 export { ArchiveUnifiedFilters } from './ArchiveUnifiedFilters'

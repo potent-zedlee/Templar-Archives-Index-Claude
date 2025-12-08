@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Loader2, Search } from "lucide-react"
 import Image from "next/image"
-import { getAllLogos, searchLogos, type LogoFile } from "@/lib/logo-utils"
+import { getAllLogos, searchLogos, type LogoFile } from "@/lib/utils/logo"
 import { cn } from "@/lib/utils"
 
 interface LogoPickerProps {

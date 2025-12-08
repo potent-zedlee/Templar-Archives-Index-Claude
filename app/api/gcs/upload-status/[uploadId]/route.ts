@@ -1,7 +1,8 @@
+
 import { NextRequest, NextResponse } from 'next/server'
-import { adminFirestore } from '@/lib/firebase-admin'
+import { adminFirestore } from '@/lib/db/firebase-admin'
 import { COLLECTION_PATHS, type UploadStatus } from '@/lib/db/firestore-types'
-import { verifyAdminFromRequest } from '@/lib/api-auth'
+import { verifyAdminFromRequest } from '@/lib/auth/api-auth'
 
 /**
  * video_uploads 상태 조회 결과 타입

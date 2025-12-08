@@ -17,8 +17,13 @@ const serwist = new Serwist({
   clientsClaim: true,
   navigationPreload: true,
   runtimeCaching: defaultCache,
-  offlineFallbacks: {
-    entries: ['/offline'],
+  fallbacks: {
+    entries: [{
+      url: '/offline',
+      matcher: (options) => {
+        return options.request.destination === 'document';
+      }
+    }],
   },
 })
 

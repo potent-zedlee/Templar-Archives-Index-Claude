@@ -28,7 +28,7 @@ import {
 import { firestore, storage } from '@/lib/db/firebase'
 import { COLLECTION_PATHS } from '@/lib/db/firestore-types'
 import type { FirestoreTournamentCategory, GameType } from '@/lib/db/firestore-types'
-import { CATEGORY_ERRORS, CATEGORY_VALIDATIONS } from './constants/category-errors'
+import { CATEGORY_ERRORS, CATEGORY_VALIDATIONS } from '@/lib/constants/category-errors'
 
 export type { GameType } from '@/lib/db/firestore-types'
 
@@ -64,7 +64,7 @@ export interface CategoryInput {
   themeShadow?: string
 }
 
-export interface CategoryUpdateInput extends Partial<Omit<CategoryInput, 'id'>> {}
+export interface CategoryUpdateInput extends Partial<Omit<CategoryInput, 'id'>> { }
 
 /**
  * Firestore 문서를 TournamentCategory로 변환

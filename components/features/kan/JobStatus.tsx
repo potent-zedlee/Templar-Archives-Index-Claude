@@ -1,14 +1,12 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { Button } from '@/components/ui/button'
 import { CheckCircle2, XCircle, Loader2 } from 'lucide-react'
-import { firestore } from '@/lib/db/firebase'
-import { doc, onSnapshot } from 'firebase/firestore'
-import { COLLECTION_PATHS, type FirestoreAnalysisJob } from '@/lib/db/firestore-types'
+import { useJobStatus } from '@/lib/queries/job-status-queries'
 
 interface JobStatusProps {
   jobId: string
@@ -16,45 +14,35 @@ interface JobStatusProps {
 }
 
 export function JobStatus({ jobId, onComplete }: JobStatusProps) {
-  const [job, setJob] = useState<FirestoreAnalysisJob | null>(null)
   const router = useRouter()
+  const { job, loading, error } = useJobStatus(jobId)
 
   useEffect(() => {
-    // Firestore 실시간 구독
-    const jobRef = doc(firestore, COLLECTION_PATHS.ANALYSIS_JOBS, jobId)
-
-    const unsubscribe = onSnapshot(
-      jobRef,
-      (snapshot) => {
-        if (snapshot.exists()) {
-          const data = snapshot.data() as FirestoreAnalysisJob
-
-          setJob(data)
-
-          // Call onComplete when job finishes
-          if (data.status === 'completed' && onComplete) {
-            onComplete()
-          }
-        }
-      },
-      (error) => {
-        console.error('[JobStatus] Firestore subscription error:', error)
-      }
-    )
-
-    // Cleanup
-    return () => {
-      unsubscribe()
+    if (job?.status === 'completed' && onComplete) {
+      onComplete()
     }
-  }, [jobId, onComplete])
+  }, [job?.status, onComplete])
 
-  if (!job) {
+  if (loading) {
     return (
       <Card>
         <CardContent className="pt-6">
           <div className="flex items-center gap-2">
             <Loader2 className="w-4 h-4 animate-spin" />
             <span>작업 정보를 불러오는 중...</span>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (error || !job) {
+    return (
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex items-center gap-2 text-destructive">
+            <XCircle className="w-4 h-4" />
+            <span>{error || 'Job not found'}</span>
           </div>
         </CardContent>
       </Card>
