@@ -74,9 +74,7 @@ export function ActionHistory({ hand }: ActionHistoryProps) {
     if (!sections) {
         return (
             <div className="h-full flex flex-col bg-card">
-                <div className="flex border-b border-border bg-muted/30 p-2">
-                    <span className="text-xs font-semibold uppercase text-muted-foreground">Action History</span>
-                </div>
+
                 <ScrollArea className="flex-1 p-4">
                     {hand.aiSummary ? (
                         <div className="text-sm text-foreground/80 leading-relaxed whitespace-pre-wrap">

@@ -152,10 +152,7 @@ export function StreamReplayerPanel({ streamId, stream }: StreamReplayerPanelPro
           If HandList is 3, this should be 9.
       */}
             <div className="col-span-9 row-span-4 bg-card rounded-xl border border-border overflow-hidden shadow-sm flex flex-col">
-                <div className="p-2 border-b border-border bg-muted/20 flex justify-between items-center">
-                    <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground px-2">Action History</h3>
-                    {selectedHand && <Badge variant="outline" className="text-[10px] h-5">Hand #{selectedHand.number}</Badge>}
-                </div>
+
                 <div className="flex-1 overflow-hidden relative">
                     <ActionHistory hand={selectedHand} />
                 </div>
