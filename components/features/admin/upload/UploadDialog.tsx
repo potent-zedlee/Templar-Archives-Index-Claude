@@ -44,6 +44,10 @@ export function UploadDialog({ onSuccess }: UploadDialogProps) {
   const [createNewStream, setCreateNewStream] = useState(false)
   const [newStreamName, setNewStreamName] = useState('')
 
+  // YouTube state
+  const [uploadMode, setUploadMode] = useState<'file' | 'youtube'>('file')
+  const [youtubeUrl, setYoutubeUrl] = useState('')
+
   // Upload store
   const addUploadTask = useUploadStore((state) => state.addTask)
 
@@ -51,8 +55,19 @@ export function UploadDialog({ onSuccess }: UploadDialogProps) {
   const { data: tournaments = [] } = useTournamentsQuery()
 
   const handleLocalUpload = async () => {
-    if (!localFile || !localName) {
-      toast.error('Please select a file and enter a name')
+    // Validation
+    if (!localName) {
+      toast.error('Please enter a name')
+      return
+    }
+
+    if (uploadMode === 'file' && !localFile) {
+      toast.error('Please select a file')
+      return
+    }
+
+    if (uploadMode === 'youtube' && !youtubeUrl) {
+      toast.error('Please enter a YouTube URL')
       return
     }
 
@@ -60,11 +75,12 @@ export function UploadDialog({ onSuccess }: UploadDialogProps) {
 
     try {
       if (addToUnsorted) {
-        // Unsorted에 추가 (기존 로직 유지 - 실제 업로드 없음)
+        // Unsorted에 추가
         const result = await createUnsortedVideo({
           name: localName,
-          video_file: localFile.name,
-          video_source: 'local',
+          video_file: uploadMode === 'file' ? localFile!.name : undefined,
+          video_url: uploadMode === 'youtube' ? youtubeUrl : undefined,
+          video_source: uploadMode === 'file' ? 'local' : 'youtube',
         })
 
         if (result.success) {
@@ -76,7 +92,7 @@ export function UploadDialog({ onSuccess }: UploadDialogProps) {
           toast.error(result.error || 'Failed to add video')
         }
       } else {
-        // Tournament → Event → Stream에 직접 추가 + GCS 업로드
+        // Tournament → Event → Stream에 직접 추가
         if (!selectedTournamentId || !selectedEventId) {
           toast.error('Please select a tournament and event')
           return
@@ -97,7 +113,8 @@ export function UploadDialog({ onSuccess }: UploadDialogProps) {
             selectedEventId,
             {
               name: newStreamName,
-              video_file: localFile.name,
+              video_file: uploadMode === 'file' ? localFile!.name : undefined,
+              video_url: uploadMode === 'youtube' ? youtubeUrl : undefined,
             }
           )
 
@@ -119,7 +136,10 @@ export function UploadDialog({ onSuccess }: UploadDialogProps) {
             selectedTournamentId,
             selectedEventId,
             selectedStreamId,
-            { video_file: localFile.name }
+            {
+              video_file: uploadMode === 'file' ? localFile!.name : undefined,
+              video_url: uploadMode === 'youtube' ? youtubeUrl : undefined,
+            }
           )
 
           if (!result.success) {
@@ -131,27 +151,31 @@ export function UploadDialog({ onSuccess }: UploadDialogProps) {
           streamName = localName
         }
 
-        // Upload Store에 작업 추가 (백그라운드 업로드 시작)
-        addUploadTask({
-          id: crypto.randomUUID(),
-          streamId,
-          tournamentId: selectedTournamentId,
-          eventId: selectedEventId,
-          fileName: localFile.name,
-          fileSize: localFile.size,
-          file: localFile,
-        })
+        // Upload Store에 작업 추가 (파일인 경우만)
+        if (uploadMode === 'file' && localFile) {
+          addUploadTask({
+            id: crypto.randomUUID(),
+            streamId,
+            tournamentId: selectedTournamentId,
+            eventId: selectedEventId,
+            fileName: localFile.name,
+            fileSize: localFile.size,
+            file: localFile,
+          })
 
-        // 다이얼로그 즉시 닫기
-        toast.success(`Upload started: ${streamName}`, {
-          description: 'Check progress in the toast area',
-        })
+          toast.success(`Upload started: ${streamName}`, {
+            description: 'Check progress in the toast area',
+          })
+        } else {
+          toast.success(`YouTube video added: ${streamName}`)
+        }
+
         resetForm()
         setOpen(false)
         onSuccess?.()
       }
     } catch (error) {
-      console.error('Error uploading local file:', error)
+      console.error('Error uploading:', error)
       toast.error('Failed to add video')
     } finally {
       setLoading(false)
@@ -161,6 +185,8 @@ export function UploadDialog({ onSuccess }: UploadDialogProps) {
   const resetForm = () => {
     setLocalFile(null)
     setLocalName('')
+    setYoutubeUrl('')
+    setUploadMode('file')
     setSelectedCategory(null)
     setSelectedTournamentId(null)
     setSelectedEventId(null)
@@ -208,6 +234,10 @@ export function UploadDialog({ onSuccess }: UploadDialogProps) {
             newStreamName={newStreamName}
             setNewStreamName={setNewStreamName}
             onUpload={handleLocalUpload}
+            uploadMode={uploadMode}
+            setUploadMode={setUploadMode}
+            youtubeUrl={youtubeUrl}
+            setYoutubeUrl={setYoutubeUrl}
           />
         </div>
       </DialogContent>
