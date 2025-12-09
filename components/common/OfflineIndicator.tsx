@@ -31,24 +31,7 @@ export function OfflineIndicator() {
           </div>
         </motion.div>
       )}
-      {isOnline && (
-        <motion.div
-          initial={{ y: -100, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: -100, opacity: 0 }}
-          transition={{ duration: 0.3, ease: 'easeOut' }}
-          className="fixed top-0 left-0 right-0 z-50 bg-green-600 text-white px-4 py-3 shadow-lg"
-          role="status"
-          aria-live="polite"
-        >
-          <div className="container mx-auto flex items-center justify-center gap-2">
-            <Wifi className="h-5 w-5" aria-hidden="true" />
-            <p className="text-sm font-medium">
-              네트워크에 다시 연결되었습니다.
-            </p>
-          </div>
-        </motion.div>
-      )}
+
     </AnimatePresence>
   )
 }
