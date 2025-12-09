@@ -65,14 +65,13 @@ export function HandReplayer({ stream, hands }: HandReplayerProps) {
 
                         <ResizableHandle className="bg-zinc-800" />
 
-                        {/* Hand List */}
-                        <ResizablePanel defaultSize={55} minSize={30}>
+                        <ResizablePanel defaultSize={55} minSize={30} className="flex flex-col h-full overflow-hidden">
                             <HandListSection
                                 hands={hands}
                                 currentHandId={currentHand?.id || null}
                                 onHandClick={handleHandClick}
                                 // Ensure it fills the panel for scrolling to work
-                                className="h-full"
+                                className="h-full flex-1"
                             />
                         </ResizablePanel>
                     </ResizablePanelGroup>
