@@ -4,7 +4,6 @@ import { GeistMono } from "geist/font/mono"
 import { WebVitalsReporter } from "@/components/analytics/WebVitals"
 import { Footer } from "@/components/layout/Footer"
 import { CookieConsentBanner } from "@/components/dialogs/CookieConsentBanner"
-import { OfflineIndicator } from "@/components/common/OfflineIndicator"
 import { InstallPWAPrompt, IOSInstallPrompt } from "@/components/common/InstallPWAPrompt"
 import "./globals.css"
 import { Providers } from "@/components/layout/Providers"
@@ -82,7 +81,6 @@ export default function RootLayout({
           Skip to main content
         </a>
         <Providers>
-          <OfflineIndicator />
           <main id="main-content" role="main">
             {children}
           </main>
