@@ -52,56 +52,59 @@ export function HandReplayer({ stream, hands }: HandReplayerProps) {
     // We use Resizable Panels for flexibility but set default sizes
 
     return (
-        <div className="h-[calc(100vh-64px)] w-full bg-background flex flex-col overflow-hidden">
-            {/* Main Content Area */}
-            <div className="flex-1 w-full h-full">
-                <ResizablePanelGroup direction="horizontal">
-                    {/* Left Column */}
-                    <ResizablePanel defaultSize={50} minSize={30}>
-                        <ResizablePanelGroup direction="vertical">
-                            {/* Top Left: Video */}
-                            <ResizablePanel defaultSize={60} minSize={30}>
+        <div className="h-full w-full bg-[#09090b] text-zinc-100 overflow-hidden flex flex-col">
+            <ResizablePanelGroup direction="horizontal" className="flex-1">
+                {/* Left Panel: Video & List */}
+                <ResizablePanel defaultSize={40} minSize={30}>
+                    <ResizablePanelGroup direction="vertical">
+                        {/* Video Player */}
+                        <ResizablePanel defaultSize={45} minSize={30}>
+                            <div className="h-full w-full bg-black relative">
                                 <VideoPlayerSection
                                     stream={stream}
-                                    isPlaying={isPlaying}
-                                    onProgress={handleProgress}
-                                    onDuration={() => { }}
-                                    playerRef={playerRef}
+                                    isPlaying={isPlaying} // Changed from initialTime={currentVideoTimestamp}
+                                    onProgress={handleProgress} // Changed from onTimeUpdate={handleVideoProgress}
+                                    playerRef={playerRef} // Changed from onSeekReq={seekRequest}
+                                    onDuration={() => { }} // Added back
                                 />
-                            </ResizablePanel>
-                            <ResizableHandle />
-                            {/* Bottom Left: Hand List */}
-                            <ResizablePanel defaultSize={40} minSize={20}>
-                                <HandListSection
-                                    hands={hands}
-                                    currentHandId={currentHand?.id || null}
-                                    onHandClick={handleHandClick}
-                                />
-                            </ResizablePanel>
-                        </ResizablePanelGroup>
-                    </ResizablePanel>
+                            </div>
+                        </ResizablePanel>
 
-                    <ResizableHandle />
+                        <ResizableHandle className="bg-zinc-800" />
 
-                    {/* Right Column */}
-                    <ResizablePanel defaultSize={50} minSize={30}>
-                        <ResizablePanelGroup direction="vertical">
-                            {/* Top Right: Poker Table */}
-                            <ResizablePanel defaultSize={60} minSize={30}>
-                                <PokerTableSection
-                                    currentHand={currentHand}
-                                    currentTime={currentTime}
-                                />
-                            </ResizablePanel>
-                            <ResizableHandle />
-                            {/* Bottom Right: Action Log */}
-                            <ResizablePanel defaultSize={40} minSize={20}>
-                                <ActionLogSection currentHand={currentHand} />
-                            </ResizablePanel>
-                        </ResizablePanelGroup>
-                    </ResizablePanel>
-                </ResizablePanelGroup>
-            </div>
+                        {/* Hand List */}
+                        <ResizablePanel defaultSize={55} minSize={30}>
+                            <HandListSection
+                                hands={hands}
+                                currentHandId={currentHand?.id || null} // Changed from currentHandId={currentHandId}
+                                onHandClick={handleHandClick}
+                            />
+                        </ResizablePanel>
+                    </ResizablePanelGroup>
+                </ResizablePanel>
+
+                <ResizableHandle className="bg-zinc-800" />
+
+                {/* Right Panel: Table & Logs */}
+                <ResizablePanel defaultSize={60} minSize={30}>
+                    <ResizablePanelGroup direction="vertical">
+                        {/* Poker Table */}
+                        <ResizablePanel defaultSize={60} minSize={40}>
+                            <PokerTableSection
+                                currentHand={currentHand}
+                                currentTime={currentTime} // Added back
+                            />
+                        </ResizablePanel>
+
+                        <ResizableHandle className="bg-zinc-800" />
+
+                        {/* Action Log */}
+                        <ResizablePanel defaultSize={40} minSize={20}>
+                            <ActionLogSection currentHand={currentHand} /> {/* Changed from hand={currentHand} */}
+                        </ResizablePanel>
+                    </ResizablePanelGroup>
+                </ResizablePanel>
+            </ResizablePanelGroup>
         </div>
     )
 }

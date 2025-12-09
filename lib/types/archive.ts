@@ -217,9 +217,21 @@ export interface Hand {
 
   // Relations
   handPlayers?: HandPlayer[]
+  actions?: HandAction[]
 
   // UI state (클라이언트 전용)
   checked?: boolean
+}
+
+export interface HandAction {
+  id?: string
+  playerId?: string
+  playerName?: string
+  street: 'PREFLOP' | 'FLOP' | 'TURN' | 'RIVER'
+  actionType: string
+  amount: number
+  sequence?: number
+  timestamp?: string
 }
 
 export interface Player {
