@@ -28,6 +28,7 @@ import {
   Sparkles,
   Globe,
   AlertCircle,
+  Keyboard,
 } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
@@ -80,6 +81,11 @@ const adminMenuItems: MenuItem[] = [
     href: "/admin/archive",
     icon: Archive,
     // subItems는 동적으로 렌더링 (파이프라인 상태별)
+  },
+  {
+    title: "Hand Input",
+    href: "/admin/hand-input",
+    icon: Keyboard, // Need to import SortAsc or similar if Keyboard not available, let's use Keyboard or Edit3
   },
   {
     title: "Edit Requests",
