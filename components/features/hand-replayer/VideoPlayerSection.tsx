@@ -3,7 +3,7 @@
 import { Stream } from '@/lib/types/archive'
 import dynamic from 'next/dynamic'
 
-const ReactPlayer = dynamic(() => import('react-player'), { ssr: false })
+const ReactPlayer = dynamic(() => import('react-player'), { ssr: false }) as any
 
 interface VideoPlayerSectionProps {
     stream: Stream
