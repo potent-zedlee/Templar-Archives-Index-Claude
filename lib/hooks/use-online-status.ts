@@ -7,11 +7,12 @@ import { useState, useEffect } from 'react'
  * @returns isOnline - 현재 온라인 상태 (boolean)
  */
 export function useOnlineStatus() {
-  const [isOnline, setIsOnline] = useState(true)
+  const [isOnline, setIsOnline] = useState(() =>
+    typeof navigator !== 'undefined' ? navigator.onLine : true
+  )
 
   useEffect(() => {
-    // 초기 상태 설정
-    setIsOnline(navigator.onLine)
+    // setIsOnline(navigator.onLine) // Removed, handled in initializer
 
     const handleOnline = () => setIsOnline(true)
     const handleOffline = () => setIsOnline(false)

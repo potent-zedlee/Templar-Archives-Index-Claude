@@ -47,6 +47,7 @@ export function PostCommentsSection({ postId, onCommentsCountChange }: PostComme
   // Sync query data to local state for easier replies management
   useEffect(() => {
     if (initialComments) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setComments(prevComments => {
         // Merge fetched top-level comments with existing replies state if needed
         // For simplicity, we just use the fresh data but try to preserve loaded replies if possible?

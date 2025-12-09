@@ -23,7 +23,8 @@ export function useJobStatus(jobId: string | null) {
 
     useEffect(() => {
         if (!jobId) {
-            setJob(null)
+            // eslint-disable-next-line react-hooks/set-state-in-effect
+            if (job) setJob(null) // Only update if currently has value
             return
         }
 
@@ -49,18 +50,18 @@ export function useJobStatus(jobId: string | null) {
         )
 
         return () => unsubscribe()
-    }, [jobId])
+    }, [jobId, job])
 
     return { job, loading, error }
 }
 
 export function useStreamAnalysisStatus(streamId: string) {
     const [job, setJob] = useState<JobStatus | null>(null)
-    const [loading, setLoading] = useState(true)
+    const [loading, setLoading] = useState(() => !!streamId)
 
     useEffect(() => {
         if (!streamId) {
-            setLoading(false)
+            // setLoading(false) // Handled by initializer
             return
         }
 

@@ -112,16 +112,13 @@ export default function AuditLogsPage() {
 
   // Update next page cursor when data loads
   useEffect(() => {
-    if (nextCursor) {
+    if (nextCursor && !pageCursors[currentPage + 1]) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPageCursors(prev => ({ ...prev, [currentPage + 1]: nextCursor }))
     }
-  }, [nextCursor, currentPage])
+  }, [nextCursor, currentPage, pageCursors])
 
-  // Reset pagination when filters change
-  useEffect(() => {
-    setCurrentPage(1)
-    setPageCursors({ 1: null })
-  }, [actionFilter, resourceTypeFilter])
+
 
   const handlePageChange = (newPage: number) => {
     // Allow going to next page only if we have the cursor
@@ -229,7 +226,14 @@ export default function AuditLogsPage() {
       {/* Filters */}
       <Card className="p-4">
         <div className="flex flex-wrap gap-4">
-          <Select value={actionFilter} onValueChange={setActionFilter}>
+          <Select
+            value={actionFilter}
+            onValueChange={(val) => {
+              setActionFilter(val)
+              setCurrentPage(1)
+              setPageCursors({ 1: null })
+            }}
+          >
             <SelectTrigger className="w-[200px]">
               <SelectValue placeholder="Action" />
             </SelectTrigger>
@@ -243,7 +247,14 @@ export default function AuditLogsPage() {
             </SelectContent>
           </Select>
 
-          <Select value={resourceTypeFilter} onValueChange={setResourceTypeFilter}>
+          <Select
+            value={resourceTypeFilter}
+            onValueChange={(val) => {
+              setResourceTypeFilter(val)
+              setCurrentPage(1)
+              setPageCursors({ 1: null })
+            }}
+          >
             <SelectTrigger className="w-[200px]">
               <SelectValue placeholder="Resource Type" />
             </SelectTrigger>

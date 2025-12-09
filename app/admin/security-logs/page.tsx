@@ -86,16 +86,13 @@ export default function SecurityLogsPage() {
 
   // Update next page cursor
   useEffect(() => {
-    if (nextCursor) {
+    if (nextCursor && !pageCursors[currentPage + 1]) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPageCursors(prev => ({ ...prev, [currentPage + 1]: nextCursor }))
     }
-  }, [nextCursor, currentPage])
+  }, [nextCursor, currentPage, pageCursors])
 
-  // Reset pagination when filters change
-  useEffect(() => {
-    setCurrentPage(1)
-    setPageCursors({ 1: null })
-  }, [eventTypeFilter, severityFilter])
+
 
   const handlePageChange = (newPage: number) => {
     if (newPage > currentPage && !pageCursors[newPage]) return
@@ -218,7 +215,14 @@ export default function SecurityLogsPage() {
       {/* Filters */}
       <Card className="p-4">
         <div className="flex flex-wrap gap-4">
-          <Select value={eventTypeFilter} onValueChange={setEventTypeFilter}>
+          <Select
+            value={eventTypeFilter}
+            onValueChange={(val) => {
+              setEventTypeFilter(val)
+              setCurrentPage(1)
+              setPageCursors({ 1: null })
+            }}
+          >
             <SelectTrigger className="w-[200px]">
               <SelectValue placeholder="Event Type" />
             </SelectTrigger>
@@ -232,7 +236,14 @@ export default function SecurityLogsPage() {
             </SelectContent>
           </Select>
 
-          <Select value={severityFilter} onValueChange={setSeverityFilter}>
+          <Select
+            value={severityFilter}
+            onValueChange={(val) => {
+              setSeverityFilter(val)
+              setCurrentPage(1)
+              setPageCursors({ 1: null })
+            }}
+          >
             <SelectTrigger className="w-[200px]">
               <SelectValue placeholder="Severity" />
             </SelectTrigger>

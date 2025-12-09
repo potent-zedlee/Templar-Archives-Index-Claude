@@ -14,6 +14,11 @@ export function InstallPWAPrompt() {
   const [showPrompt, setShowPrompt] = useState(false)
 
   useEffect(() => {
+    // 이미 설치된 경우 감지
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+      return // Don't allow prompt if standalone
+    }
+
     const handler = (e: Event) => {
       // 브라우저의 기본 설치 프롬프트 방지
       e.preventDefault()
@@ -28,10 +33,7 @@ export function InstallPWAPrompt() {
 
     window.addEventListener('beforeinstallprompt', handler)
 
-    // 이미 설치된 경우 감지
-    if (window.matchMedia('(display-mode: standalone)').matches) {
-      setShowPrompt(false)
-    }
+
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handler)

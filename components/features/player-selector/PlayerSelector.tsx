@@ -115,7 +115,7 @@ export function PlayerSelector({ value, onChange, disabled }: PlayerSelectorProp
                                         }}
                                     >
                                         <Plus className="mr-2 h-4 w-4" />
-                                        Use "{query}"
+                                        Use &quot;{query}&quot;
                                     </CommandItem>
                                 </CommandGroup>
                             </>
