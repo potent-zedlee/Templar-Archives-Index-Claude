@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useMemo } from 'react'
 import { Stream, Hand } from '@/lib/types/archive'
 import { VideoPlayerSection } from './VideoPlayerSection'
 import { PokerTableSection } from './PokerTableSection'
@@ -16,25 +16,18 @@ interface HandReplayerProps {
 export function HandReplayer({ stream, hands }: HandReplayerProps) {
     const [currentTime, setCurrentTime] = useState(0)
     const [isPlaying, setIsPlaying] = useState(false)
-    const [currentHand, setCurrentHand] = useState<Hand | null>(null)
     const playerRef = useRef<any>(null)
 
-    // Auto-Sync Logic
-    useEffect(() => {
-        // Find hand active at currentTime
-        // We assume hands don't overlap or we pick the latest one that started before currentTime?
-        // Actually, hand usually has start and end.
-        const hand = hands.find(h => {
+    // Derive current hand from video time
+    const currentHand = useMemo(() => {
+        return hands.find(h => {
             const start = h.videoTimestampStart || 0
             const end = h.videoTimestampEnd || Number.MAX_SAFE_INTEGER
             return currentTime >= start && currentTime < end
-        })
+        }) || null
+    }, [currentTime, hands])
 
-        // Only update if changed to prevent thrashing
-        if (hand && hand.id !== currentHand?.id) {
-            setCurrentHand(hand)
-        }
-    }, [currentTime, hands, currentHand])
+    // Removed Sync Effect to fix setState-in-effect warning
 
     const handleProgress = (state: { playedSeconds: number }) => {
         setCurrentTime(state.playedSeconds)
@@ -43,7 +36,7 @@ export function HandReplayer({ stream, hands }: HandReplayerProps) {
     const handleHandClick = (hand: Hand) => {
         if (playerRef.current && hand.videoTimestampStart !== undefined) {
             playerRef.current.seekTo(hand.videoTimestampStart, 'seconds')
-            setCurrentHand(hand)
+            // setCurrentHand is now derived from currentTime, which will update after seek
             setIsPlaying(true)
         }
     }

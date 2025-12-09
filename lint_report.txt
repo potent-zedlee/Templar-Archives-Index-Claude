@@ -1,0 +1,243 @@
+npm warn config optional Use `--omit=optional` to exclude optional dependencies, or
+npm warn config `--include=optional` to include them.
+npm warn config
+npm warn config       Default value does install optional deps unless otherwise omitted.
+
+> templar-archives@0.1.0 lint
+> npx eslint .
+
+npm warn config optional Use `--omit=optional` to exclude optional dependencies, or
+npm warn config `--include=optional` to include them.
+npm warn config
+npm warn config       Default value does install optional deps unless otherwise omitted.
+
+/Users/zed/Desktop/Templar-Archives-Index-Claude/app/(main)/archive/_components/StreamReplayerPanel.tsx
+  76:69  error  Error: Cannot call impure function during render
+
+`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+/Users/zed/Desktop/Templar-Archives-Index-Claude/app/(main)/archive/_components/StreamReplayerPanel.tsx:76:69
+  74 |                             <div className="flex items-center gap-1">
+  75 |                                 <Calendar className="w-3 h-3" />
+> 76 |                                 <span>{new Date(stream.createdAt || Date.now()).toLocaleDateString()}</span>
+     |                                                                     ^^^^^^^^^^ Cannot call impure function
+  77 |                             </div>
+  78 |                             <div className="flex items-center gap-1">
+  79 |                                 <Users className="w-3 h-3" />  react-hooks/purity
+
+/Users/zed/Desktop/Templar-Archives-Index-Claude/app/(main)/archive/_components/replayer/PokerTable.tsx
+  40:11  warning  The 'players' logical expression could make the dependencies of useMemo Hook (at line 53) change on every render. Move it inside the useMemo callback. Alternatively, wrap the initialization of 'players' in its own useMemo() Hook  react-hooks/exhaustive-deps
+
+/Users/zed/Desktop/Templar-Archives-Index-Claude/app/(main)/profile/page.tsx
+  58:7  warning  Unused eslint-disable directive (no problems were reported from 'react-hooks/set-state-in-effect')
+
+/Users/zed/Desktop/Templar-Archives-Index-Claude/app/admin/audit-logs/page.tsx
+  116:7  error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/zed/Desktop/Templar-Archives-Index-Claude/app/admin/audit-logs/page.tsx:116:7
+  114 |   useEffect(() => {
+  115 |     if (nextCursor) {
+> 116 |       setPageCursors(prev => ({ ...prev, [currentPage + 1]: nextCursor }))
+      |       ^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  117 |     }
+  118 |   }, [nextCursor, currentPage])
+  119 |  react-hooks/set-state-in-effect
+  122:5  error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/zed/Desktop/Templar-Archives-Index-Claude/app/admin/audit-logs/page.tsx:122:5
+  120 |   // Reset pagination when filters change
+  121 |   useEffect(() => {
+> 122 |     setCurrentPage(1)
+      |     ^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  123 |     setPageCursors({ 1: null })
+  124 |   }, [actionFilter, resourceTypeFilter])
+  125 |  react-hooks/set-state-in-effect
+  148:6  warning  React Hook useEffect has missing dependencies: 'checkAccess' and 'router'. Either include them or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       react-hooks/exhaustive-deps
+
+/Users/zed/Desktop/Templar-Archives-Index-Claude/app/admin/security-logs/page.tsx
+   90:7  error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/zed/Desktop/Templar-Archives-Index-Claude/app/admin/security-logs/page.tsx:90:7
+  88 |   useEffect(() => {
+  89 |     if (nextCursor) {
+> 90 |       setPageCursors(prev => ({ ...prev, [currentPage + 1]: nextCursor }))
+     |       ^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  91 |     }
+  92 |   }, [nextCursor, currentPage])
+  93 |  react-hooks/set-state-in-effect
+   96:5  error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/zed/Desktop/Templar-Archives-Index-Claude/app/admin/security-logs/page.tsx:96:5
+  94 |   // Reset pagination when filters change
+  95 |   useEffect(() => {
+> 96 |     setCurrentPage(1)
+     |     ^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  97 |     setPageCursors({ 1: null })
+  98 |   }, [eventTypeFilter, severityFilter])
+  99 |   react-hooks/set-state-in-effect
+  121:6  warning  React Hook useEffect has missing dependencies: 'checkAccess' and 'router'. Either include them or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  react-hooks/exhaustive-deps
+
+/Users/zed/Desktop/Templar-Archives-Index-Claude/components/common/InstallPWAPrompt.tsx
+  33:7  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/zed/Desktop/Templar-Archives-Index-Claude/components/common/InstallPWAPrompt.tsx:33:7
+  31 |     // 이미 설치된 경우 감지
+  32 |     if (window.matchMedia('(display-mode: standalone)').matches) {
+> 33 |       setShowPrompt(false)
+     |       ^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  34 |     }
+  35 |
+  36 |     return () => {  react-hooks/set-state-in-effect
+
+/Users/zed/Desktop/Templar-Archives-Index-Claude/components/features/community/PostCommentsSection.tsx
+  50:7  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/zed/Desktop/Templar-Archives-Index-Claude/components/features/community/PostCommentsSection.tsx:50:7
+  48 |   useEffect(() => {
+  49 |     if (initialComments) {
+> 50 |       setComments(prevComments => {
+     |       ^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  51 |         // Merge fetched top-level comments with existing replies state if needed
+  52 |         // For simplicity, we just use the fresh data but try to preserve loaded replies if possible?
+  53 |         // Actually, let's just use the fresh top-level comments and reset replies for now unless we structure state differently  react-hooks/set-state-in-effect
+
+/Users/zed/Desktop/Templar-Archives-Index-Claude/components/features/hand-replayer/HandReplayer.tsx
+  35:13  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/zed/Desktop/Templar-Archives-Index-Claude/components/features/hand-replayer/HandReplayer.tsx:35:13
+  33 |         // Only update if changed to prevent thrashing
+  34 |         if (hand && hand.id !== currentHand?.id) {
+> 35 |             setCurrentHand(hand)
+     |             ^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  36 |         }
+  37 |     }, [currentTime, hands, currentHand])
+  38 |  react-hooks/set-state-in-effect
+
+/Users/zed/Desktop/Templar-Archives-Index-Claude/components/features/hand/HandSearchDialog.tsx
+  95:7  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/zed/Desktop/Templar-Archives-Index-Claude/components/features/hand/HandSearchDialog.tsx:95:7
+  93 |   useEffect(() => {
+  94 |     if (open) {
+> 95 |       setStep('tournament')
+     |       ^^^^^^^ Avoid calling setState() directly within an effect
+  96 |       setSelectedTournament(null)
+  97 |       setSelectedEvent(null)
+  98 |       setSelectedStream(null)  react-hooks/set-state-in-effect
+
+/Users/zed/Desktop/Templar-Archives-Index-Claude/components/features/player-selector/PlayerSelector.tsx
+  118:45  error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  118:53  error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+
+/Users/zed/Desktop/Templar-Archives-Index-Claude/components/features/upload/GlobalUploadManager.tsx
+  264:5  warning  React Hook useCallback has missing dependencies: 'showCompletedToast', 'showErrorToast', and 'updateUploadToast'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  346:5  warning  React Hook useCallback has missing dependencies: 'handleCancel' and 'handlePause'. Either include them or remove the dependency array                                 react-hooks/exhaustive-deps
+  468:5  warning  React Hook useCallback has missing dependencies: 'handleCancel' and 'handleResume'. Either include them or remove the dependency array                                react-hooks/exhaustive-deps
+
+/Users/zed/Desktop/Templar-Archives-Index-Claude/lib/hooks/use-algolia-search.ts
+  223:6   warning  React Hook useEffect has a missing dependency: 'searchOptions'. Either include it or remove the dependency array                          react-hooks/exhaustive-deps
+  223:34  warning  React Hook useEffect has a complex expression in the dependency array. Extract it to a separate variable so it can be statically checked  react-hooks/exhaustive-deps
+
+/Users/zed/Desktop/Templar-Archives-Index-Claude/lib/hooks/use-online-status.ts
+  14:5  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/zed/Desktop/Templar-Archives-Index-Claude/lib/hooks/use-online-status.ts:14:5
+  12 |   useEffect(() => {
+  13 |     // 초기 상태 설정
+> 14 |     setIsOnline(navigator.onLine)
+     |     ^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  15 |
+  16 |     const handleOnline = () => setIsOnline(true)
+  17 |     const handleOffline = () => setIsOnline(false)  react-hooks/set-state-in-effect
+
+/Users/zed/Desktop/Templar-Archives-Index-Claude/lib/queries/job-status-queries.ts
+  26:13  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/zed/Desktop/Templar-Archives-Index-Claude/lib/queries/job-status-queries.ts:26:13
+  24 |     useEffect(() => {
+  25 |         if (!jobId) {
+> 26 |             setJob(null)
+     |             ^^^^^^ Avoid calling setState() directly within an effect
+  27 |             return
+  28 |         }
+  29 |              react-hooks/set-state-in-effect
+  63:13  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/zed/Desktop/Templar-Archives-Index-Claude/lib/queries/job-status-queries.ts:63:13
+  61 |     useEffect(() => {
+  62 |         if (!streamId) {
+> 63 |             setLoading(false)
+     |             ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  64 |             return
+  65 |         }
+  66 |  react-hooks/set-state-in-effect
+
+✖ 23 problems (14 errors, 9 warnings)
+  0 errors and 1 warning potentially fixable with the `--fix` option.
+

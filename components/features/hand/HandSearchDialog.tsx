@@ -90,14 +90,18 @@ export function HandSearchDialog({ open, onOpenChange, onSelect }: HandSearchDia
   )
 
   // 다이얼로그가 열릴 때 초기화
+  // 다이얼로그가 닫힐 때 초기화
   useEffect(() => {
-    if (open) {
+    if (open) return;
+
+    const timer = setTimeout(() => {
       setStep('tournament')
       setSelectedTournament(null)
       setSelectedEvent(null)
       setSelectedStream(null)
       setSearchQuery('')
-    }
+    }, 300) // Anim duration
+    return () => clearTimeout(timer)
   }, [open])
 
   // Tournament 선택

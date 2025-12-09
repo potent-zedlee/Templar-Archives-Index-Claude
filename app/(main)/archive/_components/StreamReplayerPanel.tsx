@@ -73,7 +73,7 @@ export function StreamReplayerPanel({ streamId, stream }: StreamReplayerPanelPro
                             </div>
                             <div className="flex items-center gap-1">
                                 <Calendar className="w-3 h-3" />
-                                <span>{new Date(stream.createdAt || Date.now()).toLocaleDateString()}</span>
+                                <span>{stream.createdAt ? new Date(stream.createdAt).toLocaleDateString() : 'N/A'}</span>
                             </div>
                             <div className="flex items-center gap-1">
                                 <Users className="w-3 h-3" />
