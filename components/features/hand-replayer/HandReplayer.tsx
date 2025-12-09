@@ -69,8 +69,10 @@ export function HandReplayer({ stream, hands }: HandReplayerProps) {
                         <ResizablePanel defaultSize={55} minSize={30}>
                             <HandListSection
                                 hands={hands}
-                                currentHandId={currentHand?.id || null} // Changed from currentHandId={currentHandId}
+                                currentHandId={currentHand?.id || null}
                                 onHandClick={handleHandClick}
+                                // Ensure it fills the panel for scrolling to work
+                                className="h-full"
                             />
                         </ResizablePanel>
                     </ResizablePanelGroup>

@@ -9,9 +9,10 @@ interface HandListSectionProps {
     hands: Hand[] // Assumed sorted by number
     currentHandId: string | null
     onHandClick: (hand: Hand) => void
+    className?: string
 }
 
-export function HandListSection({ hands, currentHandId, onHandClick }: HandListSectionProps) {
+export function HandListSection({ hands, currentHandId, onHandClick, className }: HandListSectionProps) {
     const activeRef = useRef<HTMLButtonElement>(null)
 
     // Scroll to active hand
@@ -22,7 +23,7 @@ export function HandListSection({ hands, currentHandId, onHandClick }: HandListS
     }, [currentHandId])
 
     return (
-        <div className="w-full h-full bg-[#0e0e10] border-r border-[#1a1a1a] flex flex-col overflow-hidden">
+        <div className={cn("w-full h-full bg-[#0e0e10] border-r border-[#1a1a1a] flex flex-col overflow-hidden", className)}>
             {/* Header matching screenshot roughly */}
             <div className="h-[40px] px-4 flex items-center justify-between border-b border-[#1a1a1a] bg-[#141417] shrink-0">
                 <span className="text-[12px] font-bold text-zinc-400 tracking-wider">HAND LIST ({hands.length})</span>
@@ -56,8 +57,8 @@ export function HandListSection({ hands, currentHandId, onHandClick }: HandListS
 
                             {/* Center Info */}
                             <div className="flex-1 min-w-0 flex flex-col justify-center">
-                                {/* Only show description if it exists, otherwise empty since user requested removing redundant "Hand #N" */}
-                                {hand.description && (
+                                {/* Only show description if it is NOT just "Hand #N" */}
+                                {hand.description && !/^Hand #\d+$/.test(hand.description) && (
                                     <div className={cn(
                                         "text-[13px] font-medium leading-none mb-1 truncate",
                                         isActive ? "text-white" : "text-zinc-400 group-hover:text-zinc-200"
