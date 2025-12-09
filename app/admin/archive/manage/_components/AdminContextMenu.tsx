@@ -55,6 +55,7 @@ import {
   createStream,
 } from '@/app/actions/archive-manage'
 import { useQueryClient } from '@tanstack/react-query'
+import { ManualHandDialog } from './ManualHandDialog'
 
 type NodeType = 'tournament' | 'event' | 'stream' | 'unsorted'
 
@@ -85,6 +86,7 @@ export function AdminContextMenu({
   const [createType, setCreateType] = useState<'event' | 'stream'>('event')
   const [createName, setCreateName] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [manualHandDialogOpen, setManualHandDialogOpen] = useState(false)
 
   const refreshData = () => {
     queryClient.invalidateQueries({ queryKey: ['archive'] })
@@ -233,6 +235,12 @@ export function AdminContextMenu({
           {/* Stream Menu */}
           {nodeType === 'stream' && (
             <>
+              <ContextMenuItem
+                onClick={() => setManualHandDialogOpen(true)}
+              >
+                <Clapperboard className="mr-2 h-4 w-4" />
+                Record Hand Manually
+              </ContextMenuItem>
               <ContextMenuItem onClick={onMoveToRequest}>
                 <FolderInput className="mr-2 h-4 w-4" />
                 Move to...
@@ -240,7 +248,7 @@ export function AdminContextMenu({
               <ContextMenuItem asChild>
                 <Link href={`/admin/streams/${nodeId}/recorder`} className="flex items-center cursor-pointer">
                   <Clapperboard className="mr-2 h-4 w-4" />
-                  Record Hands
+                  Record Hands (Recorder)
                 </Link>
               </ContextMenuItem>
               <ContextMenuSeparator />
@@ -277,7 +285,19 @@ export function AdminContextMenu({
             Delete
           </ContextMenuItem>
         </ContextMenuContent>
-      </ContextMenu>
+      </ContextMenu >
+
+      {/* Manual Hand Dialog */}
+      {
+        nodeType === 'stream' && (
+          <ManualHandDialog
+            open={manualHandDialogOpen}
+            onOpenChange={setManualHandDialogOpen}
+            streamId={nodeId}
+            streamName={nodeName}
+          />
+        )
+      }
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
