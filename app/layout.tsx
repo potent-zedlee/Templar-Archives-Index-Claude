@@ -76,10 +76,7 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
       </head>
       <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable} antialiased bg-textured`}>
-        {/* Skip to main content link - WCAG 2.4.1 */}
-        <a href="#main-content" className="skip-link">
-          Skip to main content
-        </a>
+
         <Providers>
           <main id="main-content" role="main">
             {children}
