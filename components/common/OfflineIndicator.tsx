@@ -1,39 +1,8 @@
 'use client'
 
-import { useOnlineStatus } from '@/lib/hooks/use-online-status'
-import { WifiOff, Wifi } from 'lucide-react'
-import { motion, AnimatePresence } from 'motion/react'
-
-/**
- * 오프라인 상태 표시 배너
- * 네트워크 연결이 끊어졌을 때 화면 상단에 표시되는 알림 배너
- */
+// 오프라인 상태 표시 기능 비활성화 요청으로 인해 null 반환
 export function OfflineIndicator() {
-  const isOnline = useOnlineStatus()
-
-  return (
-    <AnimatePresence>
-      {!isOnline && (
-        <motion.div
-          initial={{ y: -100, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: -100, opacity: 0 }}
-          transition={{ duration: 0.3, ease: 'easeOut' }}
-          className="fixed top-0 left-0 right-0 z-50 bg-destructive text-destructive-foreground px-4 py-3 shadow-lg"
-          role="alert"
-          aria-live="assertive"
-        >
-          <div className="container mx-auto flex items-center justify-center gap-2">
-            <WifiOff className="h-5 w-5" aria-hidden="true" />
-            <p className="text-sm font-medium">
-              네트워크 연결이 끊어졌습니다. 일부 기능이 제한됩니다.
-            </p>
-          </div>
-        </motion.div>
-      )}
-
-    </AnimatePresence>
-  )
+  return null
 }
 
 /**
