@@ -28,7 +28,7 @@ export default async function HandReplayerPage({ params }: PageProps) {
     }
 
     return (
-        <div className="min-h-screen bg-background text-foreground">
+        <div className="h-screen w-full bg-background text-foreground overflow-hidden">
             <HandReplayer
                 stream={data.stream}
                 hands={data.hands}

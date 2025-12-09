@@ -56,13 +56,15 @@ export function HandListSection({ hands, currentHandId, onHandClick }: HandListS
 
                             {/* Center Info */}
                             <div className="flex-1 min-w-0 flex flex-col justify-center">
-                                <div className={cn(
-                                    "text-[13px] font-medium leading-none mb-1",
-                                    isActive ? "text-white" : "text-zinc-400 group-hover:text-zinc-200"
-                                )}>
-                                    Hand #{hand.number}
-                                </div>
-                                {/* Optional: Timestamp or Description? Screenshot shows just "Hand #1" */}
+                                {/* Only show description if it exists, otherwise empty since user requested removing redundant "Hand #N" */}
+                                {hand.description && (
+                                    <div className={cn(
+                                        "text-[13px] font-medium leading-none mb-1 truncate",
+                                        isActive ? "text-white" : "text-zinc-400 group-hover:text-zinc-200"
+                                    )}>
+                                        {hand.description}
+                                    </div>
+                                )}
                             </div>
 
                             {/* Right Info: Chips/Pot (Green) */}
