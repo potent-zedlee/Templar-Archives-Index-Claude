@@ -210,6 +210,8 @@ export function useAutoSearch<T = unknown>(
   const { debounceMs = 300, ...searchOptions } = options
   const { results, isLoading, error, search, isAlgoliaEnabled } = useAlgoliaSearch<T>()
 
+  const searchOptionsJson = JSON.stringify(searchOptions)
+
   useEffect(() => {
     if (!query.trim()) {
       return
@@ -220,7 +222,7 @@ export function useAutoSearch<T = unknown>(
     }, debounceMs)
 
     return () => clearTimeout(timeoutId)
-  }, [query, debounceMs, search, JSON.stringify(searchOptions)])
+  }, [query, debounceMs, search, searchOptionsJson, searchOptions])
 
   return {
     results,

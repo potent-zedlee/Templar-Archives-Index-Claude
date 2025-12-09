@@ -116,6 +116,256 @@ export function GlobalUploadManager() {
   )
 
   /**
+   * 취소 핸들러
+   */
+  const handleCancel = useCallback(
+    (taskId: string) => {
+      const controller = uploadControllersRef.current.get(taskId)
+      if (controller) {
+        controller.abort()
+      }
+
+      const existingToastId = toastIdsRef.current.get(taskId)
+      if (existingToastId) {
+        toast.dismiss(existingToastId)
+      }
+
+      removeTask(taskId)
+      toastIdsRef.current.delete(taskId)
+    },
+    [removeTask]
+  )
+
+  /**
+   * 재개 핸들러
+   */
+  const handleResume = useCallback(
+    (taskId: string) => {
+      const task = tasks.find((t) => t.id === taskId)
+      if (task && task.status === 'paused') {
+        setTaskStatus(taskId, 'pending')
+      }
+    },
+    [tasks, setTaskStatus]
+  )
+
+  /**
+   * 일시정지 Toast
+   */
+  const showPausedToast = useCallback(
+    (taskId: string, fileName: string, progress: number) => {
+      const existingToastId = toastIdsRef.current.get(taskId)
+      if (existingToastId) {
+        toast.dismiss(existingToastId)
+      }
+
+      const newToastId = toast.custom(
+        () => (
+          <div className="bg-background border rounded-lg shadow-lg p-4 w-[320px]">
+            <div className="flex items-center gap-2 mb-2">
+              <Pause className="h-4 w-4 text-yellow-500" />
+              <span className="text-sm font-medium">Upload Paused</span>
+            </div>
+            <p className="text-sm text-muted-foreground truncate mb-2">
+              {fileName}
+            </p>
+            <Progress value={progress} className="h-2 mb-3" />
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                className="flex-1 h-8 text-xs"
+                onClick={() => handleResume(taskId)}
+              >
+                <Play className="h-3 w-3 mr-1" />
+                Resume
+              </Button>
+              <Button
+                size="sm"
+                variant="destructive"
+                className="h-8 text-xs"
+                onClick={() => handleCancel(taskId)}
+              >
+                <X className="h-3 w-3" />
+              </Button>
+            </div>
+          </div>
+        ),
+        { duration: Infinity }
+      )
+      toastIdsRef.current.set(taskId, newToastId)
+    },
+    [handleResume, handleCancel]
+  )
+
+  /**
+   * 일시정지 핸들러
+   */
+  const handlePause = useCallback(
+    (taskId: string) => {
+      const controller = uploadControllersRef.current.get(taskId)
+      if (controller) {
+        controller.isPaused = true
+        controller.abort()
+      }
+
+      const task = tasks.find((t) => t.id === taskId)
+      if (task) {
+        showPausedToast(taskId, task.fileName, task.progress)
+      }
+    },
+    [tasks, showPausedToast]
+  )
+
+  /**
+   * 에러 Toast
+   */
+  const showErrorToast = useCallback(
+    (taskId: string, fileName: string, errorMessage: string) => {
+      const existingToastId = toastIdsRef.current.get(taskId)
+      if (existingToastId) {
+        toast.dismiss(existingToastId)
+      }
+
+      toast.custom(
+        () => (
+          <div className="bg-background border border-destructive/50 rounded-lg shadow-lg p-4 w-[320px]">
+            <div className="flex items-center gap-2 mb-2">
+              <AlertCircle className="h-4 w-4 text-destructive" />
+              <span className="text-sm font-medium">Upload Failed</span>
+            </div>
+            <p className="text-sm text-muted-foreground truncate">{fileName}</p>
+            <p className="text-xs text-destructive mt-1">{errorMessage}</p>
+            <Button
+              size="sm"
+              variant="outline"
+              className="w-full h-8 text-xs mt-3"
+              onClick={() => removeTask(taskId)}
+            >
+              Dismiss
+            </Button>
+          </div>
+        ),
+        { duration: 15000 }
+      )
+
+      toastIdsRef.current.delete(taskId)
+    },
+    [removeTask]
+  )
+
+  /**
+   * 업로드 완료 Toast
+   */
+  const showCompletedToast = useCallback(
+    (taskId: string, fileName: string, _tournamentId: string, _eventId: string) => {
+      const existingToastId = toastIdsRef.current.get(taskId)
+      if (existingToastId) {
+        toast.dismiss(existingToastId)
+      }
+
+      toast.custom(
+        () => (
+          <div className="bg-background border rounded-lg shadow-lg p-4 w-[320px]">
+            <div className="flex items-center gap-2 mb-2">
+              <CheckCircle className="h-4 w-4 text-green-500" />
+              <span className="text-sm font-medium">Upload Complete</span>
+            </div>
+            <p className="text-sm text-muted-foreground truncate mb-3">
+              {fileName}
+            </p>
+            <Link href="/admin/archive/pipeline" passHref>
+              <Button size="sm" variant="outline" className="w-full h-8 text-xs">
+                <ExternalLink className="h-3 w-3 mr-1" />
+                Go to Pipeline
+              </Button>
+            </Link>
+          </div>
+        ),
+        { duration: 10000 }
+      )
+
+      toastIdsRef.current.delete(taskId)
+    },
+    []
+  )
+
+  /**
+   * 업로드 진행 Toast 업데이트
+   */
+  const updateUploadToast = useCallback(
+    (taskId: string, fileName: string, progress: number, speed: number, remaining: number) => {
+      const existingToastId = toastIdsRef.current.get(taskId)
+
+      const toastContent = (
+        <div className="w-full space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="font-medium text-sm truncate max-w-[180px]">
+              {fileName}
+            </span>
+            <span className="text-xs text-muted-foreground">{progress}%</span>
+          </div>
+          <Progress value={progress} className="h-2" />
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <span>{speed > 0 ? formatSpeed(speed) : 'Calculating...'}</span>
+            <span>{remaining > 0 ? formatRemainingTime(remaining) : ''}</span>
+          </div>
+          <div className="flex gap-2 mt-2">
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 text-xs"
+              onClick={() => handlePause(taskId)}
+            >
+              <Pause className="h-3 w-3 mr-1" />
+              Pause
+            </Button>
+            <Button
+              size="sm"
+              variant="destructive"
+              className="h-7 text-xs"
+              onClick={() => handleCancel(taskId)}
+            >
+              <X className="h-3 w-3 mr-1" />
+              Cancel
+            </Button>
+          </div>
+        </div>
+      )
+
+      if (existingToastId) {
+        toast.custom(
+          () => (
+            <div className="bg-background border rounded-lg shadow-lg p-4 w-[320px]">
+              <div className="flex items-center gap-2 mb-2">
+                <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                <span className="text-sm font-medium">Uploading</span>
+              </div>
+              {toastContent}
+            </div>
+          ),
+          { id: existingToastId, duration: Infinity }
+        )
+      } else {
+        const newToastId = toast.custom(
+          () => (
+            <div className="bg-background border rounded-lg shadow-lg p-4 w-[320px]">
+              <div className="flex items-center gap-2 mb-2">
+                <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                <span className="text-sm font-medium">Uploading</span>
+              </div>
+              {toastContent}
+            </div>
+          ),
+          { duration: Infinity }
+        )
+        toastIdsRef.current.set(taskId, newToastId)
+      }
+    },
+    [handlePause, handleCancel]
+  )
+
+  /**
    * 단일 업로드 작업 실행
    */
   const executeUpload = useCallback(
@@ -268,257 +518,10 @@ export function GlobalUploadManager() {
       setTaskProgress,
       setTaskCompleted,
       uploadChunk,
+      updateUploadToast,
+      showCompletedToast,
+      showErrorToast,
     ]
-  )
-
-  /**
-   * 업로드 진행 Toast 업데이트
-   */
-  const updateUploadToast = useCallback(
-    (taskId: string, fileName: string, progress: number, speed: number, remaining: number) => {
-      const existingToastId = toastIdsRef.current.get(taskId)
-
-      const toastContent = (
-        <div className="w-full space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="font-medium text-sm truncate max-w-[180px]">
-              {fileName}
-            </span>
-            <span className="text-xs text-muted-foreground">{progress}%</span>
-          </div>
-          <Progress value={progress} className="h-2" />
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span>{speed > 0 ? formatSpeed(speed) : 'Calculating...'}</span>
-            <span>{remaining > 0 ? formatRemainingTime(remaining) : ''}</span>
-          </div>
-          <div className="flex gap-2 mt-2">
-            <Button
-              size="sm"
-              variant="outline"
-              className="h-7 text-xs"
-              onClick={() => handlePause(taskId)}
-            >
-              <Pause className="h-3 w-3 mr-1" />
-              Pause
-            </Button>
-            <Button
-              size="sm"
-              variant="destructive"
-              className="h-7 text-xs"
-              onClick={() => handleCancel(taskId)}
-            >
-              <X className="h-3 w-3 mr-1" />
-              Cancel
-            </Button>
-          </div>
-        </div>
-      )
-
-      if (existingToastId) {
-        toast.custom(
-          () => (
-            <div className="bg-background border rounded-lg shadow-lg p-4 w-[320px]">
-              <div className="flex items-center gap-2 mb-2">
-                <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                <span className="text-sm font-medium">Uploading</span>
-              </div>
-              {toastContent}
-            </div>
-          ),
-          { id: existingToastId, duration: Infinity }
-        )
-      } else {
-        const newToastId = toast.custom(
-          () => (
-            <div className="bg-background border rounded-lg shadow-lg p-4 w-[320px]">
-              <div className="flex items-center gap-2 mb-2">
-                <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                <span className="text-sm font-medium">Uploading</span>
-              </div>
-              {toastContent}
-            </div>
-          ),
-          { duration: Infinity }
-        )
-        toastIdsRef.current.set(taskId, newToastId)
-      }
-    },
-    []
-  )
-
-  /**
-   * 업로드 완료 Toast
-   */
-  const showCompletedToast = useCallback(
-    (taskId: string, fileName: string, _tournamentId: string, _eventId: string) => {
-      const existingToastId = toastIdsRef.current.get(taskId)
-      if (existingToastId) {
-        toast.dismiss(existingToastId)
-      }
-
-      toast.custom(
-        () => (
-          <div className="bg-background border rounded-lg shadow-lg p-4 w-[320px]">
-            <div className="flex items-center gap-2 mb-2">
-              <CheckCircle className="h-4 w-4 text-green-500" />
-              <span className="text-sm font-medium">Upload Complete</span>
-            </div>
-            <p className="text-sm text-muted-foreground truncate mb-3">
-              {fileName}
-            </p>
-            <Link href="/admin/archive/pipeline" passHref>
-              <Button size="sm" variant="outline" className="w-full h-8 text-xs">
-                <ExternalLink className="h-3 w-3 mr-1" />
-                Go to Pipeline
-              </Button>
-            </Link>
-          </div>
-        ),
-        { duration: 10000 }
-      )
-
-      toastIdsRef.current.delete(taskId)
-    },
-    []
-  )
-
-  /**
-   * 에러 Toast
-   */
-  const showErrorToast = useCallback(
-    (taskId: string, fileName: string, errorMessage: string) => {
-      const existingToastId = toastIdsRef.current.get(taskId)
-      if (existingToastId) {
-        toast.dismiss(existingToastId)
-      }
-
-      toast.custom(
-        () => (
-          <div className="bg-background border border-destructive/50 rounded-lg shadow-lg p-4 w-[320px]">
-            <div className="flex items-center gap-2 mb-2">
-              <AlertCircle className="h-4 w-4 text-destructive" />
-              <span className="text-sm font-medium">Upload Failed</span>
-            </div>
-            <p className="text-sm text-muted-foreground truncate">{fileName}</p>
-            <p className="text-xs text-destructive mt-1">{errorMessage}</p>
-            <Button
-              size="sm"
-              variant="outline"
-              className="w-full h-8 text-xs mt-3"
-              onClick={() => removeTask(taskId)}
-            >
-              Dismiss
-            </Button>
-          </div>
-        ),
-        { duration: 15000 }
-      )
-
-      toastIdsRef.current.delete(taskId)
-    },
-    [removeTask]
-  )
-
-  /**
-   * 일시정지 Toast
-   */
-  const showPausedToast = useCallback(
-    (taskId: string, fileName: string, progress: number) => {
-      const existingToastId = toastIdsRef.current.get(taskId)
-      if (existingToastId) {
-        toast.dismiss(existingToastId)
-      }
-
-      const newToastId = toast.custom(
-        () => (
-          <div className="bg-background border rounded-lg shadow-lg p-4 w-[320px]">
-            <div className="flex items-center gap-2 mb-2">
-              <Pause className="h-4 w-4 text-yellow-500" />
-              <span className="text-sm font-medium">Upload Paused</span>
-            </div>
-            <p className="text-sm text-muted-foreground truncate mb-2">
-              {fileName}
-            </p>
-            <Progress value={progress} className="h-2 mb-3" />
-            <div className="flex gap-2">
-              <Button
-                size="sm"
-                variant="outline"
-                className="flex-1 h-8 text-xs"
-                onClick={() => handleResume(taskId)}
-              >
-                <Play className="h-3 w-3 mr-1" />
-                Resume
-              </Button>
-              <Button
-                size="sm"
-                variant="destructive"
-                className="h-8 text-xs"
-                onClick={() => handleCancel(taskId)}
-              >
-                <X className="h-3 w-3" />
-              </Button>
-            </div>
-          </div>
-        ),
-        { duration: Infinity }
-      )
-      toastIdsRef.current.set(taskId, newToastId)
-    },
-    []
-  )
-
-  /**
-   * 일시정지 핸들러
-   */
-  const handlePause = useCallback(
-    (taskId: string) => {
-      const controller = uploadControllersRef.current.get(taskId)
-      if (controller) {
-        controller.isPaused = true
-        controller.abort()
-      }
-
-      const task = tasks.find((t) => t.id === taskId)
-      if (task) {
-        showPausedToast(taskId, task.fileName, task.progress)
-      }
-    },
-    [tasks, showPausedToast]
-  )
-
-  /**
-   * 재개 핸들러
-   */
-  const handleResume = useCallback(
-    (taskId: string) => {
-      const task = tasks.find((t) => t.id === taskId)
-      if (task && task.status === 'paused') {
-        setTaskStatus(taskId, 'pending')
-      }
-    },
-    [tasks, setTaskStatus]
-  )
-
-  /**
-   * 취소 핸들러
-   */
-  const handleCancel = useCallback(
-    (taskId: string) => {
-      const controller = uploadControllersRef.current.get(taskId)
-      if (controller) {
-        controller.abort()
-      }
-
-      const existingToastId = toastIdsRef.current.get(taskId)
-      if (existingToastId) {
-        toast.dismiss(existingToastId)
-      }
-
-      removeTask(taskId)
-      toastIdsRef.current.delete(taskId)
-    },
-    [removeTask]
   )
 
   /**

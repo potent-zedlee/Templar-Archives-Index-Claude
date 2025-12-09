@@ -7,7 +7,7 @@
 
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -127,14 +127,14 @@ export default function AuditLogsPage() {
     setCurrentPage(newPage)
   }
 
-  const checkAccess = async () => {
+  const checkAccess = useCallback(() => {
     const currentUser = auth.currentUser
     if (!currentUser) router.push('/auth/login')
     else if (!isAdmin(currentUser.email)) {
       router.push('/')
       toast.error('관리자 권한이 필요합니다')
     }
-  }
+  }, [router])
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
@@ -142,7 +142,7 @@ export default function AuditLogsPage() {
       else router.push('/auth/login')
     })
     return () => unsubscribe()
-  }, [])
+  }, [checkAccess, router])
 
   const handleExportCSV = () => {
     if (logs.length === 0) {

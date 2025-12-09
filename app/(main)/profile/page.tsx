@@ -55,7 +55,6 @@ export default function ProfileClient() {
   // Initialize form when profile loads
   useEffect(() => {
     if (profile) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setNickname(profile.nickname)
       setBio(profile.bio || "")
       setPokerExperience(profile.pokerExperience || "")
