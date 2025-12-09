@@ -77,9 +77,16 @@ function getAdminApp(): App {
   }
 
   // GOOGLE_APPLICATION_CREDENTIALS 또는 ADC 환경
-  return initializeApp({
-    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'templar-archives-index',
-  })
+  try {
+    return initializeApp({
+      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'templar-archives-index',
+    })
+  } catch (error) {
+    console.error('Firebase Admin SDK ADC initialization failed:', error)
+    // Return a dummy app to prevent module crash, but requests will fail later
+    // Alternatively, re-throw if critical.
+    throw error
+  }
 }
 
 /**
