@@ -1,7 +1,7 @@
 'use client'
 
 import dynamic from 'next/dynamic'
-import { Suspense, useState, useSyncExternalStore, useCallback } from 'react'
+import { Suspense, useState, useEffect, useCallback } from 'react'
 import { Component, ReactNode } from 'react'
 
 // LiquidEther는 Three.js WebGL을 사용하므로 클라이언트에서만 렌더링
@@ -15,31 +15,6 @@ interface LiquidEtherBackgroundProps {
   colors?: string[]
   className?: string
 }
-
-// WebGL 지원 여부를 한 번만 체크
-function checkWebGLSupport(): boolean {
-  if (typeof window === 'undefined') return true // SSR에서는 true 반환
-  try {
-    const canvas = document.createElement('canvas')
-    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl')
-    return !!gl
-  } catch {
-    return false
-  }
-}
-
-// 캐시된 WebGL 지원 여부
-let cachedWebGLSupport: boolean | null = null
-
-function getWebGLSupport(): boolean {
-  if (cachedWebGLSupport === null) {
-    cachedWebGLSupport = checkWebGLSupport()
-  }
-  return cachedWebGLSupport
-}
-
-// SSR용 subscribe (no-op)
-const subscribeNoop = () => () => {}
 
 /**
  * LiquidEther Background Wrapper
@@ -55,47 +30,59 @@ export function LiquidEtherBackground({
   colors = ['#5227FF', '#FF9FFC', '#B19EEF'],
   className = '',
 }: LiquidEtherBackgroundProps) {
+  const [mounted, setMounted] = useState(false)
   const [hasError, setHasError] = useState(false)
+  const [isWebGLSupported, setIsWebGLSupported] = useState(true)
 
-  // useSyncExternalStore로 hydration mismatch 방지
-  const isWebGLSupported = useSyncExternalStore(
-    subscribeNoop,
-    getWebGLSupport,
-    () => true // SSR에서는 true
-  )
+  useEffect(() => {
+    // 클라이언트 마운트 후 WebGL 체크 - 의도된 hydration 패턴
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMounted(true)
+    // WebGL 지원 여부 확인
+    try {
+      const canvas = document.createElement('canvas')
+      const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl')
+      if (!gl) {
+        setIsWebGLSupported(false)
+      }
+    } catch {
+      setIsWebGLSupported(false)
+    }
+  }, [])
 
   const handleError = useCallback(() => {
     setHasError(true)
   }, [])
 
-  // WebGL 미지원 또는 에러 시 fallback
-  if (!isWebGLSupported || hasError) {
-    return (
-      <div className={`relative min-h-screen ${className}`}>
-        {children}
-      </div>
-    )
-  }
+  const showLiquidEther = mounted && isWebGLSupported && !hasError
 
   return (
     <div className={`relative min-h-screen ${className}`}>
-      {/* Background Layer */}
-      <div className="fixed inset-0 z-0" style={{ width: '100vw', height: '100vh' }}>
-        <Suspense fallback={null}>
-          <ErrorBoundary onError={handleError}>
-            <LiquidEther
-              colors={colors}
-              autoDemo={true}
-              autoSpeed={0.5}
-              autoIntensity={2.0}
-              resolution={0.5}
-              mouseForce={20}
-              cursorSize={100}
-              className="!pointer-events-auto"
-              style={{ width: '100%', height: '100%' }}
-            />
-          </ErrorBoundary>
-        </Suspense>
+      {/* Background Layer - LiquidEther WebGL Animation */}
+      <div
+        className="fixed inset-0 z-0"
+        style={{
+          width: '100vw',
+          height: '100vh',
+          background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)'
+        }}
+      >
+        {showLiquidEther && (
+          <Suspense fallback={null}>
+            <ErrorBoundary onError={handleError}>
+              <LiquidEther
+                colors={colors}
+                autoDemo={true}
+                autoSpeed={0.5}
+                autoIntensity={2.0}
+                resolution={0.5}
+                mouseForce={20}
+                cursorSize={100}
+                style={{ width: '100%', height: '100%' }}
+              />
+            </ErrorBoundary>
+          </Suspense>
+        )}
       </div>
 
       {/* Content Layer */}
