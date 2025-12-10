@@ -10,7 +10,7 @@ interface ImageBlurEffectProps {
 }
 
 /**
- * 마우스가 요소 위에 올라가면 선명해지고, 벗어나면 흐려지는 효과
+ * 기본은 선명, 마우스 hover 시 흐려지는 효과
  */
 export function ImageBlurEffect({
   children,
@@ -25,7 +25,7 @@ export function ImageBlurEffect({
       ref={containerRef}
       className={className}
       style={{
-        filter: isHovered ? 'blur(0px)' : `blur(${baseBlur}px)`,
+        filter: isHovered ? `blur(${baseBlur}px)` : 'blur(0px)',
         transition: 'filter 0.3s ease-out',
         cursor: 'pointer',
       }}

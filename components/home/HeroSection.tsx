@@ -44,10 +44,10 @@ export function HeroSection() {
             <Image
               src="/logo.svg"
               alt="Templar Archives"
-              width={800}
-              height={200}
+              width={1200}
+              height={300}
               priority
-              className="h-32 sm:h-48 md:h-64 lg:h-80 w-auto"
+              className="h-32 sm:h-48 md:h-80 lg:h-[28rem] xl:h-[36rem] w-auto"
             />
           </ImageBlurEffect>
 
