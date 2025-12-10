@@ -118,7 +118,6 @@ function DashboardContent() {
   const [tournamentDialogOpen, setTournamentDialogOpen] = useState(false)
   const [newTournamentName, setNewTournamentName] = useState('')
   const [newCategory, setNewCategory] = useState<TournamentCategory>('EPT')
-  const [newGameType, setNewGameType] = useState<'tournament' | 'cash-game'>('tournament')
   const [newLocation, setNewLocation] = useState('')
   const [newCity, setNewCity] = useState('')
   const [newCountry, setNewCountry] = useState('')
@@ -329,7 +328,6 @@ function DashboardContent() {
           // Reset form
           setNewTournamentName('')
           setNewCategory('EPT')
-          setNewGameType('tournament')
           setNewLocation('')
           setNewCity('')
           setNewCountry('')
@@ -341,7 +339,6 @@ function DashboardContent() {
           // Reset form
           setNewTournamentName('')
           setNewCategory('EPT')
-          setNewGameType('tournament')
           setNewLocation('')
           setNewCity('')
           setNewCountry('')
@@ -352,8 +349,6 @@ function DashboardContent() {
         setNewTournamentName={setNewTournamentName}
         newCategory={newCategory}
         setNewCategory={setNewCategory}
-        newGameType={newGameType}
-        setNewGameType={setNewGameType}
         newLocation={newLocation}
         setNewLocation={setNewLocation}
         newCity={newCity}
