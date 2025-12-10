@@ -1,9 +1,14 @@
 'use client'
 
 import Link from 'next/link'
-import Image from 'next/image'
+import dynamic from 'next/dynamic'
 import { ArrowRight } from 'lucide-react'
-import { ImageBlurEffect } from '@/components/effects/ImageBlurEffect'
+
+// WebGL 컴포넌트는 SSR 비활성화
+const LogoShapeBlur = dynamic(
+  () => import('@/components/effects/LogoShapeBlur').then((mod) => mod.LogoShapeBlur),
+  { ssr: false }
+)
 
 // 상수 정의
 const HERO_CONTENT = {
@@ -36,20 +41,19 @@ export function HeroSection() {
 
       <div className="container max-w-7xl mx-auto px-4 md:px-6 relative z-10">
         <div className="flex flex-col items-center text-center space-y-6 sm:space-y-8">
-          {/* Logo with blur effect - 마우스 hover 시 선명해짐 */}
-          <ImageBlurEffect
-            baseBlur={5}
-            className="mb-6 sm:mb-8"
-          >
-            <Image
+          {/* Logo with ShapeBlur effect - 마우스 주변만 선명 */}
+          <div className="mb-6 sm:mb-8">
+            <LogoShapeBlur
               src="/logo.svg"
               alt="Templar Archives"
-              width={1200}
-              height={300}
-              priority
-              className="h-32 sm:h-48 md:h-80 lg:h-[28rem] xl:h-[36rem] w-auto"
+              width={800}
+              height={250}
+              focusSize={0.2}
+              focusEdge={0.15}
+              blurAmount={6}
+              className="w-auto h-32 sm:h-48 md:h-64 lg:h-80 xl:h-96"
             />
-          </ImageBlurEffect>
+          </div>
 
           {/* Subtitle */}
           <div className="space-y-3 sm:space-y-4">

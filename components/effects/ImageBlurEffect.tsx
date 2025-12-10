@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useEffect, useState, ReactNode } from 'react'
+import { useRef, useState, ReactNode } from 'react'
 
 interface ImageBlurEffectProps {
   children: ReactNode
