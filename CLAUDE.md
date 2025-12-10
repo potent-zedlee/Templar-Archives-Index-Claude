@@ -851,5 +851,62 @@ export function useRealtimeActiveJobs() {
 
 ---
 
+## 성능 최적화 가이드라인
+
+### Core Web Vitals (INP) 최적화
+
+**INP(Interaction to Next Paint)**는 사용자 상호작용 후 다음 화면 업데이트까지 걸리는 시간입니다.
+- **Good**: < 200ms
+- **Needs Improvement**: 200-500ms
+- **Poor**: > 500ms
+
+### WebGL/Canvas 애니메이션 최적화 (필수)
+
+무거운 애니메이션(WebGL, Canvas, Three.js 등)을 사용할 때 **반드시** 다음 최적화를 적용:
+
+```typescript
+// 1. GPU 레이어 분리 (CSS)
+style={{
+  willChange: 'transform',
+  transform: 'translateZ(0)',
+  contain: 'strict',
+  isolation: 'isolate',
+}}
+
+// 2. requestIdleCallback으로 렌더링 우선순위 낮춤
+function renderLoop() {
+  if ('requestIdleCallback' in window) {
+    requestIdleCallback(() => {
+      render();
+      requestAnimationFrame(renderLoop);
+    }, { timeout: 50 });
+  } else {
+    render();
+    requestAnimationFrame(renderLoop);
+  }
+}
+
+// 3. pointer-events: none으로 불필요한 이벤트 차단
+className="pointer-events-none"
+```
+
+**적용 예시**: `components/backgrounds/LiquidEther.tsx`, `LiquidEtherBackground.tsx`
+
+### 왜 필요한가?
+
+WebGL 렌더링이 메인 스레드에서 실행되면 사용자 입력 처리가 지연됩니다.
+- `will-change`, `transform: translateZ(0)` → GPU 레이어 분리로 합성 최적화
+- `contain: strict` → 레이아웃/페인트 격리
+- `requestIdleCallback` → 브라우저 idle 상태에서만 렌더링, 입력 처리 우선
+
+### 금지 사항 (INP 악화 원인)
+
+- ❌ requestAnimationFrame만 사용한 무한 렌더 루프
+- ❌ 마우스 이벤트 핸들러에서 무거운 계산
+- ❌ 배경 애니메이션에 pointer-events 활성화
+- ❌ contain 없이 fixed 애니메이션 레이어
+
+---
+
 **마지막 업데이트**: 2025-12-10
-**문서 버전**: 8.9 (기술 스택 버전 업데이트, Cash Game 기능 제거 반영)
+**문서 버전**: 9.0 (WebGL/Canvas INP 최적화 가이드라인 추가)
