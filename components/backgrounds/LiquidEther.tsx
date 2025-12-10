@@ -1064,8 +1064,17 @@ export default function LiquidEther({
       }
       loop() {
         if (!this.running) return;
-        this.render();
-        rafRef.current = requestAnimationFrame(this._loop);
+        // requestIdleCallback으로 렌더링 우선순위 낮춤 (INP 개선)
+        if ('requestIdleCallback' in window) {
+          (window as any).requestIdleCallback(() => {
+            if (!this.running) return;
+            this.render();
+            rafRef.current = requestAnimationFrame(this._loop);
+          }, { timeout: 50 });
+        } else {
+          this.render();
+          rafRef.current = requestAnimationFrame(this._loop);
+        }
       }
       start() {
         if (this.running) return;

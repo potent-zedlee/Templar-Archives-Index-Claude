@@ -64,7 +64,12 @@ export function LiquidEtherBackground({
         style={{
           width: '100vw',
           height: '100vh',
-          background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)'
+          background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)',
+          // GPU 레이어 분리 및 렌더링 최적화
+          willChange: 'transform',
+          transform: 'translateZ(0)',
+          contain: 'strict',
+          isolation: 'isolate',
         }}
       >
         {showLiquidEther && (
