@@ -17,7 +17,7 @@ interface StatsSectionProps {
 
 export function StatsSection({ stats }: StatsSectionProps) {
   return (
-    <section className="py-12 md:py-16 bg-muted" aria-label="플랫폼 통계">
+    <section className="py-12 md:py-16 bg-black/40 backdrop-blur-sm" aria-label="플랫폼 통계">
       <div className="container max-w-7xl mx-auto px-4 md:px-6">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
           {STATS_CONFIG.map(({ key, icon, label }) => (

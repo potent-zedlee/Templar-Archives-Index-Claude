@@ -15,8 +15,8 @@ export function HeroSection() {
       className="relative py-16 sm:py-20 md:py-32 overflow-hidden"
       aria-labelledby="hero-title"
     >
-      {/* Background with gold glow effect */}
-      <div className="absolute inset-0 bg-gradient-to-b from-muted/50 to-background" aria-hidden="true" />
+      {/* Background with gold glow effect - transparent to show LiquidEther */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black/30 to-transparent" aria-hidden="true" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-gold-400/10 via-transparent to-transparent" aria-hidden="true" />
 
       {/* Grid pattern overlay */}

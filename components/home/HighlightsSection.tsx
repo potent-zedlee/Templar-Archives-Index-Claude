@@ -21,7 +21,7 @@ interface HighlightsSectionProps {
 export function HighlightsSection({ highlights }: HighlightsSectionProps) {
   return (
     <section
-      className="py-12 md:py-16 bg-background"
+      className="py-12 md:py-16 bg-black/40 backdrop-blur-sm"
       aria-labelledby="highlights-title"
     >
       <div className="container max-w-7xl mx-auto px-4 md:px-6">
