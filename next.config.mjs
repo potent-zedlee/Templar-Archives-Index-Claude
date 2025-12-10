@@ -10,9 +10,15 @@ const nextConfig = {
   // Specify the workspace root to silence warnings
   output: 'standalone',
   outputFileTracingRoot: import.meta.dirname,
+
+  // 빌드 시간 최적화 - TypeScript/ESLint는 CI에서 별도 실행
   typescript: {
-    ignoreBuildErrors: false,
+    ignoreBuildErrors: true, // CI에서 npx tsc --noEmit 별도 실행
   },
+  eslint: {
+    ignoreDuringBuilds: true, // CI에서 npm run lint 별도 실행
+  },
+
   // React 19 Compiler - 자동 메모이제이션 (useMemo/useCallback 불필요)
   reactCompiler: true,
   // Empty turbopack config to silence webpack/turbopack conflict warning
