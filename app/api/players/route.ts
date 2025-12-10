@@ -9,7 +9,7 @@
 import { NextResponse } from 'next/server'
 import { adminFirestore } from '@/lib/db/firebase-admin'
 import { COLLECTION_PATHS, type FirestorePlayer, type FirestoreHand } from '@/lib/db/firestore-types'
-import type { Timestamp } from 'firebase-admin/firestore'
+
 
 /**
  * Firestore Timestamp를 ISO 문자열로 변환
