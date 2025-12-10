@@ -1,5 +1,6 @@
 import Link from 'next/link'
-import { Sparkles, ArrowRight } from 'lucide-react'
+import Image from 'next/image'
+import { ArrowRight } from 'lucide-react'
 
 // 상수 정의
 const HERO_CONTENT = {
@@ -32,23 +33,21 @@ export function HeroSection() {
 
       <div className="container max-w-7xl mx-auto px-4 md:px-6 relative z-10">
         <div className="flex flex-col items-center text-center space-y-6 sm:space-y-8">
-          {/* Decorative icon */}
-          <div
-            className="inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 bg-gold-400/10 rounded-full border border-gold-400/20 mb-2 sm:mb-4"
-            aria-hidden="true"
-          >
-            <Sparkles className="w-7 h-7 sm:w-8 sm:h-8 text-gold-400" />
+          {/* Logo */}
+          <div className="mb-4 sm:mb-6">
+            <Image
+              src="/logo.svg"
+              alt="Templar Archives"
+              width={500}
+              height={100}
+              priority
+              className="h-20 sm:h-28 md:h-36 w-auto"
+            />
           </div>
 
-          {/* Title */}
+          {/* Subtitle */}
           <div className="space-y-3 sm:space-y-4">
-            <h1
-              id="hero-title"
-              className="text-4xl sm:text-5xl md:text-7xl font-bold tracking-tight"
-            >
-              <span className="text-gold-400">TEMPLAR</span>{' '}
-              <span className="text-foreground">ARCHIVES</span>
-            </h1>
+            <h1 id="hero-title" className="sr-only">Templar Archives</h1>
             <p className="text-lg sm:text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto px-4 sm:px-0">
               {HERO_CONTENT.subtitle}
             </p>
