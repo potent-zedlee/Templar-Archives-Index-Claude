@@ -35,12 +35,9 @@ export function StreamSelector({ selectedStreamId, onSelect }: StreamSelectorPro
 
     React.useEffect(() => {
         async function fetchStreams() {
-            if (debouncedQuery.length < 2) {
-                setResults([])
-                return
-            }
             setLoading(true)
             try {
+                // If query is empty or short, this will now return default streams (configured in server action)
                 const data = await searchStreams(debouncedQuery)
                 setResults(data)
             } catch (err) {
@@ -74,7 +71,7 @@ export function StreamSelector({ selectedStreamId, onSelect }: StreamSelectorPro
                 >
                     {selectedStream
                         ? `${selectedStream.name} (${selectedStream.eventName})`
-                        : selectedStreamId ? "Stream Selected" : "Search stream..."}
+                        : selectedStreamId ? "Stream Selected" : "Search stream... (shows recent by default)"}
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
             </PopoverTrigger>
