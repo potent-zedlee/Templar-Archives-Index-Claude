@@ -16,7 +16,7 @@ export default function MainLayout({
 }) {
   return (
     <LiquidEtherBackground
-      colors={['#1a1a2e', '#16213e', '#0f3460']}
+      colors={['#5227FF', '#FF9FFC', '#00D4FF']}
       className="bg-black"
     >
       <Header />
