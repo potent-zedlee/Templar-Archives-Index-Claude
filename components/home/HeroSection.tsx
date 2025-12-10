@@ -34,14 +34,14 @@ export function HeroSection() {
       <div className="container max-w-7xl mx-auto px-4 md:px-6 relative z-10">
         <div className="flex flex-col items-center text-center space-y-6 sm:space-y-8">
           {/* Logo */}
-          <div className="mb-4 sm:mb-6">
+          <div className="mb-6 sm:mb-8">
             <Image
               src="/logo.svg"
               alt="Templar Archives"
-              width={500}
-              height={100}
+              width={800}
+              height={200}
               priority
-              className="h-20 sm:h-28 md:h-36 w-auto"
+              className="h-32 sm:h-48 md:h-64 lg:h-80 w-auto"
             />
           </div>
 
