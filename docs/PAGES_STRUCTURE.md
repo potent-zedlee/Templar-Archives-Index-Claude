@@ -10,7 +10,6 @@
 
 **ARCHIVE 드롭다운**:
 - Tournament
-- Cash Game
 - Search
 
 **로그인 상태에 따른 변화**:
@@ -53,11 +52,7 @@
 **URL**: `/archive/tournament`
 **파일**: `app/archive/tournament/page.tsx`
 
-### 3.2 캐시 게임 아카이브
-**URL**: `/archive/cash-game`
-**파일**: `app/archive/cash-game/page.tsx`
-
-### 3.3 통합 아카이브
+### 3.2 통합 아카이브
 **파일**: `app/archive/page.tsx` (자동 리다이렉트 → `/archive/tournament`)
 
 ### 레이아웃
@@ -381,7 +376,6 @@ users
 | About | `/about` | `app/about/page.tsx` | - |
 | 검색 | `/search` | `app/search/page.tsx` | - |
 | 토너먼트 아카이브 | `/archive/tournament` | `app/archive/tournament/page.tsx` | - |
-| 캐시 게임 아카이브 | `/archive/cash-game` | `app/archive/cash-game/page.tsx` | - |
 | 플레이어 목록 | `/players` | `app/players/page.tsx` | - |
 | 플레이어 상세 | `/players/[id]` | `app/players/[id]/page.tsx` | - |
 | 핸드 상세 | `/hand/[id]` | `app/hand/[id]/page.tsx` | - |
@@ -402,10 +396,11 @@ users
 
 ---
 
-**마지막 업데이트**: 2025-11-28
-**버전**: 7.0
-**총 페이지**: 22개 (유저 14개, 관리자 6개, 인증 2개)
+**마지막 업데이트**: 2025-12-10
+**버전**: 8.0
+**총 페이지**: 45개+ (유저 페이지, 관리자 페이지, 인증 페이지, 법률 페이지)
 
 **변경 이력**:
+- v8.0: Cash Game 기능 제거, Admin 페이지 확장 (KAN, Security Logs, Audit Logs 등)
 - v7.0: NEWS, LIVE REPORTING, FORUM, Reporter 기능 제거, Firestore 완전 마이그레이션
 - v6.0: SubEvent → Event 전역 용어 변경, Flowbite 전면 도입

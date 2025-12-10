@@ -2,8 +2,8 @@
 
 > Templar Archives에서 React Query를 사용한 데이터 페칭 패턴
 
-**마지막 업데이트**: 2025-11-23
-**버전**: 1.1
+**마지막 업데이트**: 2025-12-10
+**버전**: 1.2
 
 ---
 
@@ -23,7 +23,7 @@
 
 ## 개요
 
-Templar Archives는 **@tanstack/react-query 5.90.5**를 사용하여 서버 상태를 관리합니다.
+Templar Archives는 **@tanstack/react-query 5.90.5** + **@tanstack/react-virtual 3.13.12**를 사용하여 서버 상태와 가상 스크롤을 관리합니다.
 
 ### 왜 React Query?
 
@@ -613,6 +613,7 @@ onSuccess: () => {
 
 | 날짜 | 버전 | 변경 내용 |
 |------|------|----------|
+| 2025-12-10 | 1.2 | @tanstack/react-virtual 3.13.12 추가, 문서 날짜 동기화 |
 | 2025-11-23 | 1.1 | React Query 5.90.5 버전 업데이트, 쿼리 파일 목록 갱신 |
 | 2025-10-20 | 1.0 | 초기 문서 생성 |
 
@@ -620,4 +621,4 @@ onSuccess: () => {
 
 **작성자**: Claude Code
 **프로젝트**: Templar Archives
-**버전**: 1.1 (2025-11-23)
+**버전**: 1.2 (2025-12-10)

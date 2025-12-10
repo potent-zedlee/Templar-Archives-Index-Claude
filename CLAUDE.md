@@ -64,15 +64,17 @@ npm run analyze
 
 | 카테고리 | 기술 |
 |----------|------|
-| Framework | Next.js 16, React 19, TypeScript 5.9 |
-| Styling | Tailwind CSS 4.1 |
-| State | React Query 5, Zustand 5 |
-| Database | Firebase Firestore (NoSQL) |
-| Auth | Firebase Auth (Google OAuth) + TOTP 2FA |
-| AI | Vertex AI Gemini 3 Pro (Phase 2) / Gemini 2.5 Flash (Phase 1) |
+| Framework | Next.js 16.0.7, React 19.2.1, TypeScript 5.9 |
+| Styling | Tailwind CSS 4.1.16 |
+| State | React Query 5.90.5, Zustand 5.0.2 |
+| Database | Firebase Firestore (NoSQL) - firebase 12.6.0, firebase-admin 13.6.0 |
+| Auth | Firebase Auth (Google OAuth) + TOTP 2FA (otplib 12) |
+| AI | Google AI SDK (@google/genai 1.29.0) - Gemini 2.5 Flash |
 | Background Jobs | Cloud Run + Cloud Tasks |
-| Video | GCS Resumable Upload (청크 업로드) |
-| Search | Algolia (선택적, Firestore fallback) |
+| Video | GCS Resumable Upload (@google-cloud/storage 7.17.3) |
+| Search | Algolia 5.46.0 (선택적, Firestore fallback) |
+| Animation | Motion 12.23.24 (Framer Motion) |
+| Virtual Scroll | @tanstack/react-virtual 3.13.12 |
 | Hosting | Vercel (메인) + Firebase Hosting (백업) |
 
 **Node.js**: >=22.0.0
@@ -849,5 +851,5 @@ export function useRealtimeActiveJobs() {
 
 ---
 
-**마지막 업데이트**: 2025-12-07
-**문서 버전**: 8.8 (2FA, PWA, 커뮤니티 포스트, 가상 스크롤, 실시간 로그 추가)
+**마지막 업데이트**: 2025-12-10
+**문서 버전**: 8.9 (기술 스택 버전 업데이트, Cash Game 기능 제거 반영)

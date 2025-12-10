@@ -1108,6 +1108,6 @@ ORCHESTRATOR_URL=https://video-orchestrator-*.run.app
 
 ---
 
-**문서 버전**: 1.0
-**최종 업데이트**: 2025-12-02
+**문서 버전**: 1.1
+**최종 업데이트**: 2025-12-10
 **작성자**: Claude Code

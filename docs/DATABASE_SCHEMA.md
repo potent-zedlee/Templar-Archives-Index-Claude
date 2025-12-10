@@ -2,7 +2,7 @@
 
 > **Templar Archives** Firestore NoSQL 구조
 
-**마지막 업데이트**: 2025-12-01
+**마지막 업데이트**: 2025-12-10
 **데이터베이스**: Firebase Firestore
 **필드명 규칙**: camelCase (snake_case 사용 금지)
 
@@ -53,7 +53,7 @@ hands/{handId}           # 플랫 컬렉션 (쿼리 유연성)
   location: string
   city?: string
   country?: string
-  gameType?: 'tournament' | 'cash-game'
+  gameType?: 'tournament'  // Cash Game 기능 제거됨
   startDate: Timestamp
   endDate: Timestamp
   totalPrize?: string
@@ -451,9 +451,10 @@ Firebase Security Rules는 `firestore.rules` 파일에서 관리됩니다.
 
 | 날짜 | 변경 내용 |
 |------|----------|
+| 2025-12-10 | Cash Game 기능 제거, 문서 날짜 동기화 |
 | 2025-12-07 | posts 컬렉션 추가 (커뮤니티 기능), users.twoFactor 필드 추가 (2FA) |
 | 2025-12-01 | streams 컬렉션 pipelineStatus 필드 필수화, GCS 업로드 필드 추가 |
 | 2025-11-28 | PostgreSQL → Firestore 완전 마이그레이션 |
 | 2025-11-27 | Supabase 레거시 정리 |
 
-**마지막 업데이트**: 2025-12-07
+**마지막 업데이트**: 2025-12-10

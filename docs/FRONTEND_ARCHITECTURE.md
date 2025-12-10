@@ -1,6 +1,6 @@
 # Templar Archives - 프론트엔드 아키텍처
 
-**마지막 업데이트**: 2025-12-07
+**마지막 업데이트**: 2025-12-10
 
 ---
 
@@ -62,7 +62,6 @@
 |------|------|------|
 | `/` | `page.tsx` | 홈 - 통계, 주간 하이라이트 |
 | `/archive/tournament` | `archive/tournament/page.tsx` | 토너먼트 아카이브 (2-Column VSCode 스타일) |
-| `/archive/cash-game` | `archive/cash-game/page.tsx` | 캐시 게임 아카이브 |
 | `/hands` | `hands/page.tsx` | 최근 핸드 목록 |
 | `/hands/[id]` | `hands/[id]/page.tsx` | 핸드 상세 (플레이어, 액션, AI 분석) |
 | `/players` | `players/page.tsx` | 플레이어 목록 |
