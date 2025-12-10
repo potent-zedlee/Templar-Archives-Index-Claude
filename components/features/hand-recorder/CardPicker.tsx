@@ -44,6 +44,7 @@ export function CardPicker({ value, onChange }: CardPickerProps) {
     // Standard picker: Ranks row, Suits row. 
 
     const [currentBuildingCard, setCurrentBuildingCard] = useState<'1' | '2'>('1')
+    const [pendingRank, setPendingRank] = useState<string | null>(null)
 
     const handleCardInput = (rank: string, suit: string) => {
         const card = `${rank}${suit}`
@@ -136,74 +137,21 @@ export function CardPicker({ value, onChange }: CardPickerProps) {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-13 gap-1">
-                        {RANKS.map(rank => (
-                            <button
-                                key={rank}
-                                className="text-xs font-bold w-full aspect-square border rounded hover:bg-accent flex items-center justify-center"
-                            // Logic for selection is a bit complex for a simple grid.
-                            // Let's do a simple Click-to-Select approach:
-                            // Show all 52 cards? Too big.
-                            // Rank + Suit approach is better.
-                            >
-                                {rank}
-                            </button>
-                        ))}
-                    </div>
-
-                    {/* Improved Picker UI */}
-                    <div className="space-y-2">
-                        <div className="flex flex-wrap gap-1 justify-center">
-                            {RANKS.map(rank => (
-                                <Button
-                                    key={rank}
-                                    variant="outline"
-                                    size="sm"
-                                    className="w-8 h-8 p-0"
-                                    onClick={() => {
-                                        // Must pick a suit next
-                                    }}
-                                >
-                                    {rank}
-                                </Button>
-                            ))}
-                        </div>
-                        <div className="flex gap-4 justify-center">
-                            {SUITS.map(suit => (
-                                <Button
-                                    key={suit}
-                                    variant="outline"
-                                    className={cn("w-10 h-10 p-0 text-lg", (suit === 'h' || suit === 'd') && "text-red-500")}
-                                    onClick={() => {
-                                        // Add logic to combine last picked rank + this suit
-                                    }}
-                                >
-                                    {suit === 's' ? '♠' : suit === 'h' ? '♥' : suit === 'd' ? '♦' : '♣'}
-                                </Button>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Revised Simple Logic: 
-                 Just click the card in a standard card matrix?
-                 Actually, let's just make it simple: 
-                 Rank buttons, Suit buttons. 
-                 User clicks Rank, then Suit -> Card added to current slot.
-             */}
+                    {/* Card Picker: Rank then Suit */}
                     <div className="space-y-2">
                         <div className="text-xs text-muted-foreground text-center">
-                            Select Rank then Suit for Card {currentBuildingCard}
+                            {pendingRank
+                                ? `Selected ${pendingRank}, now pick a suit for Card ${currentBuildingCard}`
+                                : `Select Rank then Suit for Card ${currentBuildingCard}`
+                            }
                         </div>
                         <div className="grid grid-cols-7 gap-1">
                             {RANKS.map(rank => (
                                 <Button
                                     key={rank}
-                                    variant="outline"
+                                    variant={pendingRank === rank ? "default" : "outline"}
                                     className="h-8 p-0 text-xs"
-                                    onClick={() => {
-                                        // Store pending rank
-                                        (window as any)._pendingRank = rank
-                                    }}
+                                    onClick={() => setPendingRank(rank)}
                                 >
                                     {rank}
                                 </Button>
@@ -215,11 +163,11 @@ export function CardPicker({ value, onChange }: CardPickerProps) {
                                     key={suit}
                                     variant="outline"
                                     className={cn("w-10 h-8 text-lg", (suit === 'h' || suit === 'd') && "text-red-500")}
+                                    disabled={!pendingRank}
                                     onClick={() => {
-                                        const rank = (window as any)._pendingRank
-                                        if (rank) {
-                                            handleCardInput(rank, suit);
-                                            (window as any)._pendingRank = null
+                                        if (pendingRank) {
+                                            handleCardInput(pendingRank, suit)
+                                            setPendingRank(null)
                                         }
                                     }}
                                 >

@@ -643,7 +643,7 @@ export async function createHand(
       players: handData.players.map((p: any) => ({
         seat: p.seat,
         name: p.name,
-        stack: p.startStack,
+        stack: p.startStack ?? p.stack, // Support both field names
         cards: p.holeCards || []
       })),
       sections: {
@@ -689,7 +689,7 @@ export async function createHand(
         seat: p.seat,
         position: p.position,
         holeCards: p.holeCards || [],
-        startStack: p.startStack,
+        startStack: p.startStack ?? p.stack, // Support both field names
         isWinner: false // Manual until we add winner logic
       })),
 
@@ -700,10 +700,52 @@ export async function createHand(
       updatedAt: FieldValue.serverTimestamp()
     }
 
-    // 3. Save to 'hands' collection
+    // 3. Auto-create players that don't have playerId
+    const playersWithIds = await Promise.all(
+      handData.players.map(async (p: any) => {
+        if (p.playerId) {
+          return p // Already has ID
+        }
+        if (!p.name) {
+          return p // No name, skip
+        }
+
+        // Check if player with this name already exists
+        const existingPlayer = await db.collection('players')
+          .where('normalizedName', '==', p.name.toLowerCase().trim())
+          .limit(1)
+          .get()
+
+        if (!existingPlayer.empty) {
+          return { ...p, playerId: existingPlayer.docs[0].id }
+        }
+
+        // Create new player
+        const newPlayerRef = await db.collection('players').add({
+          name: p.name,
+          normalizedName: p.name.toLowerCase().trim(),
+          createdAt: FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
+        })
+        return { ...p, playerId: newPlayerRef.id }
+      })
+    )
+
+    // Update docData with resolved playerIds
+    docData.players = playersWithIds.map((p: any) => ({
+      playerId: p.playerId,
+      name: p.name,
+      seat: p.seat,
+      position: p.position,
+      holeCards: p.holeCards || [],
+      startStack: p.startStack ?? p.stack,
+      isWinner: false
+    }))
+
+    // 4. Save to 'hands' collection
     const handRef = await db.collection('hands').add(docData)
 
-    // 4. Update Stream Stats
+    // 5. Update Stream Stats
     // Update stats.handsCount on the stream document
     const streamRef = streamsQuery.docs[0].ref
     await streamRef.update({
