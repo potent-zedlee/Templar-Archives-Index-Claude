@@ -7,7 +7,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 'use client'
 
-import { useRef, useEffect, useState } from 'react'
+import { useRef, useEffect, useState, useCallback } from 'react'
 import * as THREE from 'three'
 
 interface LogoShapeBlurProps {
@@ -15,10 +15,6 @@ interface LogoShapeBlurProps {
   src: string
   /** 로고 alt 텍스트 */
   alt: string
-  /** 로고 너비 */
-  width: number
-  /** 로고 높이 */
-  height: number
   /** 선명한 영역 크기 (0-1) */
   focusSize?: number
   /** 선명한 영역 가장자리 부드러움 (0-1) */
@@ -85,44 +81,69 @@ void main() {
 export function LogoShapeBlur({
   src,
   alt,
-  width,
-  height,
   focusSize = 0.15,
   focusEdge = 0.1,
   blurAmount = 8.0,
   className = '',
 }: LogoShapeBlurProps) {
   const containerRef = useRef<HTMLDivElement>(null)
+  const rendererRef = useRef<THREE.WebGLRenderer | null>(null)
+  const materialRef = useRef<THREE.ShaderMaterial | null>(null)
+  const mouseRef = useRef(new THREE.Vector2())
+  const targetMouseRef = useRef(new THREE.Vector2())
+  const sizeRef = useRef({ width: 0, height: 0 })
+
   const [isLoaded, setIsLoaded] = useState(false)
   const [hasWebGL, setHasWebGL] = useState(true)
+
+  // 리사이즈 핸들러
+  const handleResize = useCallback(() => {
+    const container = containerRef.current
+    const renderer = rendererRef.current
+    const material = materialRef.current
+    if (!container || !renderer || !material) return
+
+    const width = container.clientWidth
+    const height = container.clientHeight
+
+    sizeRef.current = { width, height }
+    renderer.setSize(width, height)
+    material.uniforms.uResolution.value.set(width, height)
+
+    // 마우스 초기 위치도 업데이트
+    targetMouseRef.current.set(width / 2, height / 2)
+  }, [])
 
   useEffect(() => {
     const container = containerRef.current
     if (!container) return
 
     // WebGL 지원 체크
-    const canvas = document.createElement('canvas')
-    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl')
+    const testCanvas = document.createElement('canvas')
+    const gl = testCanvas.getContext('webgl') || testCanvas.getContext('experimental-webgl')
     if (!gl) {
       setHasWebGL(false)
       return
     }
 
     let animationFrameId: number
-    let renderer: THREE.WebGLRenderer
     let scene: THREE.Scene
     let camera: THREE.OrthographicCamera
-    let material: THREE.ShaderMaterial
-    let mesh: THREE.Mesh
-
-    const mouse = new THREE.Vector2(width / 2, height / 2)
-    const targetMouse = new THREE.Vector2(width / 2, height / 2)
 
     // 텍스처 로드
     const textureLoader = new THREE.TextureLoader()
     textureLoader.load(
       src,
       (texture) => {
+        const width = container.clientWidth
+        const height = container.clientHeight
+        sizeRef.current = { width, height }
+
+        // 텍스처 설정 - 고품질
+        texture.minFilter = THREE.LinearFilter
+        texture.magFilter = THREE.LinearFilter
+        texture.anisotropy = 16
+
         // Scene 설정
         scene = new THREE.Scene()
 
@@ -131,7 +152,7 @@ export function LogoShapeBlur({
         camera.position.z = 1
 
         // Renderer 설정
-        renderer = new THREE.WebGLRenderer({
+        const renderer = new THREE.WebGLRenderer({
           alpha: true,
           antialias: true,
           premultipliedAlpha: false
@@ -140,14 +161,15 @@ export function LogoShapeBlur({
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
         renderer.setClearColor(0x000000, 0)
         container.appendChild(renderer.domElement)
+        rendererRef.current = renderer
 
         // Material 설정
-        material = new THREE.ShaderMaterial({
+        const material = new THREE.ShaderMaterial({
           vertexShader,
           fragmentShader,
           uniforms: {
             uTexture: { value: texture },
-            uMouse: { value: mouse },
+            uMouse: { value: mouseRef.current },
             uResolution: { value: new THREE.Vector2(width, height) },
             uFocusSize: { value: focusSize },
             uFocusEdge: { value: focusEdge },
@@ -156,37 +178,44 @@ export function LogoShapeBlur({
           },
           transparent: true,
         })
+        materialRef.current = material
 
         // Mesh 생성
         const geometry = new THREE.PlaneGeometry(1, 1)
-        mesh = new THREE.Mesh(geometry, material)
+        const mesh = new THREE.Mesh(geometry, material)
         scene.add(mesh)
+
+        // 초기 마우스 위치
+        mouseRef.current.set(width / 2, height / 2)
+        targetMouseRef.current.set(width / 2, height / 2)
 
         setIsLoaded(true)
 
         // 마우스 이벤트
         const handleMouseMove = (e: MouseEvent) => {
           const rect = container.getBoundingClientRect()
-          targetMouse.x = e.clientX - rect.left
-          targetMouse.y = e.clientY - rect.top
+          targetMouseRef.current.x = e.clientX - rect.left
+          targetMouseRef.current.y = e.clientY - rect.top
         }
 
         const handleMouseLeave = () => {
-          // 마우스가 벗어나면 중앙으로
-          targetMouse.x = width / 2
-          targetMouse.y = height / 2
+          targetMouseRef.current.x = sizeRef.current.width / 2
+          targetMouseRef.current.y = sizeRef.current.height / 2
         }
 
         container.addEventListener('mousemove', handleMouseMove)
         container.addEventListener('mouseleave', handleMouseLeave)
 
+        // ResizeObserver로 크기 변화 감지
+        const resizeObserver = new ResizeObserver(handleResize)
+        resizeObserver.observe(container)
+
         // 애니메이션 루프
         const animate = () => {
           // 부드러운 마우스 추적
-          mouse.x += (targetMouse.x - mouse.x) * 0.1
-          mouse.y += (targetMouse.y - mouse.y) * 0.1
+          mouseRef.current.x += (targetMouseRef.current.x - mouseRef.current.x) * 0.1
+          mouseRef.current.y += (targetMouseRef.current.y - mouseRef.current.y) * 0.1
 
-          material.uniforms.uMouse.value = mouse
           material.uniforms.uTime.value = performance.now() * 0.001
 
           renderer.render(scene, camera)
@@ -194,29 +223,30 @@ export function LogoShapeBlur({
         }
         animate()
 
-        // Cleanup
+        // Cleanup 반환
         return () => {
           container.removeEventListener('mousemove', handleMouseMove)
           container.removeEventListener('mouseleave', handleMouseLeave)
+          resizeObserver.disconnect()
         }
       },
       undefined,
       () => {
-        // 텍스처 로드 실패 시 WebGL 비활성화
         setHasWebGL(false)
       }
     )
 
     return () => {
       cancelAnimationFrame(animationFrameId)
-      if (renderer) {
-        renderer.dispose()
-        if (container.contains(renderer.domElement)) {
-          container.removeChild(renderer.domElement)
+      if (rendererRef.current) {
+        rendererRef.current.dispose()
+        if (container.contains(rendererRef.current.domElement)) {
+          container.removeChild(rendererRef.current.domElement)
         }
+        rendererRef.current = null
       }
     }
-  }, [src, width, height, focusSize, focusEdge, blurAmount])
+  }, [src, focusSize, focusEdge, blurAmount, handleResize])
 
   // WebGL 미지원 시 일반 이미지로 fallback
   if (!hasWebGL) {
@@ -225,9 +255,8 @@ export function LogoShapeBlur({
       <img
         src={src}
         alt={alt}
-        width={width}
-        height={height}
         className={className}
+        style={{ width: '100%', height: '100%', objectFit: 'contain' }}
       />
     )
   }
@@ -237,8 +266,6 @@ export function LogoShapeBlur({
       ref={containerRef}
       className={className}
       style={{
-        width,
-        height,
         position: 'relative',
         cursor: 'pointer',
       }}

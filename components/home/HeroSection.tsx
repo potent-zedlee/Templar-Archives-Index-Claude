@@ -42,16 +42,14 @@ export function HeroSection() {
       <div className="container max-w-7xl mx-auto px-4 md:px-6 relative z-10">
         <div className="flex flex-col items-center text-center space-y-6 sm:space-y-8">
           {/* Logo with ShapeBlur effect - 마우스 주변만 선명 */}
-          <div className="mb-6 sm:mb-8">
+          <div className="mb-6 sm:mb-8 w-48 h-48 sm:w-64 sm:h-64 md:w-80 md:h-80 lg:w-96 lg:h-96 xl:w-[28rem] xl:h-[28rem]">
             <LogoShapeBlur
               src="/logo.svg"
               alt="Templar Archives"
-              width={800}
-              height={250}
               focusSize={0.2}
               focusEdge={0.15}
               blurAmount={6}
-              className="w-auto h-32 sm:h-48 md:h-64 lg:h-80 xl:h-96"
+              className="w-full h-full"
             />
           </div>
 
