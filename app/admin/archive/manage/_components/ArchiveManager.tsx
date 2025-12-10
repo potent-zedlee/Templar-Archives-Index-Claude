@@ -68,7 +68,6 @@ export function ArchiveManager() {
   const [tournamentDialogOpen, setTournamentDialogOpen] = useState(false)
   const [newTournamentName, setNewTournamentName] = useState('')
   const [newCategory, setNewCategory] = useState<TournamentCategory>('EPT')
-  const [newGameType, setNewGameType] = useState<'tournament' | 'cash-game'>('tournament')
   const [newLocation, setNewLocation] = useState('')
   const [newCity, setNewCity] = useState('')
   const [newCountry, setNewCountry] = useState('')
@@ -307,7 +306,6 @@ export function ArchiveManager() {
           setTournamentDialogOpen(false)
           setNewTournamentName('')
           setNewCategory('EPT')
-          setNewGameType('tournament')
           setNewLocation('')
           setNewCity('')
           setNewCountry('')
@@ -318,7 +316,6 @@ export function ArchiveManager() {
           setTournamentDialogOpen(false)
           setNewTournamentName('')
           setNewCategory('EPT')
-          setNewGameType('tournament')
           setNewLocation('')
           setNewCity('')
           setNewCountry('')
@@ -329,8 +326,6 @@ export function ArchiveManager() {
         setNewTournamentName={setNewTournamentName}
         newCategory={newCategory}
         setNewCategory={setNewCategory}
-        newGameType={newGameType}
-        setNewGameType={setNewGameType}
         newLocation={newLocation}
         setNewLocation={setNewLocation}
         newCity={newCity}

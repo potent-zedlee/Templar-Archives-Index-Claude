@@ -54,7 +54,6 @@ export function Header() {
   const navLinks: NavLink[] = [
     { href: "/search", label: "SEARCH" },
     { href: "/archive/tournament", label: "TOURNAMENT" },
-    { href: "/archive/cash-game", label: "CASH GAME" },
     { href: "/players", label: "PLAYER" },
   ]
 
