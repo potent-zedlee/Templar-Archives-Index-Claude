@@ -36,11 +36,9 @@ export function HeroSection() {
 
       <div className="container max-w-7xl mx-auto px-4 md:px-6 relative z-10">
         <div className="flex flex-col items-center text-center space-y-6 sm:space-y-8">
-          {/* Logo with blur effect - 마우스가 가까워지면 선명해짐 */}
+          {/* Logo with blur effect - 마우스 hover 시 선명해짐 */}
           <ImageBlurEffect
-            maxBlur={8}
-            baseBlur={6}
-            radius={300}
+            baseBlur={5}
             className="mb-6 sm:mb-8"
           >
             <Image
