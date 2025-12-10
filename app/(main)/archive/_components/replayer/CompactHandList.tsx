@@ -11,11 +11,11 @@ interface CompactHandListProps {
 
 export function CompactHandList({ hands, selectedHandId, onHandSelect }: CompactHandListProps) {
     return (
-        <div className="flex flex-col h-full bg-card">
-            <div className="p-3 border-b border-border bg-muted/20">
+        <div className="flex flex-col h-full min-h-0 bg-card">
+            <div className="p-3 border-b border-border bg-muted/20 flex-shrink-0">
                 <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Hand List ({hands.length})</h3>
             </div>
-            <ScrollArea className="flex-1">
+            <ScrollArea className="flex-1 min-h-0">
                 <div className="flex flex-col">
                     {hands.map((hand) => {
                         const isSelected = hand.id === selectedHandId

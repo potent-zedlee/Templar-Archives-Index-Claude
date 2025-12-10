@@ -132,7 +132,7 @@ export function StreamReplayerPanel({ streamId, stream }: StreamReplayerPanelPro
           Or maybe 3 cols for List, 9 cols for History?
           Original plan: "HandListSection (Left Bottom)"
       */}
-            <div className="col-span-3 row-span-4 bg-card rounded-xl border border-border overflow-hidden shadow-sm">
+            <div className="col-span-3 row-span-4 bg-card rounded-xl border border-border overflow-hidden shadow-sm min-h-0">
                 {isLoading ? (
                     <div className="p-4 space-y-2">
                         <Skeleton className="h-8 w-full" />
