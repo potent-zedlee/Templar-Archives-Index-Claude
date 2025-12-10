@@ -80,17 +80,19 @@ export function LiquidEtherBackground({
   return (
     <div className={`relative min-h-screen ${className}`}>
       {/* Background Layer */}
-      <div className="fixed inset-0 z-0 pointer-events-auto">
+      <div className="fixed inset-0 z-0" style={{ width: '100vw', height: '100vh' }}>
         <Suspense fallback={null}>
           <ErrorBoundary onError={handleError}>
             <LiquidEther
               colors={colors}
               autoDemo={true}
-              autoSpeed={0.3}
-              autoIntensity={1.5}
-              resolution={0.4}
-              mouseForce={15}
-              cursorSize={80}
+              autoSpeed={0.5}
+              autoIntensity={2.0}
+              resolution={0.5}
+              mouseForce={20}
+              cursorSize={100}
+              className="!pointer-events-auto"
+              style={{ width: '100%', height: '100%' }}
             />
           </ErrorBoundary>
         </Suspense>
