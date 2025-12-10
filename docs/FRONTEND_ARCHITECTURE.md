@@ -622,6 +622,13 @@ CHUNK_SIZE = 16MB
 MAX_CONCURRENT_UPLOADS = 3
 ```
 
+### 9.6 포커 포맷팅 (`/lib/utils/poker-formatting.ts`)
+
+```typescript
+formatChips(chips)      // 1500 → "1.5k", 1000000 → "1M"
+formatBlinds(sb, bb, ante)  // (500, 1000, 100) → "500/1k/100"
+```
+
 ---
 
 ## 10. 데이터 흐름
