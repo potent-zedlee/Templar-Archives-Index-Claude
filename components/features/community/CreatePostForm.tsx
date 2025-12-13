@@ -28,18 +28,18 @@ import type { PostCategory } from '@/lib/db/firestore-types'
 import { toast } from 'sonner'
 
 const CATEGORIES: { value: PostCategory; label: string; description: string }[] = [
-  { value: 'Analysis', label: 'Analysis', description: 'In-depth hand or game analysis' },
-  { value: 'Strategy', label: 'Strategy', description: 'Strategic concepts and tips' },
-  { value: 'Hand Review', label: 'Hand Review', description: 'Review and discuss specific hands' },
-  { value: 'General', label: 'General', description: 'General discussion' },
-  { value: 'News', label: 'News', description: 'Poker news and updates' },
+  { value: 'general', label: 'General', description: 'General discussion' },
+  { value: 'strategy', label: 'Strategy', description: 'Strategic concepts and tips' },
+  { value: 'hand-analysis', label: 'Hand Analysis', description: 'In-depth hand or game analysis' },
+  { value: 'news', label: 'News', description: 'Poker news and updates' },
+  { value: 'tournament-recap', label: 'Tournament Recap', description: 'Tournament recaps and highlights' },
 ]
 
 // Validation schema
 const postSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters').max(200, 'Title is too long'),
   content: z.string().min(20, 'Content must be at least 20 characters'),
-  category: z.enum(['Analysis', 'Strategy', 'Hand Review', 'General', 'News']),
+  category: z.enum(['general', 'strategy', 'hand-analysis', 'news', 'tournament-recap']),
   tags: z.string().optional(),
   handId: z.string().optional(),
 })
@@ -72,7 +72,7 @@ export function CreatePostForm({ initialData }: CreatePostFormProps) {
     defaultValues: {
       title: initialData?.title || '',
       content: initialData?.content || '',
-      category: initialData?.category || 'General',
+      category: initialData?.category || 'general',
       tags: initialData?.tags?.join(', ') || '',
       handId: initialData?.handId || '',
     },

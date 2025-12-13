@@ -271,7 +271,7 @@ export async function createCategory(input: CategoryInput): Promise<TournamentCa
       aliases: input.aliases || [],
       logoUrl: input.logoUrl,
       isActive: input.isActive ?? true,
-      gameType: input.gameType || 'both',
+      gameType: input.gameType || 'tournament',
       parentId: input.parentId || undefined,
       themeGradient: input.themeGradient,
       themeText: input.themeText,

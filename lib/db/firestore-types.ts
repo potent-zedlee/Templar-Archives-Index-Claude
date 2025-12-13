@@ -218,8 +218,8 @@ export interface FirestoreTournament {
   city?: string
   /** 국가 */
   country?: string
-  /** 게임 타입 */
-  gameType?: 'tournament' | 'cash-game'
+  /** 게임 타입 (Cash Game 기능 제거됨) */
+  gameType?: 'tournament'
   /** 시작일 */
   startDate: Timestamp
   /** 종료일 */
@@ -319,8 +319,14 @@ export interface FirestoreStream {
 
   // ==================== 파이프라인 필드 (Admin Archive 워크플로우) ====================
 
-  /** 파이프라인 상태 (3단계 단순화) */
-  pipelineStatus?: 'uploaded' | 'analyzing' | 'published' | 'failed'
+  /**
+   * 파이프라인 상태
+   *
+   * 워크플로우: pending → uploaded → (needs_classify) → analyzing → completed → published
+   *                                                         ↓
+   *                                                       failed
+   */
+  pipelineStatus?: 'pending' | 'uploaded' | 'needs_classify' | 'analyzing' | 'completed' | 'published' | 'failed'
   /** 파이프라인 진행률 (0-100) */
   pipelineProgress?: number
   /** 파이프라인 에러 메시지 */
@@ -797,8 +803,16 @@ export interface FirestoreComment {
 
 /**
  * 커뮤니티 포스트 카테고리
+ *
+ * kebab-case 소문자 사용 (DB 저장값)
+ * @see CLAUDE.md PostCategory 정의
  */
-export type PostCategory = 'Analysis' | 'Strategy' | 'Hand Review' | 'General' | 'News'
+export type PostCategory =
+  | 'general'          // 일반 토론
+  | 'strategy'         // 전략 토론
+  | 'hand-analysis'    // 핸드 분석
+  | 'news'             // 뉴스
+  | 'tournament-recap' // 토너먼트 리캡
 
 /**
  * 포스트 상태
@@ -1224,6 +1238,9 @@ export interface FirestoreAdminLog {
 
 /**
  * 게임 타입
+ *
+ * 'tournament'만 사용됩니다. 'cash_game'과 'both'는 기존 데이터 호환성을 위해 유지됩니다.
+ * @deprecated 'cash_game', 'both' - Cash Game 기능 제거됨
  */
 export type GameType = 'tournament' | 'cash_game' | 'both'
 

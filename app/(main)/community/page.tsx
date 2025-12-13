@@ -24,11 +24,11 @@ import type { PostCategory } from '@/lib/db/firestore-types'
 
 const CATEGORIES: { value: PostCategory | 'all'; label: string }[] = [
   { value: 'all', label: 'All Categories' },
-  { value: 'Analysis', label: 'Analysis' },
-  { value: 'Strategy', label: 'Strategy' },
-  { value: 'Hand Review', label: 'Hand Review' },
-  { value: 'General', label: 'General' },
-  { value: 'News', label: 'News' },
+  { value: 'general', label: 'General' },
+  { value: 'strategy', label: 'Strategy' },
+  { value: 'hand-analysis', label: 'Hand Analysis' },
+  { value: 'news', label: 'News' },
+  { value: 'tournament-recap', label: 'Tournament Recap' },
 ]
 
 const SORT_OPTIONS: { value: SortOption; label: string; icon: React.ReactNode }[] = [

@@ -31,6 +31,10 @@ import { toast } from 'sonner'
 
 // ==================== Types ====================
 
+/**
+ * @deprecated Cash game 기능이 제거되어 'tournament'만 사용됩니다.
+ * 하위 호환성을 위해 'cash_game'과 'both'는 유지되지만 deprecated입니다.
+ */
 export type GameType = 'tournament' | 'cash_game' | 'both'
 
 /**

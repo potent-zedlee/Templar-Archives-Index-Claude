@@ -10,7 +10,7 @@ import {
   handleApiError,
   handleFormSubmit,
   mutationToasts,
-} from '../toast-utils'
+} from '../utils/toast'
 
 // Mock sonner
 vi.mock('sonner', () => ({
@@ -24,7 +24,7 @@ vi.mock('sonner', () => ({
 }))
 
 // Mock error-handler
-vi.mock('../error-handler', () => ({
+vi.mock('../utils/error-handler', () => ({
   logError: vi.fn(),
 }))
 

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { applyRateLimit, isRateLimitingEnabled, rateLimiters } from '../rate-limit'
+import { applyRateLimit, isRateLimitingEnabled, rateLimiters } from '../utils/rate-limit'
 import { NextRequest } from 'next/server'
 
 // Store original environment variables

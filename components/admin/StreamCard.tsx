@@ -33,12 +33,15 @@ interface StreamCardProps {
 }
 
 /**
- * 파이프라인 상태별 라벨 (3단계 단순화)
+ * 파이프라인 상태별 라벨
  */
 function getPipelineStatusLabel(status: PipelineStatus): string {
   const labels: Record<PipelineStatus, string> = {
+    pending: '대기 중',
     uploaded: '업로드 완료',
+    needs_classify: '분류 필요',
     analyzing: '분석 중',
+    completed: '분석 완료',
     published: '발행됨',
     failed: '실패',
   }
@@ -46,20 +49,32 @@ function getPipelineStatusLabel(status: PipelineStatus): string {
 }
 
 /**
- * 파이프라인 상태별 색상 (3단계 단순화)
+ * 파이프라인 상태별 색상
  */
 function getPipelineStatusColor(status: PipelineStatus): {
   color: string
   bgColor: string
 } {
   const colors: Record<PipelineStatus, { color: string; bgColor: string }> = {
+    pending: {
+      color: 'text-gray-700 dark:text-gray-300',
+      bgColor: 'bg-gray-100 dark:bg-gray-800',
+    },
     uploaded: {
       color: 'text-slate-700 dark:text-slate-300',
       bgColor: 'bg-slate-100 dark:bg-slate-800',
     },
+    needs_classify: {
+      color: 'text-amber-700 dark:text-amber-300',
+      bgColor: 'bg-amber-100 dark:bg-amber-900/30',
+    },
     analyzing: {
       color: 'text-blue-700 dark:text-blue-300',
       bgColor: 'bg-blue-100 dark:bg-blue-900/30',
+    },
+    completed: {
+      color: 'text-cyan-700 dark:text-cyan-300',
+      bgColor: 'bg-cyan-100 dark:bg-cyan-900/30',
     },
     published: {
       color: 'text-emerald-700 dark:text-emerald-300',
@@ -71,7 +86,7 @@ function getPipelineStatusColor(status: PipelineStatus): {
     },
   }
 
-  return colors[status] || colors.uploaded
+  return colors[status] || colors.pending
 }
 
 export function StreamCard({

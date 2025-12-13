@@ -81,8 +81,10 @@ export const videoSourceSchema = z.enum(["youtube", "upload", "nas"])
 
 /**
  * 게임 타입 스키마
+ *
+ * Note: Cash Game 기능은 제거되었습니다 (CLAUDE.md 참조)
  */
-export const gameTypeSchema = z.enum(["tournament", "cash-game"])
+export const gameTypeSchema = z.enum(["tournament"])
 
 // ==================== Form Data Schemas ====================
 
@@ -207,12 +209,25 @@ export const streamSchema = z.object({
 })
 
 /**
+ * 커뮤니티 포스트 카테고리 스키마
+ *
+ * @see PostCategory in firestore-types.ts
+ */
+export const postCategorySchema = z.enum([
+  "general",          // 일반 토론
+  "strategy",         // 전략 토론
+  "hand-analysis",    // 핸드 분석
+  "news",             // 뉴스
+  "tournament-recap", // 토너먼트 리캡
+])
+
+/**
  * 커뮤니티 포스트 생성 스키마
  */
 export const createPostSchema = z.object({
   title: z.string().trim().min(1, "제목을 입력해주세요").max(200),
   content: z.string().trim().min(1, "내용을 입력해주세요").max(10000),
-  category: z.enum(["analysis", "strategy", "hand-review", "general"]),
+  category: postCategorySchema,
   handId: z.string().uuid().optional(),
 })
 
@@ -363,6 +378,9 @@ export type CreateBookmarkInput = z.infer<typeof createBookmarkSchema>
 
 /** 프로필 업데이트 입력 */
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>
+
+/** 포스트 카테고리 타입 */
+export type PostCategoryInferred = z.infer<typeof postCategorySchema>
 
 /** 세그먼트 타입 */
 export type SegmentTypeInput = z.infer<typeof segmentTypeSchema>

@@ -17,16 +17,20 @@ import type {
 // ==================== Pipeline Status ====================
 
 /**
- * Stream 파이프라인 상태 (3단계 단순화)
+ * Stream 파이프라인 상태
  *
- * Upload -> Analyze -> Publish 워크플로우
- * 검토는 유저 claim 방식으로 전환
+ * 워크플로우: pending → uploaded → (needs_classify) → analyzing → completed → published
+ *                                                         ↓
+ *                                                       failed
  */
 export type PipelineStatus =
-  | 'uploaded'   // 업로드 완료, 분석 대기
-  | 'analyzing'  // AI 분석 중
-  | 'published'  // 발행 완료
-  | 'failed'     // 분석 실패
+  | 'pending'        // 초기 상태
+  | 'uploaded'       // 업로드 완료, 분석 대기
+  | 'needs_classify' // 분류 필요 (토너먼트/이벤트 미지정)
+  | 'analyzing'      // AI 분석 중
+  | 'completed'      // 분석 완료, 리뷰 대기
+  | 'published'      // 발행 완료
+  | 'failed'         // 분석 실패
 
 // ==================== Enums & Constants (Zod에서 파생) ====================
 
@@ -79,7 +83,8 @@ export interface Tournament {
   location: string
   city?: string
   country?: string
-  gameType?: 'tournament' | 'cash-game'
+  /** 게임 타입 (Cash Game 기능 제거됨) */
+  gameType?: 'tournament'
   startDate: string
   endDate: string
   totalPrize?: string
@@ -130,7 +135,10 @@ export interface Stream {
   videoNasPath?: string
   videoSource?: VideoSource
   createdAt?: string
-  isOrganized?: boolean // DEPRECATED: use status instead
+  /**
+   * @deprecated Use `status` instead. Will be removed in future version.
+   */
+  isOrganized?: boolean
   organizedAt?: string
   playerCount?: number
   handCount?: number // Computed: count of hands in this stream
@@ -179,11 +187,17 @@ export interface Hand {
   boardTurn?: string         // 1 card: "7c"
   boardRiver?: string        // 1 card: "3s"
 
-  // DEPRECATED: use boardFlop/turn/river instead
+  /**
+   * @deprecated Use `boardFlop`, `boardTurn`, `boardRiver` instead. Will be removed in future version.
+   */
   boardCards?: string[]
 
   potSize?: number
-  stakes?: string             // e.g., "50k/100k/100k" - DEPRECATED: use smallBlind/bigBlind/ante
+  /**
+   * @deprecated Use `smallBlind`, `bigBlind`, `ante` instead. Will be removed in future version.
+   * @example "50k/100k/100k"
+   */
+  stakes?: string
 
   // NEW: Blind information (Phase 1)
   smallBlind?: number        // Small blind amount (in chips)
@@ -227,7 +241,8 @@ export interface HandAction {
   id?: string
   playerId?: string
   playerName?: string
-  street: 'PREFLOP' | 'FLOP' | 'TURN' | 'RIVER'
+  /** 스트리트 (소문자 사용) - @see PokerStreet in firestore-types.ts */
+  street: 'preflop' | 'flop' | 'turn' | 'river'
   actionType: string
   amount: number
   sequence?: number
@@ -264,9 +279,12 @@ export interface HandPlayer {
   pokerPosition?: string     // DB: poker_position (BTN, SB, BB, UTG, MP, CO, HJ)
   seat?: number               // Seat number (1-9 for 9-max tables)
 
-  // Hole cards
-  holeCards?: string[]       // Structured format: ["As", "Kd"] (권장)
-  cards?: string[] | string | null  // DEPRECATED: legacy format (use holeCards instead)
+  /** 홀 카드 (권장 형식) - 예: ["As", "Kd"] */
+  holeCards?: string[]
+  /**
+   * @deprecated Use `holeCards` instead. Will be removed in future version.
+   */
+  cards?: string[] | string | null
 
   // Stack information (KAN integration)
   startingStack?: number     // DB: starting_stack

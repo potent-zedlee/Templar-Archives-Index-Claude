@@ -11,18 +11,30 @@ import { adminFirestore, adminAuth } from '@/lib/db/firebase-admin'
 import { cookies } from 'next/headers'
 import { COLLECTION_PATHS } from '@/lib/db/firestore-types'
 
-// Pipeline 상태 타입 (3단계 단순화)
+/**
+ * Pipeline 상태 타입
+ *
+ * 워크플로우: pending → uploaded → (needs_classify) → analyzing → completed → published
+ *                                                         ↓
+ *                                                       failed
+ */
 export type PipelineStatus =
-  | 'all'
-  | 'uploaded'   // 업로드 완료, 분석 대기
-  | 'analyzing'  // AI 분석 중
-  | 'published'  // 발행 완료
-  | 'failed'     // 분석 실패
+  | 'all'            // 필터용: 전체
+  | 'pending'        // 초기 상태
+  | 'uploaded'       // 업로드 완료, 분석 대기
+  | 'needs_classify' // 분류 필요 (토너먼트/이벤트 미지정)
+  | 'analyzing'      // AI 분석 중
+  | 'completed'      // 분석 완료, 리뷰 대기
+  | 'published'      // 발행 완료
+  | 'failed'         // 분석 실패
 
 export interface PipelineStatusCounts {
   all: number
+  pending: number
   uploaded: number
+  needs_classify: number
   analyzing: number
+  completed: number
   published: number
   failed: number
 }
@@ -115,7 +127,7 @@ export async function getPipelineStatusCounts(): Promise<{
     }
 
     const statuses: Exclude<PipelineStatus, 'all'>[] = [
-      'uploaded', 'analyzing', 'published', 'failed'
+      'pending', 'uploaded', 'needs_classify', 'analyzing', 'completed', 'published', 'failed'
     ]
 
     // collectionGroup으로 모든 streams 서브컬렉션 조회
@@ -135,8 +147,11 @@ export async function getPipelineStatusCounts(): Promise<{
 
     const counts: PipelineStatusCounts = {
       all: 0,
+      pending: 0,
       uploaded: 0,
+      needs_classify: 0,
       analyzing: 0,
+      completed: 0,
       published: 0,
       failed: 0,
     }
@@ -179,7 +194,7 @@ export async function getStreamsByPipelineStatus(
     } else {
       // 'all'인 경우 모든 pipelineStatus가 있는 문서만 조회
       queryRef = streamsRef.where('pipelineStatus', 'in', [
-        'uploaded', 'analyzing', 'published', 'failed'
+        'pending', 'uploaded', 'needs_classify', 'analyzing', 'completed', 'published', 'failed'
       ])
     }
 

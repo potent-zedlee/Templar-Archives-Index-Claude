@@ -69,12 +69,15 @@ export interface PipelineStream {
 }
 
 /**
- * 파이프라인 상태별 카운트 (3단계 단순화)
+ * 파이프라인 상태별 카운트 (7단계 파이프라인)
  */
 export interface PipelineStatusCounts {
   all: number
+  pending: number
   uploaded: number
+  needs_classify: number
   analyzing: number
+  completed: number
   published: number
   failed: number
 }
