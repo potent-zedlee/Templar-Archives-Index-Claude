@@ -134,7 +134,7 @@ describe('Validation Utilities', () => {
       const valid = {
         title: 'Amazing Hand Analysis',
         content: 'This is a detailed analysis of a poker hand...',
-        category: 'analysis',
+        category: 'hand-analysis',
         handId: '123e4567-e89b-42d3-a456-426614174000',
       }
       const result = createPostSchema.safeParse(valid)
@@ -145,7 +145,7 @@ describe('Validation Utilities', () => {
       const invalid = {
         title: '   ',
         content: 'Content',
-        category: 'analysis',
+        category: 'hand-analysis',
       }
       const result = createPostSchema.safeParse(invalid)
       expect(result.success).toBe(false)
