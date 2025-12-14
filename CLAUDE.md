@@ -64,7 +64,7 @@ npm run analyze
 
 | 카테고리 | 기술 |
 |----------|------|
-| Framework | Next.js 16.0.7, React 19.2.1, TypeScript 5.9 |
+| Framework | Next.js 16.0.10, React 19.2.3, TypeScript 5.9.3 |
 | Styling | Tailwind CSS 4.1.16 |
 | State | React Query 5.90.5, Zustand 5.0.2 |
 | Database | Firebase Firestore (NoSQL) - firebase 12.6.0, firebase-admin 13.6.0 |
@@ -116,6 +116,18 @@ export async function createTournament(data: TournamentData) {
   return { success: true, data: { id: docRef.id, ...data } }
 }
 ```
+
+### 페이지 렌더링 설정
+
+**동적 렌더링 페이지** (실시간 데이터 필요):
+```typescript
+// app/(main)/page.tsx - 홈페이지
+export const dynamic = 'force-dynamic'  // 매 요청마다 Firestore에서 최신 데이터 조회
+```
+
+- 홈페이지 통계 (핸드 수, 토너먼트 수 등)는 Firestore 실시간 조회
+- 빌드 시점 캐싱 방지로 항상 최신 데이터 표시
+- Vercel Edge에서 SSR 처리
 
 ### Archive 계층 구조
 
@@ -344,6 +356,35 @@ docker buildx build --platform linux/amd64 --load ...
 | `high_templar` | 아카이브 관리 |
 | `admin` | 전체 시스템 접근 |
 
+### 시크릿 로테이션 가이드
+
+정기적인 보안 키 로테이션을 위한 CLI 명령어:
+
+```bash
+# Firebase Admin SDK 키 로테이션
+gcloud iam service-accounts keys create new-key.json \
+  --iam-account=firebase-adminsdk-xxx@PROJECT_ID.iam.gserviceaccount.com
+gcloud iam service-accounts keys delete OLD_KEY_ID \
+  --iam-account=firebase-adminsdk-xxx@PROJECT_ID.iam.gserviceaccount.com
+
+# 암호화 키 생성
+openssl rand -hex 32  # TWO_FACTOR_ENCRYPTION_KEY
+openssl rand -base64 32  # NEXT_SERVER_ACTIONS_ENCRYPTION_KEY
+
+# GitHub Secrets 업데이트
+gh secret set SECRET_NAME < secret-file.txt
+gh secret set SECRET_NAME --body "secret-value"
+
+# Vercel 환경변수 업데이트
+cat secret-file.txt | vercel env add SECRET_NAME production --force
+vercel env rm SECRET_NAME production --yes
+```
+
+**로테이션 주기 권장**:
+- Firebase Admin SDK 키: 90일
+- 암호화 키: 180일
+- API 키 (노출 시): 즉시
+
 ---
 
 ## CI/CD
@@ -363,7 +404,8 @@ Git Push (main) → GitHub Actions → https://templar-archives-index.web.app
 ```
 
 **GitHub Secrets 필요**:
-- `GOOGLE_APPLICATION_CREDENTIALS` - GCP 서비스 계정 JSON
+- `GOOGLE_APPLICATION_CREDENTIALS` - GCP 서비스 계정 JSON (Firebase Admin)
+- `FIREBASE_SERVICE_ACCOUNT` - Firebase 서비스 계정 JSON
 - `FIREBASE_TOKEN` - Firebase CLI 토큰
 - `NEXT_PUBLIC_FIREBASE_API_KEY`
 - `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`
@@ -372,7 +414,9 @@ Git Push (main) → GitHub Actions → https://templar-archives-index.web.app
 - `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`
 - `NEXT_PUBLIC_FIREBASE_APP_ID`
 - `CLOUD_RUN_ORCHESTRATOR_URL`
-- `GOOGLE_API_KEY`
+- `GOOGLE_API_KEY` - Gemini API 키
+- `TWO_FACTOR_ENCRYPTION_KEY` - 2FA 시크릿 암호화 키
+- `NEXT_SERVER_ACTIONS_ENCRYPTION_KEY` - Server Actions 암호화 키
 
 ---
 
@@ -908,5 +952,5 @@ WebGL 렌더링이 메인 스레드에서 실행되면 사용자 입력 처리�
 
 ---
 
-**마지막 업데이트**: 2025-12-10
-**문서 버전**: 9.0 (WebGL/Canvas INP 최적화 가이드라인 추가)
+**마지막 업데이트**: 2025-12-14
+**문서 버전**: 10.0 (시크릿 로테이션 가이드, 동적 렌더링 설정, GitHub Secrets 목록 업데이트)
