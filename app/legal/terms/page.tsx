@@ -38,9 +38,8 @@ export default function TermsOfServicePage() {
             Templar Archives Index is a poker hand history archive platform that:
           </p>
           <ul>
-            <li>Analyzes poker video content from public sources (YouTube)</li>
-            <li>Extracts and stores hand history data</li>
-            <li>Provides search and analysis tools for poker players</li>
+            <li>Stores hand history data from public sources</li>
+            <li>Provides search tools for poker players</li>
             <li>Facilitates community discussion and sharing</li>
           </ul>
 
@@ -66,7 +65,7 @@ export default function TermsOfServicePage() {
           <p className="bg-yellow-50 dark:bg-yellow-950 p-4 rounded-md border border-yellow-200 dark:border-yellow-800">
             <strong>FTC Disclosure:</strong> This Service contains affiliate links to poker sites and related services.
             We may earn a commission if you sign up or make purchases through our links, at no additional cost to you.
-            Our recommendations are based on research and analysis, not on commission rates.
+            Our recommendations are based on research, not on commission rates.
           </p>
 
           <h2>5. Intellectual Property Rights</h2>
@@ -82,7 +81,7 @@ export default function TermsOfServicePage() {
           </p>
           <ul>
             <li><strong>Transformative Purpose:</strong> We convert video content into structured hand history data, a fundamentally different format</li>
-            <li><strong>Educational Purpose:</strong> The Service is designed for poker education and analysis</li>
+            <li><strong>Educational Purpose:</strong> The Service is designed for poker education</li>
             <li><strong>Limited Use:</strong> We reference specific hands/clips, not entire broadcasts</li>
             <li><strong>No Market Harm:</strong> Our Service complements rather than replaces original video content</li>
           </ul>
@@ -144,7 +143,7 @@ export default function TermsOfServicePage() {
 
           <h3>10.2 No Gambling Advice</h3>
           <p>
-            This Service provides historical data and analysis tools ONLY. We do not provide gambling advice,
+            This Service provides historical data ONLY. We do not provide gambling advice,
             recommendations, or predictions. Use at your own risk.
           </p>
 

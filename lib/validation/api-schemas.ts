@@ -8,56 +8,6 @@
 
 import { z } from "zod"
 
-// ==================== Video Segment Schemas ====================
-
-/**
- * 세그먼트 타입 스키마
- */
-export const segmentTypeSchema = z.enum([
-  'countdown', 'opening', 'gameplay', 'break', 'ending'
-])
-
-/**
- * 시간 문자열 정규식 (HH:MM:SS 또는 MM:SS)
- */
-const timeStringRegex = /^(?:(\d{1,2}):)?(\d{1,2}):(\d{2})$/
-
-/**
- * Video Segment 스키마 (UI 입력용)
- */
-export const videoSegmentSchema = z.object({
-  id: z.string().min(1, "세그먼트 ID가 필요합니다"),
-  type: segmentTypeSchema,
-  startTime: z.string()
-    .min(1, "시작 시간을 입력해주세요")
-    .regex(timeStringRegex, "시간 형식: HH:MM:SS 또는 MM:SS"),
-  endTime: z.string()
-    .min(1, "종료 시간을 입력해주세요")
-    .regex(timeStringRegex, "시간 형식: HH:MM:SS 또는 MM:SS"),
-  label: z.string().max(200).optional(),
-})
-
-/**
- * TimeSegment 스키마 (API 전송용 - 초 단위)
- */
-export const timeSegmentSchema = z.object({
-  id: z.string().min(1),
-  type: segmentTypeSchema,
-  start: z.number().min(0, "시작 시간은 0 이상이어야 합니다"),
-  end: z.number().min(0, "종료 시간은 0 이상이어야 합니다"),
-  label: z.string().optional(),
-}).refine(data => data.end > data.start, {
-  message: "종료 시간은 시작 시간보다 커야 합니다",
-  path: ["end"],
-})
-
-/**
- * TimeSegment 배열 스키마 (분석 요청용)
- */
-export const timeSegmentsSchema = z.array(timeSegmentSchema)
-  .min(1, "최소 1개의 분석 구간이 필요합니다")
-  .max(20, "최대 20개의 분석 구간만 허용됩니다")
-
 // ==================== Enum Schemas ====================
 
 /**
@@ -81,8 +31,6 @@ export const videoSourceSchema = z.enum(["youtube", "upload", "nas"])
 
 /**
  * 게임 타입 스키마
- *
- * Note: Cash Game 기능은 제거되었습니다 (CLAUDE.md 참조)
  */
 export const gameTypeSchema = z.enum(["tournament"])
 
@@ -90,7 +38,6 @@ export const gameTypeSchema = z.enum(["tournament"])
 
 /**
  * Tournament Form 데이터 스키마
- * UI 폼에서 사용하는 데이터 구조
  */
 export const tournamentFormDataSchema = z.object({
   name: z.string().trim().min(1, "토너먼트 이름을 입력해주세요").max(200),
@@ -106,7 +53,6 @@ export const tournamentFormDataSchema = z.object({
 
 /**
  * Event Form 데이터 스키마
- * UI 폼에서 사용하는 데이터 구조
  */
 export const eventFormDataSchema = z.object({
   name: z.string().trim().min(1, "이벤트 이름을 입력해주세요").max(200),
@@ -124,29 +70,15 @@ export const eventFormDataSchema = z.object({
 
 /**
  * Stream Form 데이터 스키마
- * UI 폼에서 사용하는 데이터 구조
- * Note: uploadFile은 File 객체로 Zod에서 직접 검증하지 않음 (런타임 검증)
  */
 export const streamFormDataSchema = z.object({
   name: z.string().trim().min(1, "스트림 이름을 입력해주세요").max(200),
-  videoSource: videoSourceSchema.exclude(["nas"]), // Form에서는 youtube, upload만
+  videoSource: videoSourceSchema.exclude(["nas", "upload"]), // Only youtube for now
   videoUrl: z.string().url("유효한 URL을 입력해주세요").or(z.literal("")),
   publishedAt: z.string(),
 })
 
 // ==================== API Input Schemas ====================
-
-/**
- * 자연어 검색 API 스키마
- */
-export const naturalSearchSchema = z.object({
-  query: z
-    .string()
-    .trim()
-    .min(1, "검색어를 입력해주세요")
-    .max(200, "검색어는 최대 200자까지 입력 가능합니다")
-    .regex(/^[a-zA-Z0-9가-힣\s.,!?'-]+$/, "허용되지 않는 특수문자가 포함되어 있습니다"),
-})
 
 /**
  * 핸드 Import API 스키마
@@ -169,8 +101,7 @@ export const importHandsSchema = z.object({
 })
 
 /**
- * Tournament API 스키마 (생성/수정)
- * @deprecated tournamentFormDataSchema 사용 권장
+ * Tournament API 스키마
  */
 export const tournamentSchema = z.object({
   name: z.string().trim().min(1, "토너먼트 이름을 입력해주세요").max(200),
@@ -205,20 +136,16 @@ export const streamSchema = z.object({
   name: z.string().trim().min(1).max(100),
   videoSource: z.enum(["youtube", "upload"]),
   videoUrl: z.string().url().optional().or(z.literal("")),
-  videoFile: z.string().optional(),
 })
 
 /**
  * 커뮤니티 포스트 카테고리 스키마
- *
- * @see PostCategory in firestore-types.ts
  */
 export const postCategorySchema = z.enum([
-  "general",          // 일반 토론
-  "strategy",         // 전략 토론
-  "hand-analysis",    // 핸드 분석
-  "news",             // 뉴스
-  "tournament-recap", // 토너먼트 리캡
+  "general",
+  "strategy",
+  "news",
+  "tournament-recap",
 ])
 
 /**
@@ -290,7 +217,7 @@ export const createBookmarkSchema = z.object({
  * 유저 프로필 업데이트 스키마
  */
 export const updateProfileSchema = z.object({
-  nickname: z.string().trim().min(1).max(50).optional(),
+  nickname: z.string().trim().min(1, "nickname을 입력해주세요").max(50).optional(),
   bio: z.string().max(500).optional(),
   avatarUrl: z.string().url().max(500).optional(),
   socialLinks: z
@@ -332,64 +259,17 @@ export function formatValidationErrors(errors: z.ZodError): string[] {
   })
 }
 
-// ==================== Inferred Types (Single Source of Truth) ====================
+// ==================== Inferred Types ====================
 
-/**
- * Form 데이터 타입들 - Zod 스키마에서 파생 (z.infer)
- *
- * 이 타입들은 스키마에서 자동으로 추론되므로 수동 정의가 필요 없음
- */
-
-/** 토너먼트 카테고리 타입 */
 export type TournamentCategoryInferred = z.infer<typeof tournamentCategorySchema>
-
-/** 영상 소스 타입 */
 export type VideoSourceInferred = z.infer<typeof videoSourceSchema>
-
-/** 게임 타입 */
 export type GameTypeInferred = z.infer<typeof gameTypeSchema>
-
-/** Tournament Form 데이터 */
 export type TournamentFormDataInferred = z.infer<typeof tournamentFormDataSchema>
-
-/** Event Form 데이터 */
 export type EventFormDataInferred = z.infer<typeof eventFormDataSchema>
-
-/** Stream Form 데이터 (uploadFile 제외 - 런타임 처리) */
 export type StreamFormDataInferred = z.infer<typeof streamFormDataSchema>
-
-/** 자연어 검색 입력 */
-export type NaturalSearchInput = z.infer<typeof naturalSearchSchema>
-
-/** 핸드 Import 입력 */
-export type ImportHandsInput = z.infer<typeof importHandsSchema>
-
-/** Player Claim 입력 */
 export type PlayerClaimInput = z.infer<typeof playerClaimSchema>
-
-/** Hand Edit Request 입력 */
 export type HandEditRequestInput = z.infer<typeof handEditRequestSchema>
-
-/** Content Report 입력 */
 export type ContentReportInput = z.infer<typeof contentReportSchema>
-
-/** 북마크 생성 입력 */
 export type CreateBookmarkInput = z.infer<typeof createBookmarkSchema>
-
-/** 프로필 업데이트 입력 */
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>
-
-/** 포스트 카테고리 타입 */
 export type PostCategoryInferred = z.infer<typeof postCategorySchema>
-
-/** 세그먼트 타입 */
-export type SegmentTypeInput = z.infer<typeof segmentTypeSchema>
-
-/** Video Segment (UI 입력용) */
-export type VideoSegmentInput = z.infer<typeof videoSegmentSchema>
-
-/** TimeSegment (API 전송용) */
-export type TimeSegmentInput = z.infer<typeof timeSegmentSchema>
-
-/** TimeSegment 배열 (분석 요청용) */
-export type TimeSegmentsInput = z.infer<typeof timeSegmentsSchema>

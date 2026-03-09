@@ -336,11 +336,6 @@ function UnsortedVideoNode({ video, isActive }: UnsortedVideoNodeProps) {
         <GripVertical className="h-3 w-3 text-muted-foreground" />
         <Video className="h-4 w-4 text-purple-500" />
         <span className="flex-1 truncate">{video.name}</span>
-        {video.gcsFileSize && (
-          <span className="text-xs text-muted-foreground">
-            {(video.gcsFileSize / 1024 / 1024 / 1024).toFixed(1)} GB
-          </span>
-        )}
       </div>
     </AdminContextMenu>
   )

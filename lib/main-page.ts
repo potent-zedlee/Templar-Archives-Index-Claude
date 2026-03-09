@@ -1,12 +1,8 @@
 /**
- * Main Page Data Fetching
- *
- * Firestore-based data fetching for the main page
+ * Main Page Data Fetching (Supabase Version)
  */
 
-import { collection, query, orderBy, limit, getDocs, getCountFromServer, where, Timestamp } from 'firebase/firestore'
-import { firestore } from '@/lib/db/firebase'
-import { COLLECTION_PATHS } from '@/lib/db/firestore-types'
+import { createClient } from '@/lib/supabase/client'
 
 export type PlatformStats = {
   totalHands: number
@@ -39,66 +35,63 @@ export type TopPlayer = {
  * 플랫폼 전체 통계 조회
  */
 export async function getPlatformStats(): Promise<PlatformStats> {
+  const supabase = createClient()
   try {
-    const [handsCount, tournamentsCount, playersCount] = await Promise.all([
-      getCountFromServer(collection(firestore, COLLECTION_PATHS.HANDS)),
-      getCountFromServer(collection(firestore, COLLECTION_PATHS.TOURNAMENTS)),
-      getCountFromServer(collection(firestore, COLLECTION_PATHS.PLAYERS))
+    const [hands, tournaments, players] = await Promise.all([
+      supabase.from('hands').select('*', { count: 'exact', head: true }),
+      supabase.from('tournaments').select('*', { count: 'exact', head: true }),
+      supabase.from('players').select('*', { count: 'exact', head: true }),
     ])
 
     return {
-      totalHands: handsCount.data().count,
-      totalTournaments: tournamentsCount.data().count,
-      totalPlayers: playersCount.data().count
+      totalHands: hands.count || 0,
+      totalTournaments: tournaments.count || 0,
+      totalPlayers: players.count || 0,
     }
   } catch (error) {
-    console.error('Error fetching platform stats:', error)
-    return {
-      totalHands: 0,
-      totalTournaments: 0,
-      totalPlayers: 0
-    }
+    return { totalHands: 0, totalTournaments: 0, totalPlayers: 0 }
   }
 }
 
 /**
- * 주간 하이라이트 핸드 조회 (최근 7일간 좋아요 많이 받은 핸드)
+ * 주간 하이라이트 핸드 조회
  */
 export async function getWeeklyHighlights(limitCount: number = 3): Promise<WeeklyHighlight[]> {
+  const supabase = createClient()
+  const sevenDaysAgo = new Date()
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+
   try {
-    const sevenDaysAgo = new Date()
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+    const { data, error } = await supabase
+      .from('hands')
+      .select(`
+        *,
+        streams (
+          name,
+          video_url,
+          events (
+            tournaments (name)
+          )
+        )
+      `)
+      .gte('created_at', sevenDaysAgo.toISOString())
+      .order('likes_count', { ascending: false })
+      .limit(limitCount)
 
-    const handsQuery = query(
-      collection(firestore, COLLECTION_PATHS.HANDS),
-      where('createdAt', '>=', Timestamp.fromDate(sevenDaysAgo)),
-      orderBy('createdAt', 'desc'),
-      orderBy('engagement.likesCount', 'desc'),
-      limit(limitCount)
-    )
+    if (error) throw error
 
-    const handsSnapshot = await getDocs(handsQuery)
-
-    return handsSnapshot.docs.map(doc => {
-      const data = doc.data()
-      // 기존 문자열 데이터와 새로운 정수 데이터 모두 호환
-      const handNumber = typeof data.number === 'string'
-        ? parseInt(data.number, 10) || 0
-        : data.number ?? 0
-      return {
-        id: doc.id,
-        number: handNumber,
-        description: data.description || '',
-        timestamp: data.timestamp || '',
-        potSize: data.potSize || 0,
-        likesCount: data.engagement?.likesCount || 0,
-        videoUrl: data.refData?.streamVideoUrl || '',
-        tournamentName: data.refData?.tournamentName || 'Unknown',
-        streamName: data.refData?.streamName || 'Unknown'
-      }
-    })
+    return (data || []).map((h: any) => ({
+      id: h.id,
+      number: h.hand_number,
+      description: h.description || '',
+      timestamp: h.timestamp || '',
+      potSize: h.pot_size || 0,
+      likesCount: h.likes_count || 0,
+      videoUrl: h.streams?.video_url || '',
+      tournamentName: h.streams?.events?.tournaments?.name || 'Unknown',
+      streamName: h.streams?.name || 'Unknown',
+    }))
   } catch (error) {
-    console.error('Error fetching weekly highlights:', error)
     return []
   }
 }
@@ -107,63 +100,58 @@ export async function getWeeklyHighlights(limitCount: number = 3): Promise<Weekl
  * 최신 커뮤니티 포스트 조회
  */
 export async function getLatestPosts(limitCount: number = 5) {
+  const supabase = createClient()
   try {
-    const postsQuery = query(
-      collection(firestore, COLLECTION_PATHS.POSTS),
-      orderBy('createdAt', 'desc'),
-      limit(limitCount)
-    )
+    const { data, error } = await supabase
+      .from('posts')
+      .select('*, users(nickname, avatar_url)')
+      .eq('status', 'published')
+      .order('created_at', { ascending: false })
+      .limit(limitCount)
 
-    const postsSnapshot = await getDocs(postsQuery)
+    if (error) throw error
 
-    return postsSnapshot.docs.map(doc => {
-      const data = doc.data()
-      return {
-        id: doc.id,
-        title: data.title || '',
-        content: data.content || '',
-        category: data.category || '',
-        createdAt: data.createdAt?.toDate?.()?.toISOString() || '',
-        likesCount: data.engagement?.likesCount || 0,
-        commentsCount: data.engagement?.commentsCount || 0,
-        author: {
-          nickname: data.author?.name || 'Unknown',
-          avatarUrl: data.author?.avatarUrl || ''
-        }
+    return (data || []).map((p: any) => ({
+      id: p.id,
+      title: p.title,
+      content: p.content,
+      category: p.category,
+      createdAt: p.created_at,
+      likesCount: p.likes_count || 0,
+      commentsCount: p.comments_count || 0,
+      author: {
+        nickname: p.users?.nickname || 'Unknown',
+        avatarUrl: p.users?.avatar_url || ''
       }
-    })
+    }))
   } catch (error) {
-    console.error('Error fetching latest posts:', error)
     return []
   }
 }
 
 /**
- * Top 플레이어 조회 (총 상금 기준)
+ * Top 플레이어 조회
  */
 export async function getTopPlayers(limitCount: number = 5): Promise<TopPlayer[]> {
+  const supabase = createClient()
   try {
-    const playersQuery = query(
-      collection(firestore, COLLECTION_PATHS.PLAYERS),
-      orderBy('totalWinnings', 'desc'),
-      limit(limitCount)
-    )
+    const { data, error } = await supabase
+      .from('players')
+      .select('*')
+      .order('total_winnings', { ascending: false })
+      .limit(limitCount)
 
-    const playersSnapshot = await getDocs(playersQuery)
+    if (error) throw error
 
-    return playersSnapshot.docs.map(doc => {
-      const data = doc.data()
-      return {
-        id: doc.id,
-        name: data.name || '',
-        photoUrl: data.photoUrl,
-        totalWinnings: data.totalWinnings || 0,
-        tournamentCount: data.stats?.tournamentCount || 0,
-        handsCount: data.stats?.totalHands || 0
-      }
-    })
+    return (data || []).map(p => ({
+      id: p.id,
+      name: p.name,
+      photoUrl: p.photo_url,
+      totalWinnings: Number(p.total_winnings) || 0,
+      tournamentCount: 0,
+      handsCount: (p.stats as any)?.total_hands || 0
+    }))
   } catch (error) {
-    console.error('Error fetching top players:', error)
     return []
   }
 }

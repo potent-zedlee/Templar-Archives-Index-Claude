@@ -25,8 +25,7 @@ const SENSITIVE_KEYWORDS = [
   'connection',
   'database',
   'postgres',
-  'firebase',
-  'firestore',
+  'supabase',
 ]
 
 /**

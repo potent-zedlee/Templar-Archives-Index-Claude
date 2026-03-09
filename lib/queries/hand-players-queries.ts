@@ -1,21 +1,16 @@
 /**
- * Hand Players React Query Hooks (Firestore)
- *
- * 핸드 플레이어 데이터 페칭을 위한 React Query hooks
- * Firestore에서는 players가 hands 컬렉션 내 embedded 배열로 저장됨
+ * Hand Players React Query Hooks (Supabase Version)
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   fetchHandPlayers,
   fetchAllPlayers,
-  addPlayerToHand,
-  removePlayerFromHand,
-  updatePlayerInHand,
   searchPlayers,
 } from '@/lib/poker/hand-players'
 import type { HandPlayer } from '@/lib/poker/hand-players'
 import { toast } from 'sonner'
+import { createClient } from '@/lib/supabase/client'
 
 // ==================== Query Keys ====================
 
@@ -28,62 +23,34 @@ export const handPlayersKeys = {
 
 // ==================== Queries ====================
 
-/**
- * Get players for a specific hand
- * Firestore: hands/{handId}의 players 배열 조회
- */
 export function useHandPlayersQuery(handId: string) {
   return useQuery({
     queryKey: handPlayersKeys.byHand(handId),
-    queryFn: async () => {
-      return await fetchHandPlayers(handId)
-    },
-    staleTime: 2 * 60 * 1000, // 2분
-    gcTime: 5 * 60 * 1000, // 5분
+    queryFn: () => fetchHandPlayers(handId),
     enabled: !!handId,
   })
 }
 
-/**
- * Get all players
- * Firestore: players 컬렉션 조회
- */
 export function useAllPlayersQuery() {
   return useQuery({
     queryKey: handPlayersKeys.allPlayers(),
-    queryFn: async () => {
-      return await fetchAllPlayers()
-    },
-    staleTime: 5 * 60 * 1000, // 5분
-    gcTime: 10 * 60 * 1000, // 10분
+    queryFn: fetchAllPlayers,
   })
 }
 
-/**
- * Search players by name
- * Firestore: players 컬렉션에서 name 필드로 검색
- */
 export function useSearchPlayersQuery(query: string) {
   return useQuery({
     queryKey: handPlayersKeys.searchPlayers(query),
-    queryFn: async () => {
-      if (!query || query.length < 2) return []
-      return await searchPlayers(query)
-    },
-    staleTime: 1 * 60 * 1000, // 1분
-    gcTime: 5 * 60 * 1000, // 5분
+    queryFn: () => searchPlayers(query),
     enabled: query.length >= 2,
   })
 }
 
 // ==================== Mutations ====================
 
-/**
- * Add player to hand
- * Firestore: hands/{handId}의 players 배열에 추가
- */
 export function useAddPlayerMutation(handId: string) {
   const queryClient = useQueryClient()
+  const supabase = createClient()
 
   return useMutation({
     mutationFn: async ({
@@ -97,108 +64,63 @@ export function useAddPlayerMutation(handId: string) {
       cards?: string
       startingStack?: number
     }) => {
-      return await addPlayerToHand(handId, playerId, position, cards, startingStack)
-    },
-    onMutate: async ({ playerId, position, cards, startingStack }) => {
-      // Cancel outgoing refetches
-      await queryClient.cancelQueries({ queryKey: handPlayersKeys.byHand(handId) })
-
-      // Snapshot previous value
-      const previousPlayers = queryClient.getQueryData<HandPlayer[]>(handPlayersKeys.byHand(handId))
-
-      // Optimistically update (Firestore embedded array)
-      const newPlayer: HandPlayer = {
-        id: playerId, // Firestore: player ID를 직접 사용 (별도 handPlayer ID 없음)
-        handId: handId,
-        playerId: playerId,
-        position: position || null,
-        cards: cards || null,
-        startingStack: startingStack || 0,
-        endingStack: 0,
-        createdAt: new Date().toISOString(),
+      // 1. 기존 핸드 로드
+      const { data: hand } = await supabase.from('hands').select('players_json').eq('id', handId).single()
+      const players = (hand?.players_json as any[]) || []
+      
+      // 2. 플레이어 정보 조회
+      const { data: player } = await supabase.from('players').select('name').eq('id', playerId).single()
+      
+      // 3. 새 플레이어 추가
+      const newPlayer = {
+        player_id: playerId,
+        name: player?.name || 'Unknown',
+        position,
+        hole_cards: cards ? cards.match(/.{1,2}/g) || [] : [],
+        starting_stack: startingStack || 0
       }
 
-      queryClient.setQueryData<HandPlayer[]>(
-        handPlayersKeys.byHand(handId),
-        (old) => [...(old || []), newPlayer]
-      )
+      const { error } = await supabase.from('hands').update({
+        players_json: [...players, newPlayer]
+      }).eq('id', handId)
 
-      return { previousPlayers }
+      if (error) throw error
+      return { success: true }
     },
-    onError: (error, _variables, context) => {
-      if (context?.previousPlayers) {
-        queryClient.setQueryData(handPlayersKeys.byHand(handId), context.previousPlayers)
-      }
-      console.error('플레이어 추가 실패:', error)
-      toast.error('Failed to add player')
-    },
-    onSuccess: (result) => {
-      if (!result.success) {
-        toast.error(result.error || 'Failed to add player')
-        return
-      }
-      toast.success('Player added')
-    },
-    onSettled: () => {
-      // Refetch to ensure consistency
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: handPlayersKeys.byHand(handId) })
-    },
+      toast.success('Player added')
+    }
   })
 }
 
-/**
- * Remove player from hand
- * Firestore: hands/{handId}의 players 배열에서 제거
- */
 export function useRemovePlayerMutation(handId: string) {
   const queryClient = useQueryClient()
+  const supabase = createClient()
 
   return useMutation({
     mutationFn: async ({ playerId }: { playerId: string }) => {
-      return await removePlayerFromHand(handId, playerId)
-    },
-    onMutate: async ({ playerId }) => {
-      // Cancel outgoing refetches
-      await queryClient.cancelQueries({ queryKey: handPlayersKeys.byHand(handId) })
+      const { data: hand } = await supabase.from('hands').select('players_json').eq('id', handId).single()
+      const players = (hand?.players_json as any[]) || []
+      const filtered = players.filter(p => p.player_id !== playerId)
+      
+      const { error } = await supabase.from('hands').update({
+        players_json: filtered
+      }).eq('id', handId)
 
-      // Snapshot previous value
-      const previousPlayers = queryClient.getQueryData<HandPlayer[]>(handPlayersKeys.byHand(handId))
-
-      // Optimistically update (remove from players array)
-      queryClient.setQueryData<HandPlayer[]>(
-        handPlayersKeys.byHand(handId),
-        (old) => (old || []).filter(player => player.playerId !== playerId)
-      )
-
-      return { previousPlayers }
+      if (error) throw error
+      return { success: true }
     },
-    onError: (error, _variables, context) => {
-      if (context?.previousPlayers) {
-        queryClient.setQueryData(handPlayersKeys.byHand(handId), context.previousPlayers)
-      }
-      console.error('플레이어 제거 실패:', error)
-      toast.error('Failed to remove player')
-    },
-    onSuccess: (result) => {
-      if (!result.success) {
-        toast.error(result.error || 'Failed to remove player')
-        return
-      }
-      toast.success('Player removed')
-    },
-    onSettled: () => {
-      // Refetch to ensure consistency
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: handPlayersKeys.byHand(handId) })
-    },
+      toast.success('Player removed')
+    }
   })
 }
 
-/**
- * Update player in hand
- * Firestore: hands/{handId}의 players 배열에서 해당 player 업데이트
- */
 export function useUpdatePlayerMutation(handId: string) {
   const queryClient = useQueryClient()
+  const supabase = createClient()
 
   return useMutation({
     mutationFn: async ({
@@ -213,51 +135,32 @@ export function useUpdatePlayerMutation(handId: string) {
         endingStack?: number
       }
     }) => {
-      return await updatePlayerInHand(handId, playerId, data)
-    },
-    onMutate: async ({ playerId, data }) => {
-      // Cancel outgoing refetches
-      await queryClient.cancelQueries({ queryKey: handPlayersKeys.byHand(handId) })
+      const { data: hand } = await supabase.from('hands').select('players_json').eq('id', handId).single()
+      const players = (hand?.players_json as any[]) || []
+      
+      const updated = players.map(p => {
+        if (p.player_id === playerId) {
+          return {
+            ...p,
+            position: data.position ?? p.position,
+            hole_cards: data.cards ? data.cards.match(/.{1,2}/g) || [] : p.hole_cards,
+            starting_stack: data.startingStack ?? p.starting_stack,
+            ending_stack: data.endingStack ?? p.ending_stack
+          }
+        }
+        return p
+      })
 
-      // Snapshot previous value
-      const previousPlayers = queryClient.getQueryData<HandPlayer[]>(handPlayersKeys.byHand(handId))
+      const { error } = await supabase.from('hands').update({
+        players_json: updated
+      }).eq('id', handId)
 
-      // Optimistically update (update specific player in array)
-      queryClient.setQueryData<HandPlayer[]>(
-        handPlayersKeys.byHand(handId),
-        (old) =>
-          (old || []).map((player) =>
-            player.playerId === playerId
-              ? {
-                  ...player,
-                  position: data.position ?? player.position,
-                  cards: data.cards ?? player.cards,
-                  startingStack: data.startingStack ?? player.startingStack,
-                  endingStack: data.endingStack ?? player.endingStack,
-                }
-              : player
-          )
-      )
-
-      return { previousPlayers }
+      if (error) throw error
+      return { success: true }
     },
-    onError: (error, _variables, context) => {
-      if (context?.previousPlayers) {
-        queryClient.setQueryData(handPlayersKeys.byHand(handId), context.previousPlayers)
-      }
-      console.error('플레이어 정보 수정 실패:', error)
-      toast.error('Failed to update player')
-    },
-    onSuccess: (result) => {
-      if (!result.success) {
-        toast.error(result.error || 'Failed to update player')
-        return
-      }
-      toast.success('Player updated')
-    },
-    onSettled: () => {
-      // Refetch to ensure consistency
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: handPlayersKeys.byHand(handId) })
-    },
+      toast.success('Player updated')
+    }
   })
 }

@@ -84,9 +84,9 @@ export default function ContentPage() {
   return (
     <div className="container max-w-7xl mx-auto py-8 px-4">
       <div className="mb-6">
-        <h1 className="text-title-lg mb-2">Hand Comments Management</h1>
+        <h1 className="text-title-lg mb-2">Comments Management</h1>
         <p className="text-body text-muted-foreground">
-          Manage comments on hand analysis pages
+          Manage comments on hand and post pages
         </p>
       </div>
 

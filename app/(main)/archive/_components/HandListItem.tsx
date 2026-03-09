@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/button'
 import { Heart, MessageCircle, Eye, Play } from 'lucide-react'
 import type { Hand } from '@/lib/types/archive'
 import { formatDistanceToNow } from 'date-fns'
-import { formatTime } from '@/types/segments'
+import { formatTime } from '@/lib/utils/time'
 
 interface HandListItemProps {
   hand: Hand
@@ -98,9 +98,9 @@ export const HandListItem = memo(function HandListItem({
       )}
 
       {/* Description */}
-      {hand.aiSummary && (
+      {hand.description && (
         <p className="text-sm text-foreground mb-3 line-clamp-2">
-          {hand.aiSummary}
+          {hand.description}
         </p>
       )}
 

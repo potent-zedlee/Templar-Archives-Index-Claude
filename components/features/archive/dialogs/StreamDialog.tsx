@@ -13,11 +13,12 @@ import { Label } from "@/components/ui/label"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Youtube, Upload, FolderOpen, Calendar, PlayCircle } from "lucide-react"
+import { Youtube, FolderOpen, Calendar, PlayCircle } from "lucide-react"
 import { toast } from "sonner"
 import { organizeVideo } from "@/lib/unsorted-videos"
 import type { UnsortedVideo } from "@/lib/types/archive"
 import { createStream, updateStream as updateStreamAction } from "@/app/actions/archive"
+import { createClient } from "@/lib/supabase/client"
 
 interface StreamDialogProps {
   isOpen: boolean
@@ -37,12 +38,11 @@ export function StreamDialog({
   onSuccess,
 }: StreamDialogProps) {
   const [newStreamName, setNewStreamName] = useState("")
-  const [videoSourceTab, setVideoSourceTab] = useState<'youtube' | 'upload' | 'unsorted'>('youtube')
+  const [videoSourceTab, setVideoSourceTab] = useState<'youtube' | 'unsorted'>('youtube')
   const [newStreamVideoUrl, setNewStreamVideoUrl] = useState("")
-  const [uploadFile, setUploadFile] = useState<File | null>(null)
   const [selectedUnsortedId, setSelectedUnsortedId] = useState<string | null>(null)
   const [publishedAt, setPublishedAt] = useState("")
-  const [uploading, setUploading] = useState(false)
+  const [loading, setLoading] = useState(false)
   const [loadingData, setLoadingData] = useState(false)
 
   // Reset form when dialog closes
@@ -50,11 +50,10 @@ export function StreamDialog({
     if (!isOpen) {
       setNewStreamName("")
       setNewStreamVideoUrl("")
-      setUploadFile(null)
       setSelectedUnsortedId(null)
       setPublishedAt("")
       setVideoSourceTab('youtube')
-      setUploading(false)
+      setLoading(false)
     }
   }, [isOpen])
 
@@ -71,20 +70,20 @@ export function StreamDialog({
 
     try {
       setLoadingData(true)
-      const response = await fetch(`/api/streams/${editingStreamId}`)
-      if (!response.ok) {
-        throw new Error('Failed to fetch stream data')
-      }
-      const { data } = await response.json()
+      const supabase = createClient()
+      const { data, error } = await supabase
+        .from('streams')
+        .select('*')
+        .eq('id', editingStreamId)
+        .single()
+
+      if (error) throw error
 
       if (data) {
         setNewStreamName(data.name || "")
-        setVideoSourceTab(data.videoSource || 'youtube')
-        setNewStreamVideoUrl(data.videoUrl || "")
-        // Handle Firestore Timestamp format
-        setPublishedAt(data.publishedAt?._seconds
-          ? new Date(data.publishedAt._seconds * 1000).toISOString().split('T')[0]
-          : data.publishedAt || "")
+        setVideoSourceTab(data.video_source === 'youtube' ? 'youtube' : 'youtube') // Default to youtube for now
+        setNewStreamVideoUrl(data.video_url || "")
+        setPublishedAt(data.created_at ? data.created_at.split('T')[0] : "")
       }
     } catch (error) {
       console.error('Error loading stream:', error)
@@ -98,13 +97,6 @@ export function StreamDialog({
     if (!editingStreamId) return
 
     try {
-      // Unsorted tab is not allowed for editing
-      if (videoSourceTab === 'unsorted') {
-        toast.error('Cannot update stream with unsorted video source')
-        return
-      }
-
-      // Validate YouTube URL if needed
       if (videoSourceTab === 'youtube' && !newStreamVideoUrl.trim()) {
         toast.error('Please enter YouTube URL')
         return
@@ -112,13 +104,10 @@ export function StreamDialog({
 
       const streamData = {
         name: newStreamName.trim() || undefined,
-        video_source: videoSourceTab as 'youtube' | 'upload',
-        video_url: videoSourceTab === 'youtube' ? newStreamVideoUrl.trim() : undefined,
-        video_file: undefined,
-        published_at: publishedAt || undefined,
+        video_source: 'youtube',
+        video_url: newStreamVideoUrl.trim() || undefined,
       }
 
-      // Call Server Action
       const result = await updateStreamAction(editingStreamId, streamData)
 
       if (!result.success) {
@@ -147,8 +136,13 @@ export function StreamDialog({
     }
 
     try {
-      setUploading(true)
-      const result = await organizeVideo(selectedUnsortedId, selectedEventId)
+      setLoading(true)
+      // Get tournamentId for the event
+      const supabase = createClient()
+      const { data: event } = await supabase.from('events').select('tournament_id').eq('id', selectedEventId).single()
+      if (!event) throw new Error('Event not found')
+
+      const result = await organizeVideo(selectedUnsortedId, selectedEventId, event.tournament_id)
 
       if (result.success) {
         toast.success('Video organized successfully')
@@ -161,7 +155,7 @@ export function StreamDialog({
       console.error('Error organizing video:', error)
       toast.error('Failed to organize video')
     } finally {
-      setUploading(false)
+      setLoading(false)
     }
   }
 
@@ -171,49 +165,25 @@ export function StreamDialog({
       return
     }
 
-    // If editing, call updateStream instead
     if (editingStreamId) {
       return updateStream()
     }
 
-    // If unsorted tab, organize existing video
     if (videoSourceTab === 'unsorted') {
       return organizeUnsortedVideo()
     }
 
     try {
-      let videoFile: string | undefined = undefined
-
-      // YouTube source
-      if (videoSourceTab === 'youtube') {
-        if (!newStreamVideoUrl.trim()) {
-          toast.error('Please enter YouTube URL')
-          return
-        }
-      }
-
-      // File upload source - Note: GCS upload should be handled separately
-      if (videoSourceTab === 'upload') {
-        if (!uploadFile) {
-          toast.error('Please select a file to upload')
-          return
-        }
-
-        setUploading(true)
-        // For now, we'll just create the stream without actual file upload
-        // GCS upload should be handled through the dedicated upload flow
-        toast.info('File upload is handled through the dedicated upload flow')
-        setUploading(false)
+      if (videoSourceTab === 'youtube' && !newStreamVideoUrl.trim()) {
+        toast.error('Please enter YouTube URL')
         return
       }
 
-      // Create Stream via Server Action
+      setLoading(true)
       const streamData = {
         name: newStreamName.trim() || undefined,
-        video_source: videoSourceTab as 'youtube' | 'upload',
-        video_url: videoSourceTab === 'youtube' ? newStreamVideoUrl.trim() : undefined,
-        video_file: videoFile,
-        published_at: publishedAt || undefined,
+        video_source: 'youtube',
+        video_url: newStreamVideoUrl.trim() || undefined,
       }
 
       const result = await createStream(selectedEventId, streamData)
@@ -229,7 +199,8 @@ export function StreamDialog({
       console.error('[StreamDialog] Error adding stream:', error)
       const errorMessage = error instanceof Error ? error.message : 'Failed to add stream'
       toast.error(errorMessage)
-      setUploading(false)
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -255,20 +226,6 @@ export function StreamDialog({
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="published-at">Stream Date</Label>
-              <Input
-                id="published-at"
-                type="date"
-                value={publishedAt}
-                onChange={(e) => setPublishedAt(e.target.value)}
-              />
-              <p className="text-caption text-muted-foreground">
-                Original stream/upload date (auto-filled from selected video)
-              </p>
-            </div>
-
-            {/* Video Source Tabs */}
             <div className="space-y-4">
               <Label>Video Source</Label>
               <div className="flex gap-2">
@@ -283,15 +240,6 @@ export function StreamDialog({
                 </Button>
                 <Button
                   type="button"
-                  variant={videoSourceTab === 'upload' ? 'default' : 'outline'}
-                  onClick={() => setVideoSourceTab('upload')}
-                  className="flex-1"
-                >
-                  <Upload className="mr-2 h-4 w-4" />
-                  Upload
-                </Button>
-                <Button
-                  type="button"
                   variant={videoSourceTab === 'unsorted' ? 'default' : 'outline'}
                   onClick={() => setVideoSourceTab('unsorted')}
                   className="flex-1"
@@ -302,7 +250,6 @@ export function StreamDialog({
               </div>
             </div>
 
-            {/* YouTube Tab */}
             {videoSourceTab === 'youtube' && (
               <div className="space-y-2">
                 <Label htmlFor="youtube-url">YouTube URL *</Label>
@@ -315,44 +262,6 @@ export function StreamDialog({
               </div>
             )}
 
-            {/* Upload Tab */}
-            {videoSourceTab === 'upload' && (
-              <div className="space-y-2">
-                <Label htmlFor="file-upload">Upload Video File *</Label>
-                <div className="border-2 border-dashed rounded-lg p-6 text-center">
-                  <input
-                    id="file-upload"
-                    type="file"
-                    accept="video/mp4,video/mov,video/avi,video/mkv,video/webm"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0]
-                      if (file) {
-                        if (file.size > 500 * 1024 * 1024) {
-                          toast.error('File size must be less than 500MB')
-                          return
-                        }
-                        setUploadFile(file)
-                      }
-                    }}
-                    className="hidden"
-                  />
-                  <label htmlFor="file-upload" className="cursor-pointer">
-                    <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-2" />
-                    <p className="text-body font-medium">
-                      {uploadFile ? uploadFile.name : 'Click to select video file'}
-                    </p>
-                    <p className="text-caption text-muted-foreground mt-1">
-                      {uploadFile
-                        ? `${(uploadFile.size / (1024 * 1024)).toFixed(2)} MB`
-                        : 'MP4, MOV, AVI, MKV, WebM (max 500MB)'
-                      }
-                    </p>
-                  </label>
-                </div>
-              </div>
-            )}
-
-            {/* Unsorted Tab */}
             {videoSourceTab === 'unsorted' && (
               <div className="space-y-2">
                 <Label>Select Video from Unsorted</Label>
@@ -360,12 +269,9 @@ export function StreamDialog({
                   <div className="border-2 border-dashed rounded-lg p-8 text-center">
                     <FolderOpen className="mx-auto h-12 w-12 text-muted-foreground mb-2" />
                     <p className="text-body font-medium text-muted-foreground">No unsorted videos available</p>
-                    <p className="text-caption text-muted-foreground mt-1">
-                      Upload videos to the Unsorted folder first
-                    </p>
                   </div>
                 ) : (
-                  <ScrollArea className="h-[500px] w-[460px] border rounded-lg">
+                  <ScrollArea className="h-[400px] border rounded-lg">
                     <div className="p-4 space-y-3">
                       {unsortedVideos.map((video) => (
                         <Card
@@ -375,57 +281,26 @@ export function StreamDialog({
                               ? 'border-primary bg-primary/5'
                               : 'hover:border-primary/50'
                           }`}
-                          onClick={() => {
-                            setSelectedUnsortedId(video.id)
-                            // Auto-fill publishedAt from selected video
-                            if (video.publishedAt) {
-                              setPublishedAt(new Date(video.publishedAt).toISOString().split('T')[0])
-                            }
-                          }}
+                          onClick={() => setSelectedUnsortedId(video.id)}
                         >
                           <div className="flex items-start gap-3">
-                            {/* Video Icon/Thumbnail */}
                             <div className="shrink-0">
-                              {video.videoSource === 'youtube' ? (
-                                <div className="w-16 h-16 bg-red-500/10 rounded flex items-center justify-center">
-                                  <Youtube className="h-8 w-8 text-red-500" />
-                                </div>
-                              ) : (
-                                <div className="w-16 h-16 bg-primary/10 rounded flex items-center justify-center">
-                                  <PlayCircle className="h-8 w-8 text-primary" />
-                                </div>
-                              )}
+                              <Youtube className="h-8 w-8 text-red-500" />
                             </div>
-
-                            {/* Video Info */}
                             <div className="flex-1 min-w-0">
                               <h4 className="font-semibold text-sm truncate mb-1">{video.name}</h4>
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <Badge variant="outline" className="text-xs">
-                                  {video.videoSource === 'youtube' ? 'YouTube' :
-                                   video.videoSource === 'upload' ? 'Upload' :
-                                   video.videoSource || 'Unknown'}
-                                </Badge>
-                                <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                                  <Calendar className="h-3 w-3" />
+                              <div className="flex items-center gap-2">
+                                <Badge variant="outline" className="text-xs">YouTube</Badge>
+                                <span className="text-xs text-muted-foreground">
                                   {new Date(video.createdAt).toLocaleDateString()}
-                                </div>
+                                </span>
                               </div>
-                              {video.videoUrl && (
-                                <p className="text-xs text-muted-foreground mt-1 truncate">
-                                  {video.videoUrl}
-                                </p>
-                              )}
                             </div>
-
-                            {/* Selected Indicator */}
                             {selectedUnsortedId === video.id && (
-                              <div className="shrink-0">
-                                <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center">
-                                  <svg className="w-4 h-4 text-primary-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                  </svg>
-                                </div>
+                              <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center">
+                                <svg className="w-4 h-4 text-primary-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
                               </div>
                             )}
                           </div>
@@ -434,9 +309,6 @@ export function StreamDialog({
                     </div>
                   </ScrollArea>
                 )}
-                <p className="text-caption text-muted-foreground">
-                  Selected video will be moved from Unsorted to this event
-                </p>
               </div>
             )}
 
@@ -444,12 +316,12 @@ export function StreamDialog({
               <Button
                 variant="outline"
                 onClick={() => onOpenChange(false)}
-                disabled={uploading}
+                disabled={loading}
               >
                 Cancel
               </Button>
-              <Button onClick={addStream} disabled={uploading || loadingData}>
-                {uploading ? 'Uploading...' : (editingStreamId ? 'Edit' : 'Add')}
+              <Button onClick={addStream} disabled={loading || loadingData}>
+                {loading ? 'Processing...' : (editingStreamId ? 'Edit' : 'Add')}
               </Button>
             </div>
           </div>

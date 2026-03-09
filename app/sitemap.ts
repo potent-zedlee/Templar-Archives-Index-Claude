@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next'
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = 'https://templar-archives.vercel.app'
+  const baseUrl = 'https://templar-archives-index.vercel.app'
 
   // Static routes
   const staticRoutes = [

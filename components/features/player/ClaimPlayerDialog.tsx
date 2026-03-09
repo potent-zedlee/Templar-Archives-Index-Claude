@@ -26,7 +26,7 @@ import { requestPlayerClaim, type VerificationMethod } from "@/lib/player-claims
 import { useAuth } from "@/components/layout/AuthProvider"
 
 /**
- * 플레이어 타입 (Firestore 또는 Supabase에서 모두 호환)
+ * 플레이어 타입
  */
 type PlayerForClaim = {
   id: string

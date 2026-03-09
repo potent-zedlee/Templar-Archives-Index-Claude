@@ -9,13 +9,14 @@ import "./globals.css"
 import { Providers } from "@/components/layout/Providers"
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://templar-archives-index.web.app'),
+  metadataBase: new URL('https://templar-archives-index.vercel.app'),
   title: {
-    default: "Templar Archives Index - Poker Hand History Archive & Analysis",
-    template: "%s | Templar Archives Index"
+    default: "Templar Archives - Poker Hand History",
+    template: "%s | Templar Archives",
   },
-  description: "Comprehensive poker hand history archive and analysis platform. Search, analyze, and share professional poker hands from major tournaments worldwide.",
-  keywords: ["poker", "hand history", "tournament", "analysis", "archive", "WSOP", "Triton", "EPT", "poker hands"],
+  description: "Comprehensive poker hand history archive platform. Search and share professional poker hands from major tournaments worldwide.",
+  keywords: ["poker", "hand history", "tournament", "archive", "WSOP", "Triton", "EPT", "poker hands"],
+
   authors: [{ name: "Templar Archives Index Team" }],
   creator: "Templar Archives Index",
   publisher: "Templar Archives Index",
@@ -30,8 +31,8 @@ export const metadata: Metadata = {
     locale: "ko_KR",
     url: "https://templar-archives-index.web.app",
     siteName: "Templar Archives Index",
-    title: "Templar Archives Index - Poker Hand History Archive & Analysis",
-    description: "Comprehensive poker hand history archive and analysis platform",
+    title: "Templar Archives Index - Poker Hand History Archive",
+    description: "Comprehensive poker hand history archive platform",
     images: [
       {
         url: "/og-image.png",
@@ -44,7 +45,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Templar Archives Index - Poker Hand History Archive",
-    description: "Comprehensive poker hand history archive and analysis platform",
+    description: "Comprehensive poker hand history archive platform",
     images: ["/og-image.png"]
   },
   robots: {

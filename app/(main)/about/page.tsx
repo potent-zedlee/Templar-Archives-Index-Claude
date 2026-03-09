@@ -4,75 +4,66 @@ import {
   Database,
   Search,
   Users,
-  Zap,
   Shield,
-  TrendingUp,
-  Brain,
   FileText,
   Play,
   Newspaper,
   Radio,
   Phone,
   Mail,
+  Trophy,
 } from "lucide-react"
 
 export default function AboutPage() {
   const features = [
     {
-      icon: Video,
-      title: "AI Video Analysis",
-      description:
-        "Powered by Claude Vision API, automatically extracts hand history from poker videos with 95%+ accuracy.",
-    },
-    {
       icon: Database,
-      title: "Dual Archive System",
+      title: "Hand Archive",
       description:
-        "Separate archives for tournaments (WSOP, EPT, Triton) and cash games (Hustler, Live at the Bike). Organized and searchable.",
+        "Comprehensive database of professional poker hands from major tournaments including WSOP, EPT, and Triton.",
     },
     {
       icon: Search,
       title: "Advanced Search",
       description:
-        "30+ search filters including AI natural language queries. Find specific hands in seconds.",
+        "Powerful search filters to find specific situations, players, or hand strengths in seconds.",
     },
     {
       icon: Users,
       title: "Player Profiles",
       description:
-        "Track stats for thousands of players. Claim your own profile and showcase your achievements.",
+        "Track performance stats for professional players and compare strategies.",
+    },
+    {
+      icon: Trophy,
+      title: "Tournament Coverage",
+      description:
+        "Detailed hand histories from the world's most prestigious poker series and events.",
     },
     {
       icon: Newspaper,
       title: "Poker News",
       description:
-        "Stay updated with the latest poker tournament announcements, industry news, and community highlights.",
+        "Stay updated with the latest poker tournament announcements and community highlights.",
     },
     {
       icon: Radio,
-      title: "Live Reporting",
+      title: "Event Reports",
       description:
-        "Real-time tournament updates, live chip counts, and results from ongoing events around the world.",
-    },
-    {
-      icon: Brain,
-      title: "Hand Review Forum",
-      description:
-        "Discuss strategy, analyze hands, and learn from the community in Reddit-style forums.",
+        "Tournament updates, chip counts, and results from ongoing events around the world.",
     },
     {
       icon: Shield,
       title: "Privacy & Security",
       description:
-        "GDPR, CCPA, and PIPL compliant. Your data is encrypted and secure.",
+        "Secure platform built with modern web standards to protect user data and preferences.",
     },
   ]
 
   const techStack = [
-    { name: "Next.js 15", logo: "⚡" },
+    { name: "Next.js 16", logo: "⚡" },
     { name: "React 19", logo: "⚛️" },
-    { name: "Firebase", logo: "🔥" },
-    { name: "Claude AI", logo: "🤖" },
+    { name: "Supabase", logo: "⚡" },
     { name: "Tailwind CSS", logo: "🎨" },
     { name: "TypeScript", logo: "📘" },
   ]
@@ -81,7 +72,7 @@ export default function AboutPage() {
     { value: "10,000+", label: "HANDS ARCHIVED" },
     { value: "500+", label: "PLAYERS TRACKED" },
     { value: "50+", label: "TOURNAMENTS" },
-    { value: "95%", label: "AI ACCURACY" },
+    { value: "100%", label: "MANUAL CURATION" },
   ]
 
   return (
@@ -97,8 +88,8 @@ export default function AboutPage() {
           </h1>
           <p className="text-body-lg text-text-secondary max-w-4xl mx-auto mb-8 leading-relaxed">
             The ultimate poker hand history archive.{" "}
-            <span className="whitespace-nowrap">Powered by AI,</span>{" "}
-            <span className="whitespace-nowrap">built for players.</span>
+            <span className="whitespace-nowrap">Built for players,</span>{" "}
+            <span className="whitespace-nowrap">curated by experts.</span>
           </p>
           <div className="flex gap-4 justify-center">
             <Link href="/search" className="btn-primary">
@@ -128,9 +119,9 @@ export default function AboutPage() {
         <div className="mb-16 text-center">
           <h2 className="text-heading-lg mb-4">OUR MISSION</h2>
           <p className="text-body text-text-secondary max-w-3xl mx-auto">
-            To make poker hand history universally accessible by converting every poker video
-            into searchable, analyzable data. We believe that learning from real-world hands
-            is the fastest path to improving your game.
+            To make professional poker hand history universally accessible and organized.
+            We believe that studying high-stakes tournament play is the most effective path
+            to mastering the game.
           </p>
         </div>
 
@@ -164,33 +155,33 @@ export default function AboutPage() {
 
         {/* How It Works */}
         <div className="mb-16">
-          <h2 className="text-heading-lg text-center mb-12">HOW IT WORKS</h2>
+          <h2 className="text-heading-lg text-center mb-12">PLATFORM ARCHITECTURE</h2>
           <div className="grid md:grid-cols-3 gap-8">
             <div className="text-center">
               <div className="w-16 h-16 border-2 border-gold-600 flex items-center justify-center mx-auto mb-4 bg-black-100">
-                <Video className="h-8 w-8 text-gold-400" />
+                <Database className="h-8 w-8 text-gold-400" />
               </div>
-              <h3 className="text-caption-lg mb-2">1. UPLOAD OR LINK VIDEO</h3>
+              <h3 className="text-caption-lg mb-2">1. DATA AGGREGATION</h3>
               <p className="text-body text-text-muted">
-                Provide a YouTube URL or upload a video file from your device.
+                We collect and structure hand data from various tournament broadcasts and sessions.
               </p>
             </div>
             <div className="text-center">
               <div className="w-16 h-16 border-2 border-gold-600 flex items-center justify-center mx-auto mb-4 bg-black-100">
-                <Zap className="h-8 w-8 text-gold-400" />
+                <FileText className="h-8 w-8 text-gold-400" />
               </div>
-              <h3 className="text-caption-lg mb-2">2. AI ANALYSIS</h3>
+              <h3 className="text-caption-lg mb-2">2. MANUAL CURATION</h3>
               <p className="text-body text-text-muted">
-                Claude Vision analyzes frames to extract hand details: cards, actions, pot sizes.
+                Every hand is reviewed and tagged to ensure maximum accuracy and relevance.
               </p>
             </div>
             <div className="text-center">
               <div className="w-16 h-16 border-2 border-gold-600 flex items-center justify-center mx-auto mb-4 bg-black-100">
-                <TrendingUp className="h-8 w-8 text-gold-400" />
+                <Search className="h-8 w-8 text-gold-400" />
               </div>
-              <h3 className="text-caption-lg mb-2">3. SEARCH & LEARN</h3>
+              <h3 className="text-caption-lg mb-2">3. SEARCH & STUDY</h3>
               <p className="text-body text-text-muted">
-                Access hand history, watch video clips, analyze patterns, and improve your game.
+                Users can easily find specific spots and study how the world's best players react.
               </p>
             </div>
           </div>
@@ -211,19 +202,19 @@ export default function AboutPage() {
             ))}
           </div>
           <p className="text-center text-caption text-text-muted mt-8">
-            All open-source technologies. See our{" "}
+            Modern high-performance stack. See our{" "}
             <Link href="/legal/terms" className="text-gold-400 hover:text-gold-300">
               Terms of Service
             </Link>{" "}
-            for license information.
+            for details.
           </p>
         </div>
 
         {/* CTA Section */}
         <div className="card-postmodern p-12 text-center border-gold-600">
-          <h2 className="text-heading-lg mb-4">START ANALYZING HANDS TODAY</h2>
+          <h2 className="text-heading-lg mb-4">START STUDYING TODAY</h2>
           <p className="text-body text-text-secondary mb-8 max-w-2xl mx-auto">
-            Join thousands of players using Templar Archives Index to study poker hands from the world&apos;s best tournaments and cash games.
+            Join players using Templar Archives Index to study poker hands from the world's best tournaments.
           </p>
           <div className="flex gap-4 justify-center">
             <Link href="/auth/login" className="btn-primary">

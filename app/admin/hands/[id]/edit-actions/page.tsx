@@ -4,7 +4,6 @@
  * Admin Edit Hand Actions Page
  *
  * Edit hand actions for admin users.
- * Migrated from Supabase to Firestore
  */
 
 import { useState } from "react"

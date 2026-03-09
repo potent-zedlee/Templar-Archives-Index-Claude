@@ -133,8 +133,8 @@ describe('Validation Utilities', () => {
     it('should validate correct post data', () => {
       const valid = {
         title: 'Amazing Hand Analysis',
-        content: 'This is a detailed analysis of a poker hand...',
-        category: 'hand-analysis',
+        content: 'This is a detailed discussion of a poker hand...',
+        category: 'strategy',
         handId: '123e4567-e89b-42d3-a456-426614174000',
       }
       const result = createPostSchema.safeParse(valid)
@@ -145,7 +145,7 @@ describe('Validation Utilities', () => {
       const invalid = {
         title: '   ',
         content: 'Content',
-        category: 'hand-analysis',
+        category: 'strategy',
       }
       const result = createPostSchema.safeParse(invalid)
       expect(result.success).toBe(false)
@@ -155,7 +155,7 @@ describe('Validation Utilities', () => {
       const invalid = {
         title: 'Title',
         content: 'a'.repeat(10001),
-        category: 'analysis',
+        category: 'strategy',
       }
       const result = createPostSchema.safeParse(invalid)
       expect(result.success).toBe(false)
@@ -166,7 +166,7 @@ describe('Validation Utilities', () => {
     it('should validate correct comment data', () => {
       const valid = {
         postId: '123e4567-e89b-42d3-a456-426614174000',
-        content: 'Great analysis! I agree with your decision.',
+        content: 'Great discussion! I agree with your decision.',
         parentCommentId: '550e8400-e29b-41d4-a716-446655440000',
       }
       const result = createCommentSchema.safeParse(valid)

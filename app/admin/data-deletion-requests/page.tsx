@@ -4,7 +4,6 @@
  * Admin Data Deletion Requests Page
  *
  * GDPR/CCPA/PIPL compliance: Review and process user data deletion requests.
- * Migrated from Supabase to Firebase Auth
  */
 
 import { useState, useEffect } from "react"
@@ -73,7 +72,7 @@ export default function DataDeletionRequestsPage() {
       return
     }
 
-    // user.email comes from Firebase Auth via AuthProvider
+    // user.email comes from Supabase Auth via AuthProvider
     if (user.email && !isAdmin(user.email)) {
       router.push("/")
       toast.error("Admin access only")

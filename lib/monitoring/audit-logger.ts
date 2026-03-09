@@ -1,14 +1,8 @@
 /**
- * Audit Logger
- *
- * Logs user and admin actions for auditing purposes.
- * Migrated to Firestore.
+ * Audit Logger (Supabase Version)
  */
 
-import { collection, addDoc, getDocs, query, where, orderBy, limit, getCountFromServer, Timestamp, doc, getDoc } from 'firebase/firestore'
-import { firestore } from '@/lib/db/firebase'
-
-const AUDIT_LOGS_COLLECTION = 'auditLogs'
+import { createClient } from '@/lib/supabase/client'
 
 export interface AuditLogData {
   user_id: string | null
@@ -22,60 +16,36 @@ export interface AuditLogData {
   metadata?: Record<string, unknown> | null
 }
 
-interface FirestoreAuditLog {
-  userId: string | null
-  action: string
-  resourceType?: string | null
-  resourceId?: string | null
-  oldValue?: Record<string, unknown> | null
-  newValue?: Record<string, unknown> | null
-  ipAddress?: string | null
-  userAgent?: string | null
-  metadata?: Record<string, unknown> | null
-  createdAt: Timestamp
-}
-
-/**
- * Log an audit event
- *
- * @param data Audit log data
- * @returns Promise<{ success: boolean; logId?: string; error?: string }>
- */
 export async function logAuditEvent(
   data: AuditLogData
 ): Promise<{ success: boolean; logId?: string; error?: string }> {
   try {
-    const auditLogData: FirestoreAuditLog = {
-      userId: data.user_id,
-      action: data.action,
-      resourceType: data.resource_type,
-      resourceId: data.resource_id,
-      oldValue: data.old_value,
-      newValue: data.new_value,
-      ipAddress: data.ip_address,
-      userAgent: data.user_agent,
-      metadata: data.metadata,
-      createdAt: Timestamp.now()
-    }
+    const supabase = createClient()
+    const { data: log, error } = await supabase
+      .from('admin_logs')
+      .insert({
+        admin_id: data.user_id,
+        action: data.action,
+        target_type: data.resource_type,
+        target_id: data.resource_id,
+        details: {
+          old_value: data.old_value,
+          new_value: data.new_value,
+          ip_address: data.ip_address,
+          user_agent: data.user_agent,
+          metadata: data.metadata
+        }
+      })
+      .select()
+      .single()
 
-    const docRef = await addDoc(collection(firestore, AUDIT_LOGS_COLLECTION), auditLogData)
-
-    return { success: true, logId: docRef.id }
-  } catch (error) {
-    console.error('Failed to log audit event:', error)
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
-    }
+    if (error) throw error
+    return { success: true, logId: log.id }
+  } catch (error: any) {
+    return { success: false, error: error.message }
   }
 }
 
-/**
- * Get audit logs with pagination
- *
- * @param options Query options
- * @returns Promise<{ data: any[]; count: number; error?: string }>
- */
 export async function getAuditLogs(options: {
   page?: number
   limit?: number
@@ -84,97 +54,47 @@ export async function getAuditLogs(options: {
   resource_type?: string
   from_date?: string
   to_date?: string
-}): Promise<{ data: unknown[]; count: number; error?: string }> {
+}) {
   try {
+    const supabase = createClient()
     const pageSize = options.limit || 50
-    const constraints: Parameters<typeof where>[] = []
+    const from = ((options.page || 1) - 1) * pageSize
+    const to = from + pageSize - 1
 
-    // Build query constraints
-    if (options.user_id) {
-      constraints.push(['userId', '==', options.user_id])
-    }
+    let query = supabase
+      .from('admin_logs')
+      .select('*, users:admin_id(nickname, email)', { count: 'exact' })
 
-    if (options.action) {
-      constraints.push(['action', '==', options.action])
-    }
+    if (options.user_id) query = query.eq('admin_id', options.user_id)
+    if (options.action) query = query.eq('action', options.action)
+    if (options.resource_type) query = query.eq('target_type', options.resource_type)
+    if (options.from_date) query = query.gte('created_at', options.from_date)
+    if (options.to_date) query = query.lte('created_at', options.to_date)
 
-    if (options.resource_type) {
-      constraints.push(['resourceType', '==', options.resource_type])
-    }
+    const { data, count, error } = await query
+      .order('created_at', { ascending: false })
+      .range(from, to)
 
-    if (options.from_date) {
-      constraints.push(['createdAt', '>=', Timestamp.fromDate(new Date(options.from_date))])
-    }
+    if (error) throw error
 
-    if (options.to_date) {
-      constraints.push(['createdAt', '<=', Timestamp.fromDate(new Date(options.to_date))])
-    }
-
-    // Build the query
-    const baseQuery = collection(firestore, AUDIT_LOGS_COLLECTION)
-    const whereConstraints = constraints.map(c => where(c[0] as string, c[1] as any, c[2]))
-
-    const logsQuery = query(
-      baseQuery,
-      ...whereConstraints,
-      orderBy('createdAt', 'desc'),
-      limit(pageSize)
-    )
-
-    // Get count
-    const countQuery = query(baseQuery, ...whereConstraints)
-    const countSnapshot = await getCountFromServer(countQuery)
-    const totalCount = countSnapshot.data().count
-
-    // Get data
-    const logsSnapshot = await getDocs(logsQuery)
-
-    // Fetch user data for each log
-    const logsWithUsers = await Promise.all(
-      logsSnapshot.docs.map(async (logDoc) => {
-        const logData = logDoc.data() as FirestoreAuditLog
-        let userData = null
-
-        if (logData.userId) {
-          try {
-            const userDoc = await getDoc(doc(firestore, 'users', logData.userId))
-            if (userDoc.exists()) {
-              const user = userDoc.data()
-              userData = {
-                id: userDoc.id,
-                email: user.email,
-                name: user.nickname || user.displayName
-              }
-            }
-          } catch {
-            // User not found, continue without user data
-          }
-        }
-
-        return {
-          id: logDoc.id,
-          user_id: logData.userId,
-          action: logData.action,
-          resource_type: logData.resourceType,
-          resource_id: logData.resourceId,
-          old_value: logData.oldValue,
-          new_value: logData.newValue,
-          ip_address: logData.ipAddress,
-          user_agent: logData.userAgent,
-          metadata: logData.metadata,
-          created_at: logData.createdAt.toDate().toISOString(),
-          users: userData
-        }
-      })
-    )
-
-    return { data: logsWithUsers, count: totalCount }
-  } catch (error) {
-    console.error('Error fetching audit logs:', error)
     return {
-      data: [],
-      count: 0,
-      error: error instanceof Error ? error.message : 'Unknown error',
+      data: (data || []).map(d => ({
+        id: d.id,
+        user_id: d.admin_id,
+        action: d.action,
+        resource_type: d.target_type,
+        resource_id: d.target_id,
+        old_value: d.details?.old_value,
+        new_value: d.details?.new_value,
+        ip_address: d.details?.ip_address,
+        user_agent: d.details?.user_agent,
+        metadata: d.details?.metadata,
+        created_at: d.created_at,
+        users: d.users
+      })),
+      count: count || 0
     }
+  } catch (error: any) {
+    return { data: [], count: 0, error: error.message }
   }
 }

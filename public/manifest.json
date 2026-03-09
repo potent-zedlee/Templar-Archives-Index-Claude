@@ -1,7 +1,7 @@
 {
   "name": "Templar Archives",
   "short_name": "Templar",
-  "description": "Poker hand history archive and analysis platform",
+  "description": "Poker hand history archive platform",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#000000",

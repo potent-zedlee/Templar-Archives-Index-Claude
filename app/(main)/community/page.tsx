@@ -20,13 +20,12 @@ import {
 import { useAuth } from '@/components/layout/AuthProvider'
 import { usePostsQuery, type SortOption } from '@/lib/queries/posts-queries'
 import { PostCard } from '@/components/features/community/PostCard'
-import type { PostCategory } from '@/lib/db/firestore-types'
+import type { PostCategory } from '@/lib/queries/posts-queries'
 
 const CATEGORIES: { value: PostCategory | 'all'; label: string }[] = [
   { value: 'all', label: 'All Categories' },
   { value: 'general', label: 'General' },
   { value: 'strategy', label: 'Strategy' },
-  { value: 'hand-analysis', label: 'Hand Analysis' },
   { value: 'news', label: 'News' },
   { value: 'tournament-recap', label: 'Tournament Recap' },
 ]

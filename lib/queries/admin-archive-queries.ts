@@ -1,729 +1,141 @@
 /**
- * Admin Archive React Query Hooks
- *
- * Admin 전용 Archive 쿼리 (모든 상태 조회 가능)
- * 파이프라인 상태별 스트림 조회 및 통계
- *
- * Firestore 기반
- *
- * @module lib/queries/admin-archive-queries
+ * Admin Archive React Query Hooks (Supabase Version)
  */
 
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query'
-import { firestore } from '@/lib/db/firebase'
-import {
-  collection,
-  doc,
-  getDoc,
-  query,
-  where,
-  orderBy,
-  getDocs,
-  updateDoc,
-  Timestamp,
-  CollectionReference,
-  QueryConstraint,
-} from 'firebase/firestore'
+import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
-import { publishStream, unpublishStream, bulkPublishStreams, bulkUnpublishStreams } from '@/app/actions/admin/archive-admin'
-import type { Tournament, Event, Stream, ContentStatus, PipelineStatus, Hand } from '@/lib/types/archive'
+import type { Tournament, Event, Stream, ContentStatus } from '@/lib/types/archive'
 
-// ============================================
-// Pipeline Types
-// ============================================
+// ==================== Types ====================
 
-/**
- * 파이프라인 스트림 (비정규화된 관계 데이터 포함)
- */
-export interface PipelineStream {
-  id: string
-  name: string
-  description?: string
-  videoUrl?: string
-  videoSource?: 'youtube' | 'upload' | 'nas'
-  videoFile?: string
-  gcsUri?: string
-  gcsPath?: string
-  uploadStatus?: 'none' | 'uploading' | 'uploaded' | 'failed'
-
-  // 파이프라인 상태
-  pipelineStatus: PipelineStatus
-  pipelineProgress: number
-  pipelineError?: string
-  pipelineUpdatedAt?: Date
-
-  // 분석 관련
-  currentJobId?: string
-  lastAnalysisAt?: Date
-  analysisAttempts: number
-  handCount: number
-
-  // 참조 정보 (비정규화)
-  eventId?: string
+export interface AdminStream extends Stream {
   eventName?: string
-  tournamentId?: string
   tournamentName?: string
-
-  createdAt: Date
-  updatedAt: Date
+  tournamentId?: string
 }
+
+// ==================== Admin Queries ====================
 
 /**
- * 파이프라인 상태별 카운트 (7단계 파이프라인)
- */
-export interface PipelineStatusCounts {
-  all: number
-  pending: number
-  uploaded: number
-  needs_classify: number
-  analyzing: number
-  completed: number
-  published: number
-  failed: number
-}
-
-// ==================== Query Keys ====================
-
-export const adminArchiveKeys = {
-  all: ['admin-archive'] as const,
-  tournaments: (statusFilter?: ContentStatus | 'all') =>
-    [...adminArchiveKeys.all, 'tournaments', statusFilter] as const,
-  events: (tournamentId: string, statusFilter?: ContentStatus | 'all') =>
-    [...adminArchiveKeys.all, 'events', tournamentId, statusFilter] as const,
-  streams: (eventId: string, statusFilter?: ContentStatus | 'all') =>
-    [...adminArchiveKeys.all, 'streams', eventId, statusFilter] as const,
-}
-
-/**
- * Admin Archive Pipeline Query Keys
- */
-export const adminArchiveQueryKeys = {
-  all: ['admin', 'archive'] as const,
-  streams: () => [...adminArchiveQueryKeys.all, 'streams'] as const,
-  streamsByStatus: (status: PipelineStatus | 'all') =>
-    [...adminArchiveQueryKeys.streams(), 'status', status] as const,
-  stream: (id: string) => [...adminArchiveQueryKeys.streams(), id] as const,
-  statusCounts: () => [...adminArchiveQueryKeys.all, 'counts'] as const,
-  hands: (streamId: string) => [...adminArchiveQueryKeys.all, 'hands', streamId] as const,
-}
-
-// ==================== Admin Tournaments Query ====================
-
-/**
- * Admin 전용 Tournaments 쿼리 (모든 상태 포함)
+ * Admin 전용 Tournaments 쿼리
  */
 export function useAdminTournamentsQuery(statusFilter: ContentStatus | 'all' = 'all') {
   return useQuery({
-    queryKey: adminArchiveKeys.tournaments(statusFilter),
+    queryKey: ['admin', 'tournaments', statusFilter],
     queryFn: async () => {
-      const tournamentsRef = collection(firestore, 'tournaments') as CollectionReference
-      const constraints: QueryConstraint[] = [
-        orderBy('endDate', 'desc')
-      ]
-
-      // Status 필터 적용
-      if (statusFilter !== 'all') {
-        constraints.unshift(where('status', '==', statusFilter))
-      }
-
-      const q = query(tournamentsRef, ...constraints)
-      const snapshot = await getDocs(q)
-
-      const tournaments: Tournament[] = []
-      snapshot.forEach(doc => {
-        const data = doc.data()
-        tournaments.push({
-          id: doc.id,
-          name: data.name,
-          category: data.category,
-          categoryId: data.categoryId,
-          categoryLogo: data.categoryLogo,
-          categoryLogoUrl: data.categoryLogoUrl,
-          location: data.location,
-          city: data.city,
-          country: data.country,
-          gameType: data.gameType,
-          totalPrize: data.totalPrize,
-          status: data.status,
-          publishedBy: data.publishedBy,
-          publishedAt: data.publishedAt,
-          // Timestamp를 string으로 변환
-          startDate: data.startDate instanceof Timestamp
-            ? data.startDate.toDate().toISOString()
-            : data.startDate,
-          endDate: data.endDate instanceof Timestamp
-            ? data.endDate.toDate().toISOString()
-            : data.endDate,
-          createdAt: data.createdAt instanceof Timestamp
-            ? data.createdAt.toDate().toISOString()
-            : data.createdAt,
-        })
-      })
-
-      return tournaments
-    },
-    staleTime: 2 * 60 * 1000, // 2분 (Admin은 자주 업데이트)
-    gcTime: 10 * 60 * 1000, // 10분
+      const supabase = createClient()
+      let query = supabase.from('tournaments').select('*').order('end_date', { ascending: false })
+      if (statusFilter !== 'all') query = query.eq('status', statusFilter)
+      const { data, error } = await query
+      if (error) throw error
+      return data as Tournament[]
+    }
   })
 }
 
-// ==================== Admin Events Query ====================
-
 /**
- * Admin 전용 Events 쿼리 (모든 상태 포함)
+ * Admin 전용 Events 쿼리
  */
-export function useAdminEventsQuery(
-  tournamentId: string,
-  statusFilter: ContentStatus | 'all' = 'all'
-) {
+export function useAdminEventsQuery(tournamentId: string, statusFilter: ContentStatus | 'all' = 'all') {
   return useQuery({
-    queryKey: adminArchiveKeys.events(tournamentId, statusFilter),
+    queryKey: ['admin', 'events', tournamentId, statusFilter],
     queryFn: async () => {
-      const eventsRef = collection(firestore, 'events') as CollectionReference
-      const constraints: QueryConstraint[] = [
-        where('tournamentId', '==', tournamentId),
-        orderBy('date', 'desc')
-      ]
-
-      // Status 필터 적용
-      if (statusFilter !== 'all') {
-        constraints.splice(1, 0, where('status', '==', statusFilter))
-      }
-
-      const q = query(eventsRef, ...constraints)
-      const snapshot = await getDocs(q)
-
-      const events: Event[] = []
-      snapshot.forEach(doc => {
-        const data = doc.data()
-        events.push({
-          id: doc.id,
-          tournamentId: data.tournamentId,
-          name: data.name,
-          eventNumber: data.eventNumber,
-          totalPrize: data.totalPrize,
-          winner: data.winner,
-          buyIn: data.buyIn,
-          entryCount: data.entryCount,
-          blindStructure: data.blindStructure,
-          levelDuration: data.levelDuration,
-          startingStack: data.startingStack,
-          notes: data.notes,
-          status: data.status,
-          publishedBy: data.publishedBy,
-          publishedAt: data.publishedAt,
-          // Timestamp를 string으로 변환
-          date: data.date instanceof Timestamp
-            ? data.date.toDate().toISOString()
-            : data.date,
-          createdAt: data.createdAt instanceof Timestamp
-            ? data.createdAt.toDate().toISOString()
-            : data.createdAt,
-        })
-      })
-
-      return events
+      const supabase = createClient()
+      let query = supabase.from('events').select('*').eq('tournament_id', tournamentId).order('date', { ascending: false })
+      if (statusFilter !== 'all') query = query.eq('status', statusFilter)
+      const { data, error } = await query
+      if (error) throw error
+      return data as Event[]
     },
-    enabled: !!tournamentId,
-    staleTime: 2 * 60 * 1000, // 2분
-    gcTime: 10 * 60 * 1000, // 10분
+    enabled: !!tournamentId
   })
 }
 
-// ==================== Admin Streams Query ====================
-
 /**
- * Admin 전용 Streams 쿼리 (모든 상태 포함)
+ * Admin 전용 Streams 쿼리
  */
-export function useAdminStreamsQuery(
-  eventId: string,
-  statusFilter: ContentStatus | 'all' = 'all'
-) {
+export function useAdminStreamsQuery(eventId: string | 'all', statusFilter: ContentStatus | 'all' = 'all') {
   return useQuery({
-    queryKey: adminArchiveKeys.streams(eventId, statusFilter),
+    queryKey: ['admin', 'streams', eventId, statusFilter],
     queryFn: async () => {
-      const streamsRef = collection(firestore, 'streams') as CollectionReference
-      const constraints: QueryConstraint[] = [
-        where('eventId', '==', eventId),
-        orderBy('publishedAt', 'desc')
-      ]
+      const supabase = createClient()
+      let query = supabase
+        .from('streams')
+        .select(`
+          *,
+          events (
+            name,
+            tournament_id,
+            tournaments (name)
+          )
+        `)
+        .order('created_at', { ascending: false })
 
-      // Status 필터 적용
-      if (statusFilter !== 'all') {
-        constraints.splice(1, 0, where('status', '==', statusFilter))
-      }
+      if (eventId !== 'all') query = query.eq('event_id', eventId)
+      if (statusFilter !== 'all') query = query.eq('status', statusFilter)
 
-      const q = query(streamsRef, ...constraints)
-      const snapshot = await getDocs(q)
+      const { data, error } = await query
+      if (error) throw error
 
-      const streams: (Stream & { handCount?: number })[] = []
-      const streamIds: string[] = []
-
-      snapshot.forEach(doc => {
-        const data = doc.data()
-        streamIds.push(doc.id)
-
-        streams.push({
-          id: doc.id,
-          eventId: data.eventId,
-          name: data.name,
-          description: data.description,
-          videoUrl: data.videoUrl,
-          videoFile: data.videoFile,
-          videoNasPath: data.videoNasPath,
-          videoSource: data.videoSource,
-          isOrganized: data.isOrganized,
-          organizedAt: data.organizedAt,
-          playerCount: data.playerCount,
-          status: data.status,
-          publishedBy: data.publishedBy,
-          gcsPath: data.gcsPath,
-          gcsUri: data.gcsUri,
-          gcsFileSize: data.gcsFileSize,
-          gcsUploadedAt: data.gcsUploadedAt,
-          uploadStatus: data.uploadStatus,
-          videoDuration: data.videoDuration,
-          // Timestamp를 string으로 변환
-          publishedAt: data.publishedAt instanceof Timestamp
-            ? data.publishedAt.toDate().toISOString()
-            : data.publishedAt,
-          createdAt: data.createdAt instanceof Timestamp
-            ? data.createdAt.toDate().toISOString()
-            : data.createdAt,
-          handCount: 0, // 초기값
-        })
-      })
-
-      // Hand count 조회
-      if (streamIds.length > 0) {
-        const handCounts: Record<string, number> = {}
-
-        // Firestore 'in' 쿼리는 최대 30개까지만 가능하므로 청크로 나눔
-        const chunkSize = 30
-        for (let i = 0; i < streamIds.length; i += chunkSize) {
-          const chunk = streamIds.slice(i, i + chunkSize)
-          const handsRef = collection(firestore, 'hands')
-          const handsQuery = query(handsRef, where('streamId', 'in', chunk))
-          const handsSnapshot = await getDocs(handsQuery)
-
-          handsSnapshot.forEach(doc => {
-            const streamId = doc.data().streamId
-            handCounts[streamId] = (handCounts[streamId] || 0) + 1
-          })
-        }
-
-        // Hand count 병합
-        streams.forEach(stream => {
-          stream.handCount = handCounts[stream.id] || 0
-        })
-      }
-
-      return streams
-    },
-    enabled: !!eventId,
-    staleTime: 2 * 60 * 1000, // 2분
-    gcTime: 10 * 60 * 1000, // 10분
+      return (data || []).map(d => ({
+        ...d,
+        eventName: (d.events as any)?.name,
+        tournamentId: (d.events as any)?.tournament_id,
+        tournamentName: (d.events as any)?.tournaments?.name,
+      })) as AdminStream[]
+    }
   })
 }
 
-// ==================== Publish Mutations ====================
-
-/**
- * Publish Stream Mutation
- */
-export function usePublishStreamMutation() {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: async ({ tournamentId, eventId, streamId }: { tournamentId: string, eventId: string, streamId: string }) => {
-      const result = await publishStream(tournamentId, eventId, streamId)
-      if (!result.success) throw new Error(result.error)
-      return result
-    },
-    onSuccess: () => {
-      // 모든 admin archive 쿼리 무효화
-      queryClient.invalidateQueries({ queryKey: adminArchiveKeys.all })
-    },
-  })
-}
-
-/**
- * Unpublish Stream Mutation
- */
-export function useUnpublishStreamMutation() {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: async ({ tournamentId, eventId, streamId }: { tournamentId: string, eventId: string, streamId: string }) => {
-      const result = await unpublishStream(tournamentId, eventId, streamId)
-      if (!result.success) throw new Error(result.error)
-      return result
-    },
-    onSuccess: () => {
-      // 모든 admin archive 쿼리 무효화
-      queryClient.invalidateQueries({ queryKey: adminArchiveKeys.all })
-    },
-  })
-}
-
-/**
- * Bulk Publish Streams Mutation
- */
-export function useBulkPublishMutation() {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: async ({ tournamentId, eventId, streamIds }: { tournamentId: string, eventId: string, streamIds: string[] }) => {
-      const result = await bulkPublishStreams(tournamentId, eventId, streamIds)
-      if (!result.success) throw new Error(result.error)
-      return result
-    },
-    onSuccess: () => {
-      // 모든 admin archive 쿼리 무효화
-      queryClient.invalidateQueries({ queryKey: adminArchiveKeys.all })
-    },
-  })
-}
-
-/**
- * Bulk Unpublish Streams Mutation
- */
-export function useBulkUnpublishMutation() {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: async ({ tournamentId, eventId, streamIds }: { tournamentId: string, eventId: string, streamIds: string[] }) => {
-      const result = await bulkUnpublishStreams(tournamentId, eventId, streamIds)
-      if (!result.success) throw new Error(result.error)
-      return result
-    },
-    onSuccess: () => {
-      // 모든 admin archive 쿼리 무효화
-      queryClient.invalidateQueries({ queryKey: adminArchiveKeys.all })
-    },
-  })
-}
-
-// ============================================
-// Pipeline Query Functions (Server Actions 사용)
-// ============================================
-
-import {
-  getPipelineStatusCounts as getPipelineStatusCountsAction,
-  getStreamsByPipelineStatus as getStreamsByPipelineStatusAction,
-  resetStreamAnalysis as resetStreamAnalysisAction,
-  updateStreamPipelineStatusById as updateStreamPipelineStatusByIdAction,
-} from '@/app/actions/pipeline'
-
-/**
- * 파이프라인 상태별 스트림 조회 (Server Action 호출)
- */
-async function getStreamsByPipelineStatus(
-  status: PipelineStatus | 'all',
-  pageLimit = 50
-): Promise<PipelineStream[]> {
-  const result = await getStreamsByPipelineStatusAction(status, pageLimit)
-
-  if (!result.success || !result.data) {
-    console.error('[getStreamsByPipelineStatus] Error:', result.error)
-    throw new Error(result.error || 'Failed to fetch streams')
-  }
-
-  // Server Action에서 반환된 데이터를 PipelineStream 형식으로 변환
-  return result.data.map((stream) => ({
-    id: stream.id,
-    name: stream.name || '',
-    description: stream.description,
-    videoUrl: stream.videoUrl,
-    videoSource: stream.videoSource as 'youtube' | 'upload' | 'nas' | undefined,
-    videoFile: stream.videoFile,
-    gcsUri: stream.gcsUri,
-    gcsPath: stream.gcsPath,
-    uploadStatus: stream.uploadStatus as 'none' | 'uploading' | 'uploaded' | 'failed' | undefined,
-    pipelineStatus: stream.pipelineStatus as PipelineStatus || 'uploaded',
-    pipelineProgress: stream.pipelineProgress || 0,
-    pipelineError: stream.pipelineError,
-    pipelineUpdatedAt: stream.pipelineUpdatedAt ? new Date(stream.pipelineUpdatedAt) : undefined,
-    currentJobId: stream.currentJobId,
-    lastAnalysisAt: stream.lastAnalysisAt ? new Date(stream.lastAnalysisAt) : undefined,
-    analysisAttempts: stream.analysisAttempts || 0,
-    handCount: stream.handCount || 0,
-    eventId: stream.eventId,
-    eventName: stream.eventName,
-    tournamentId: stream.tournamentId,
-    tournamentName: stream.tournamentName,
-    createdAt: stream.createdAt ? new Date(stream.createdAt) : new Date(),
-    updatedAt: stream.updatedAt ? new Date(stream.updatedAt) : new Date(),
-  }))
-}
-
-/**
- * 파이프라인 상태별 카운트 조회 (Server Action 호출)
- */
-async function getPipelineStatusCounts(): Promise<PipelineStatusCounts> {
-  const result = await getPipelineStatusCountsAction()
-
-  if (!result.success || !result.data) {
-    console.error('[getPipelineStatusCounts] Error:', result.error)
-    throw new Error(result.error || 'Failed to fetch counts')
-  }
-
-  return result.data
-}
-
-// ============================================
-// Pipeline React Query Hooks
-// ============================================
-
-/**
- * 파이프라인 상태별 스트림 목록 훅
- */
-export function useStreamsByPipelineStatus(
-  status: PipelineStatus | 'all',
-  options?: { enabled?: boolean }
-) {
-  return useQuery({
-    queryKey: adminArchiveQueryKeys.streamsByStatus(status),
-    queryFn: () => getStreamsByPipelineStatus(status),
-    enabled: options?.enabled !== false,
-    refetchInterval: status === 'analyzing' ? 3000 : false, // 분석 중일 때 3초마다 갱신
-  })
-}
-
-/**
- * 파이프라인 상태 카운트 훅
- */
-export function usePipelineStatusCounts() {
-  return useQuery({
-    queryKey: adminArchiveQueryKeys.statusCounts(),
-    queryFn: getPipelineStatusCounts,
-    refetchInterval: 10000, // 10초마다 갱신
-  })
-}
-
-/**
- * 스트림 파이프라인 상태 업데이트 뮤테이션
- *
- * collectionGroup 쿼리를 사용하여 서브컬렉션 경로를 모르더라도
- * streamId만으로 스트림을 찾아 상태를 업데이트합니다.
- */
-export function useUpdatePipelineStatus() {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: async ({
-      streamId,
-      status,
-      error
-    }: {
-      streamId: string
-      status: PipelineStatus
-      error?: string
-    }) => {
-      // Server Action 사용 (collectionGroup 쿼리로 서브컬렉션 지원)
-      const result = await updateStreamPipelineStatusByIdAction(
-        streamId,
-        status as Exclude<PipelineStatus, 'all'>,
-        error ? { error } : undefined
-      )
-
-      if (!result.success) {
-        throw new Error(result.error || '상태 업데이트 실패')
-      }
-
-      return { streamId, status }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: adminArchiveQueryKeys.all })
-      toast.success('상태가 업데이트되었습니다')
-    },
-    onError: (error) => {
-      console.error('[useUpdatePipelineStatus] Error:', error)
-      toast.error('상태 업데이트 실패')
-    },
-  })
-}
-
-/**
- * 분석 재시도 뮤테이션
- *
- * subcollection 구조 (tournaments/{id}/events/{id}/streams/{id})를
- * 지원하기 위해 Server Action 사용
- *
- * 중요: 재분석 시 기존 핸드가 자동으로 삭제됩니다.
- */
-export function useRetryAnalysis() {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: async ({
-      streamId,
-      tournamentId,
-      eventId,
-    }: {
-      streamId: string
-      tournamentId: string
-      eventId: string
-    }) => {
-      const result = await resetStreamAnalysisAction(streamId, tournamentId, eventId)
-
-      if (!result.success) {
-        throw new Error(result.error || '분석 리셋 실패')
-      }
-
-      return { streamId, deletedHandsCount: result.deletedHandsCount || 0 }
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: adminArchiveQueryKeys.all })
-      if (data.deletedHandsCount > 0) {
-        toast.success(`분석이 리셋되었습니다. (기존 ${data.deletedHandsCount}개 핸드 삭제됨) Pending 탭에서 다시 시작하세요.`)
-      } else {
-        toast.success('분석이 리셋되었습니다. Pending 탭에서 다시 시작하세요.')
-      }
-    },
-    onError: (error) => {
-      console.error('[useRetryAnalysis] Error:', error)
-      toast.error(error instanceof Error ? error.message : '분석 재시도 실패')
-    },
-  })
-}
-
-/**
- * 스트림 분류 뮤테이션
- */
-export function useClassifyStream() {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: async ({
-      streamId,
-      tournamentId,
-      eventId,
-    }: {
-      streamId: string
-      tournamentId: string
-      eventId: string
-    }) => {
-      // 토너먼트와 이벤트 정보 조회
-      const tournamentRef = doc(firestore, 'tournaments', tournamentId)
-      const eventRef = doc(firestore, 'events', eventId)
-
-      const [tournamentDoc, eventDoc] = await Promise.all([
-        getDoc(tournamentRef),
-        getDoc(eventRef),
-      ])
-
-      if (!tournamentDoc.exists()) {
-        throw new Error('토너먼트를 찾을 수 없습니다')
-      }
-
-      if (!eventDoc.exists()) {
-        throw new Error('이벤트를 찾을 수 없습니다')
-      }
-
-      const tournamentData = tournamentDoc.data()
-      const eventData = eventDoc.data()
-
-      // 스트림 업데이트
-      const streamRef = doc(firestore, 'streams', streamId)
-      await updateDoc(streamRef, {
-        tournamentId: tournamentId,
-        tournamentName: tournamentData.name,
-        eventId: eventId,
-        eventName: eventData.name,
-        pipelineStatus: 'uploaded' as PipelineStatus,
-        pipelineUpdatedAt: Timestamp.now(),
-      })
-
-      return {
-        streamId,
-        tournamentId,
-        tournamentName: tournamentData.name,
-        eventId,
-        eventName: eventData.name,
-      }
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: adminArchiveQueryKeys.all })
-      queryClient.invalidateQueries({ queryKey: adminArchiveKeys.all })
-      toast.success(`스트림이 분류되었습니다: ${data.tournamentName} > ${data.eventName}`)
-    },
-    onError: (error) => {
-      console.error('[useClassifyStream] Error:', error)
-      toast.error('스트림 분류 실패')
-    },
-  })
-}
-
-// ============================================
-// Stream Hands Query
-// ============================================
-
-/**
- * 스트림별 핸드 목록 조회
- */
 export function useStreamHands(streamId: string) {
   return useQuery({
-    queryKey: adminArchiveQueryKeys.hands(streamId),
+    queryKey: ['admin', 'stream-hands', streamId],
     queryFn: async () => {
-      const handsRef = collection(firestore, 'hands')
-      // number 필드로 정렬: 핸드 번호 순서 보장 (#1, #2, #3...)
-      const q = query(
-        handsRef,
-        where('streamId', '==', streamId),
-        orderBy('number', 'asc')
-      )
-      const snapshot = await getDocs(q)
-
-      const hands: Hand[] = []
-      snapshot.forEach((docSnapshot) => {
-        const data = docSnapshot.data()
-        // 기존 문자열 데이터와 새로운 정수 데이터 모두 호환
-        const handNumber = typeof data.number === 'string'
-          ? parseInt(data.number, 10) || 0
-          : data.number ?? 0
-        hands.push({
-          id: docSnapshot.id,
-          streamId: data.streamId,
-          number: handNumber,
-          description: data.description,
-          aiSummary: data.aiSummary,
-          confidence: data.confidence,
-          timestamp: data.timestamp,
-          boardFlop: data.boardFlop,
-          boardTurn: data.boardTurn,
-          boardRiver: data.boardRiver,
-          boardCards: data.boardCards,
-          potSize: data.potSize,
-          stakes: data.stakes,
-          smallBlind: data.smallBlind,
-          bigBlind: data.bigBlind,
-          ante: data.ante,
-          potPreflop: data.potPreflop,
-          potFlop: data.potFlop,
-          potTurn: data.potTurn,
-          potRiver: data.potRiver,
-          videoTimestampStart: data.videoTimestampStart,
-          videoTimestampEnd: data.videoTimestampEnd,
-          jobId: data.jobId,
-          rawData: data.rawData,
-          pokerkitFormat: data.pokerkitFormat,
-          handHistoryFormat: data.handHistoryFormat,
-          favorite: data.favorite,
-          thumbnailUrl: data.thumbnailUrl,
-          likesCount: data.likesCount,
-          dislikesCount: data.dislikesCount,
-          bookmarksCount: data.bookmarksCount,
-          createdAt: data.createdAt instanceof Timestamp
-            ? data.createdAt.toDate().toISOString()
-            : data.createdAt,
-          handPlayers: data.handPlayers || [],
-        })
-      })
-
-      return hands
+      const supabase = createClient()
+      const { data, error } = await supabase
+        .from('hands')
+        .select('*')
+        .eq('stream_id', streamId)
+        .order('hand_number')
+      if (error) throw error
+      return data
     },
-    enabled: !!streamId,
-    staleTime: 1 * 60 * 1000, // 1분
+    enabled: !!streamId
+  })
+}
+
+// ==================== Mutations ====================
+
+export function useUpdateStreamStatus() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ streamId, status }: { streamId: string, status: ContentStatus }) => {
+      const supabase = createClient()
+      const { error } = await supabase.from('streams').update({ status }).eq('id', streamId)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'streams'] })
+      toast.success('Status updated')
+    }
+  })
+}
+
+export function useClassifyStream() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ streamId, eventId, tournamentId }: { streamId: string, eventId: string, tournamentId: string }) => {
+      const supabase = createClient()
+      const { error } = await supabase.from('streams').update({ 
+        event_id: eventId,
+        tournament_id: tournamentId,
+      }).eq('id', streamId)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'streams'] })
+      toast.success('Stream classified')
+    }
   })
 }

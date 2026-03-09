@@ -116,7 +116,7 @@ export async function applyRateLimit(
  * Prefers user ID (more secure) over IP address
  */
 function getIdentifier(request: NextRequest): string {
-  // Try to extract user ID from Firebase Auth token
+  // Try to extract user ID from Auth token
   const authHeader = request.headers.get('authorization')
 
   if (authHeader && authHeader.startsWith('Bearer ')) {

@@ -4,7 +4,6 @@
  * Hand Detail Dialog
  *
  * 핸드 상세 정보를 다이얼로그로 표시
- * Firestore 버전으로 마이그레이션됨
  */
 
 import { useHandDetailQuery } from "@/lib/queries/archive-queries"
@@ -52,8 +51,6 @@ function PlayingCard({ card }: { card: string }) {
     </div>
   )
 }
-
-
 
 export function HandDetailDialog({ handId, open, onOpenChange }: HandDetailDialogProps) {
   const { data: hand, isLoading } = useHandDetailQuery(open ? handId : null)
@@ -108,11 +105,11 @@ export function HandDetailDialog({ handId, open, onOpenChange }: HandDetailDialo
                   </div>
                 )}
 
-                {/* AI Summary */}
-                {hand.aiSummary && (
-                  <div className="bg-blue-900/20 border border-blue-800 rounded-lg p-4">
-                    <div className="text-sm font-semibold text-blue-300 mb-2">AI 요약</div>
-                    <p className="text-sm text-blue-200">{hand.aiSummary}</p>
+                {/* Description */}
+                {hand.description && (
+                  <div className="bg-muted rounded-lg p-4">
+                    <div className="text-sm font-semibold text-muted-foreground mb-2">설명</div>
+                    <p className="text-sm">{hand.description}</p>
                   </div>
                 )}
 
@@ -175,12 +172,6 @@ export function HandDetailDialog({ handId, open, onOpenChange }: HandDetailDialo
                     </div>
                   </div>
                 )}
-
-                {/* Actions - Requires fetching actions separately or ensuring they are in handData? 
-                    mapFirestoreHand does NOT include actions array by default in the return type 'Hand'.
-                    But FirestoreHand type has 'actions'.
-                    Let's check mapFirestoreHand in archive-queries.ts to be sure.
-                */}
               </>
             )}
           </div>

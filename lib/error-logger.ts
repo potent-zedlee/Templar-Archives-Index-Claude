@@ -15,15 +15,13 @@ export enum ErrorCategory {
   NETWORK = 'network',
   DATABASE = 'database',
   VALIDATION = 'validation',
-  FFMPEG = 'ffmpeg',
-  OCR = 'ocr',
-  VISION_API = 'vision_api',
+  AUTH = 'auth',
   FILE_SYSTEM = 'file_system',
   UNKNOWN = 'unknown',
 }
 
 export interface ErrorContext {
-  /** 요청 ID (submissionId 등) */
+  /** 요청 ID */
   requestId?: string
   /** 사용자 ID */
   userId?: string
@@ -65,11 +63,20 @@ export function detectErrorCategory(error: Error): ErrorCategory {
   if (
     message.includes('database') ||
     message.includes('postgres') ||
-    message.includes('firebase') ||
-    message.includes('firestore') ||
+    message.includes('supabase') ||
     message.includes('sql')
   ) {
     return ErrorCategory.DATABASE
+  }
+
+  // Auth errors
+  if (
+    message.includes('auth') ||
+    message.includes('login') ||
+    message.includes('unauthorized') ||
+    message.includes('forbidden')
+  ) {
+    return ErrorCategory.AUTH
   }
 
   // Validation errors
@@ -80,21 +87,6 @@ export function detectErrorCategory(error: Error): ErrorCategory {
     message.includes('missing')
   ) {
     return ErrorCategory.VALIDATION
-  }
-
-  // FFmpeg errors
-  if (message.includes('ffmpeg') || message.includes('video')) {
-    return ErrorCategory.FFMPEG
-  }
-
-  // OCR errors
-  if (message.includes('tesseract') || message.includes('ocr')) {
-    return ErrorCategory.OCR
-  }
-
-  // Vision API errors
-  if (message.includes('anthropic') || message.includes('claude') || message.includes('vision')) {
-    return ErrorCategory.VISION_API
   }
 
   // File system errors
@@ -194,55 +186,6 @@ export function logWarning(message: string, metadata?: Record<string, any>): voi
 
   console.warn(`[WARNING]`, message)
   if (metadata) {
-    console.warn(`[WARNING] Metadata:`, metadata)
+    console.log(`[WARNING] Metadata:`, metadata)
   }
-}
-
-/**
- * 파이프라인 단계 로깅
- */
-export function logPipelineStep(
-  step: string,
-  submissionId: string,
-  metadata?: Record<string, any>
-): void {
-  logInfo(`Pipeline step: ${step}`, {
-    submissionId,
-    ...metadata,
-  })
-}
-
-/**
- * 파이프라인 완료 로깅
- */
-export function logPipelineComplete(
-  submissionId: string,
-  durationMs: number,
-  metadata?: Record<string, any>
-): void {
-  logInfo(`Pipeline completed`, {
-    submissionId,
-    durationMs,
-    durationSeconds: (durationMs / 1000).toFixed(2),
-    ...metadata,
-  })
-}
-
-/**
- * 파이프라인 실패 로깅
- */
-export function logPipelineFailure(
-  submissionId: string,
-  error: Error,
-  durationMs: number,
-  step?: string
-): void {
-  logError(error, {
-    requestId: submissionId,
-    metadata: {
-      failedAt: step,
-      durationMs,
-      durationSeconds: (durationMs / 1000).toFixed(2),
-    },
-  })
 }

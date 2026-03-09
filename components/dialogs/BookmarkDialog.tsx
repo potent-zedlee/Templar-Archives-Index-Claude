@@ -71,9 +71,17 @@ export function BookmarkDialog({
   const loadFolders = async () => {
     if (!userId) return
     try {
-      // Firestore 구조에서는 별도 폴더 기능이 없으므로 빈 배열 반환
-      // 향후 폴더 기능 추가 시 여기서 Firestore 조회 구현
-      setFolders([])
+      // Load unique folder names from bookmarks
+      const supabase = createClient()
+      const { data } = await supabase
+        .from('hand_bookmarks')
+        .select('folder_name')
+        .eq('user_id', userId)
+      
+      if (data) {
+        const uniqueFolders = Array.from(new Set(data.map(b => b.folder_name).filter(Boolean))) as string[]
+        setFolders(uniqueFolders)
+      }
     } catch (error) {
       console.error("Failed to load folders:", error)
     }

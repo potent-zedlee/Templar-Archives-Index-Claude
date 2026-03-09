@@ -12,8 +12,8 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { onAuthStateChanged } from 'firebase/auth'
-import { auth } from '@/lib/db/firebase'
+import { createClient } from '@/lib/supabase/client'
+import { useAuth } from '@/components/layout/AuthProvider'
 import { isAdmin } from '@/lib/auth/auth-utils'
 import { ArchiveManager } from './manage/_components/ArchiveManager'
 import { Loader2 } from 'lucide-react'
@@ -21,33 +21,29 @@ import { toast } from 'sonner'
 
 export default function AdminArchivePage() {
   const router = useRouter()
-  const [isLoading, setIsLoading] = useState(true)
+  const { user, profile, loading } = useAuth()
   const [isAuthorized, setIsAuthorized] = useState(false)
 
-  // Auth check
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+    if (!loading) {
       if (!user) {
         toast.error('Please sign in')
         router.push('/auth/login')
         return
       }
 
-      const adminCheck = isAdmin(user.email)
-      if (!adminCheck) {
+      const isUserAdmin = profile?.role === 'admin' || profile?.role === 'high_templar' || isAdmin(user.email)
+      if (!isUserAdmin) {
         toast.error('Admin access required')
         router.push('/')
         return
       }
 
       setIsAuthorized(true)
-      setIsLoading(false)
-    })
+    }
+  }, [user, profile, loading, router])
 
-    return () => unsubscribe()
-  }, [router])
-
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />

@@ -180,7 +180,7 @@
 **패턴**: `{entity}_metadata` 또는 `{specific_name}`
 
 ```sql
-✅ analysis_metadata, positional_stats
+✅ tournament_metadata, positional_stats
 ✅ settings, preferences
 
 ❌ json_data (타입명 사용 금지)
@@ -546,5 +546,5 @@
 
 ---
 
-**문서 관리자**: Claude (Anthropic AI)
+**문서 관리자**: Templar Archives Index Team
 **참고**: 프로젝트의 모든 개발자는 이 가이드를 준수해야 합니다.

@@ -56,7 +56,7 @@ export default function DMCAPolicyPage() {
             <li><strong>Effect:</strong> Does not substitute for original content; drives traffic to original sources</li>
           </ul>
           <p>
-            If you disagree with our Fair Use analysis, please contact us using the DMCA process below.
+            If you disagree with our Fair Use claims, please contact us using the DMCA process below.
           </p>
 
           <h2>4. Filing a DMCA Takedown Notice</h2>

@@ -1,16 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
-import { firestore } from '@/lib/db/firebase'
-import { auth } from '@/lib/db/firebase'
-import { onAuthStateChanged } from 'firebase/auth'
-import {
-  collection,
-  query,
-  where,
-  getDocs,
-  orderBy,
-} from 'firebase/firestore'
-import { COLLECTION_PATHS } from '@/lib/db/firestore-types'
-import type { FirestoreHand, FirestoreTournament, FirestoreEvent, FirestoreStream } from '@/lib/db/firestore-types'
+import { createClient } from '@/lib/supabase/client'
+import { onAuthStateChange } from '@/lib/supabase/auth'
 import { getUnsortedVideos } from '@/lib/unsorted-videos'
 import type { UnsortedVideo } from '@/lib/unsorted-videos'
 import { toast } from 'sonner'
@@ -23,75 +13,48 @@ export function useArchiveData() {
   const [loading, setLoading] = useState(true)
   const [userEmail, setUserEmail] = useState<string | null>(null)
 
-  // Load tournaments from Firestore
+  const supabase = createClient()
+
+  // Load tournaments tree from Supabase
   const loadTournaments = useCallback(async () => {
     setLoading(true)
     try {
-      const tournamentsRef = collection(firestore, COLLECTION_PATHS.TOURNAMENTS)
-      const tournamentsSnap = await getDocs(query(tournamentsRef, orderBy('startDate', 'desc')))
-
-      const tournamentsData = await Promise.all(
-        tournamentsSnap.docs.map(async (tournamentDoc) => {
-          const tournamentData = tournamentDoc.data() as FirestoreTournament
-          const tournamentId = tournamentDoc.id
-
-          // Load events for this tournament
-          const eventsRef = collection(firestore, COLLECTION_PATHS.EVENTS(tournamentId))
-          const eventsSnap = await getDocs(query(eventsRef, orderBy('date', 'desc')))
-
-          const events = await Promise.all(
-            eventsSnap.docs.map(async (eventDoc) => {
-              const eventData = eventDoc.data() as FirestoreEvent
-              const eventId = eventDoc.id
-
-              // Load streams for this event
-              const streamsRef = collection(firestore, COLLECTION_PATHS.STREAMS(tournamentId, eventId))
-              const streamsSnap = await getDocs(query(streamsRef, orderBy('name')))
-
-              const streams = streamsSnap.docs.map((streamDoc) => {
-                const streamData = streamDoc.data() as FirestoreStream
-                return {
-                  id: streamDoc.id,
-                  name: streamData.name,
-                  video_url: streamData.videoUrl,
-                  video_source: streamData.videoSource,
-                  status: streamData.status,
-                  selected: false,
-                }
-              })
-
-              return {
-                id: eventId,
-                name: eventData.name,
-                buy_in: eventData.buyIn,
-                date: eventData.date?.toDate?.()?.toISOString(),
-                streams,
-                expanded: false,
-              }
-            })
+      const { data, error } = await supabase
+        .from('tournaments')
+        .select(`
+          id, name, category, location, start_date, end_date,
+          events (
+            id, name, date,
+            streams (
+              id, name, video_url, video_source, status
+            )
           )
+        `)
+        .order('start_date', { ascending: false })
 
-          return {
-            id: tournamentId,
-            name: tournamentData.name,
-            category: tournamentData.category,
-            location: tournamentData.location,
-            start_date: tournamentData.startDate?.toDate?.()?.toISOString(),
-            end_date: tournamentData.endDate?.toDate?.()?.toISOString(),
-            events: events,
-            expanded: true,
-          }
-        })
-      )
+      if (error) throw error
 
-      setTournaments(tournamentsData)
+      const formattedData = (data || []).map(t => ({
+        ...t,
+        expanded: true,
+        events: (t.events || []).map((e: any) => ({
+          ...e,
+          expanded: false,
+          streams: (e.streams || []).map((s: any) => ({
+            ...s,
+            selected: false
+          }))
+        }))
+      }))
+
+      setTournaments(formattedData)
     } catch (error) {
       console.error('Error loading tournaments:', error)
       toast.error('Failed to load tournaments')
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [supabase])
 
   // Load unsorted videos
   const loadUnsortedVideos = useCallback(async () => {
@@ -103,67 +66,56 @@ export function useArchiveData() {
     }
   }, [])
 
-  // Load hands for selected stream from Firestore
+  // Load hands for selected stream
   const loadHands = useCallback(async (streamId: string) => {
     try {
-      const handsRef = collection(firestore, COLLECTION_PATHS.HANDS)
-      const handsQuery = query(
-        handsRef,
-        where('streamId', '==', streamId),
-        orderBy('createdAt', 'asc')
-      )
-      const handsSnap = await getDocs(handsQuery)
+      const { data, error } = await supabase
+        .from('hands')
+        .select('*')
+        .eq('stream_id', streamId)
+        .order('hand_number', { ascending: true })
 
-      const handsData = handsSnap.docs.map((doc) => {
-        const data = doc.data() as FirestoreHand
-        // 기존 문자열 데이터와 새로운 정수 데이터 모두 호환
-        const handNumber = typeof data.number === 'string'
-          ? parseInt(data.number, 10) || 0
-          : data.number ?? 0
-        return {
-          id: doc.id,
-          number: handNumber,
-          description: data.description,
-          timestamp: data.timestamp,
-          pot_size: data.potSize,
-          ai_summary: data.aiSummary,
-          stream_id: data.streamId,
-          favorite: data.favorite,
-          checked: false,
-          hand_players: data.players?.map((p) => ({
-            position: p.position,
-            cards: p.holeCards,
-            player: { name: p.name },
-          })),
-        }
-      })
+      if (error) throw error
+
+      const handsData = (data || []).map((h: any) => ({
+        id: h.id,
+        number: h.hand_number,
+        description: h.description,
+        timestamp: h.timestamp,
+        pot_size: h.pot_size,
+        ai_summary: h.ai_summary,
+        stream_id: h.stream_id,
+        favorite: h.description === 'FAVORITE', // 임시 매핑
+        checked: false,
+        hand_players: (h.players_json as any[])?.map((p: any) => ({
+          position: p.position,
+          cards: p.hole_cards,
+          player: { name: p.name },
+        })),
+      }))
 
       setHands(handsData)
     } catch (error) {
       console.error('Error loading hands:', error)
     }
-  }, [])
+  }, [supabase])
 
-  // Initial data load
   useEffect(() => {
     loadTournaments()
     loadUnsortedVideos()
   }, [loadTournaments, loadUnsortedVideos])
 
-  // Load hands when stream changes
   useEffect(() => {
     if (selectedStream) {
       loadHands(selectedStream)
     }
   }, [selectedStream, loadHands])
 
-  // Listen to auth state changes (Firebase Auth)
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const { unsubscribe } = onAuthStateChange((user) => {
       setUserEmail(user?.email || null)
     })
-
-    return () => unsubscribe()
+    return () => { unsubscribe() }
   }, [])
 
   return {

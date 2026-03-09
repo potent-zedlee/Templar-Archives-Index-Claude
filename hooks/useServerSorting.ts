@@ -75,7 +75,7 @@ interface UseServerSortingReturn<T = string> {
 /**
  * 서버 사이드 정렬 및 페이지네이션 훅
  *
- * Firestore orderBy() 및 limit()와 함께 사용
+ * Supabase order() 및 range()와 함께 사용
  *
  * @example
  * ```tsx

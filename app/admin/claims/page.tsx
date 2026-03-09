@@ -4,7 +4,6 @@
  * Admin Claims Page
  *
  * Player profile claim management.
- * Migrated from Supabase to Firebase Auth
  */
 
 import { useState, useEffect } from "react"
@@ -48,7 +47,7 @@ export default function ClaimsClient() {
       return
     }
 
-    // user.email comes from Firebase Auth via AuthProvider
+    // user.email comes from Supabase Auth via AuthProvider
     if (user.email && !isAdmin(user.email)) {
       router.push("/")
       toast.error("Admin access only")

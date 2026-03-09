@@ -205,8 +205,8 @@ const ALLOWED_DOMAINS = [
   "youtu.be",
   "i.ytimg.com",
   "img.youtube.com",
-  "firebasestorage.googleapis.com",
   "googleusercontent.com",
+  "supabase.co",
 ]
 
 /**

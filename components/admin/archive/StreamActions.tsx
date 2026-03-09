@@ -10,9 +10,10 @@
 
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { CheckSquare, Eye, EyeOff, Sparkles } from 'lucide-react'
+import { CheckSquare, Eye, EyeOff } from 'lucide-react'
 import { StreamChecklist } from './StreamChecklist'
 import type { ContentStatus } from '@/lib/types/archive'
+
 // Adapted Stream type for component props
 type Stream = {
   id: string
@@ -30,7 +31,6 @@ interface StreamActionsProps {
   videoUrl?: string
   stream?: Stream
   onStatusChange?: () => void
-  onOpenAnalyze?: () => void
 }
 
 export function StreamActions({
@@ -41,25 +41,11 @@ export function StreamActions({
   eventId,
   stream,
   onStatusChange,
-  onOpenAnalyze
 }: StreamActionsProps) {
   const [checklistOpen, setChecklistOpen] = useState(false)
 
   return (
     <div className="flex items-center gap-2">
-      {/* KAN 분석 버튼 */}
-      {stream && onOpenAnalyze && (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onOpenAnalyze}
-          title="KAN 분석 시작"
-          className="text-primary hover:text-primary/80 hover:bg-primary/10"
-        >
-          <Sparkles className="h-4 w-4" />
-        </Button>
-      )}
-
       {/* Checklist 버튼 */}
       <Button
         variant="ghost"

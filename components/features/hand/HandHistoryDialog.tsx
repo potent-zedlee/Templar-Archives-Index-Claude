@@ -21,8 +21,6 @@ import { HandNavigator } from "./HandNavigator"
 import { HandSummary } from "./HandSummary"
 import { HandComments } from "./HandComments"
 import { HandHistoryTimeline } from "./HandHistoryTimeline"
-import { SemanticTags } from "./SemanticTags"
-import { AIAnalysisPanel } from "./AIAnalysisPanel"
 import {
   Download,
   ChevronLeft,
@@ -36,33 +34,7 @@ import {
   Copy
 } from "lucide-react"
 import { toast } from "sonner"
-import type { FirestoreStream } from "@/lib/db/firestore-types"
-
-// Semantic tag type
-type SemanticTag =
-  | '#BadBeat' | '#Cooler' | '#HeroCall' | '#Tilt'
-  | '#SoulRead' | '#SuckOut' | '#SlowPlay' | '#Bluff'
-  | '#AllIn' | '#BigPot' | '#FinalTable' | '#BubblePlay'
-
-// Emotional state type
-type EmotionalState = 'tilting' | 'confident' | 'cautious' | 'neutral'
-
-// Play style type
-type PlayStyle = 'aggressive' | 'passive' | 'balanced'
-
-// Hand quality type
-type HandQuality = 'routine' | 'interesting' | 'highlight' | 'epic'
-
-// AI Analysis interface
-interface AIAnalysis {
-  confidence: number
-  reasoning: string
-  playerStates: Record<string, {
-    emotionalState: EmotionalState
-    playStyle: PlayStyle
-  }>
-  handQuality: HandQuality
-}
+import type { Stream } from "@/lib/types/archive"
 
 interface HandData {
   id: string
@@ -75,38 +47,20 @@ interface HandData {
     player?: {
       id?: string
       name: string
-      normalized_name?: string
-      avatar?: string
-      aliases?: string[]
-      bio?: string
-      is_pro?: boolean
       photo_url?: string
-      country?: string
-      total_winnings?: number
-      created_at?: string
     }
     position?: string
-    cards?: string[] | string | null  // Support legacy format
+    cards?: string[] | string | null
     stack?: number
     is_winner?: boolean
   }>
-  streets?: {
-    preflop?: { actions?: any[]; pot?: number }
-    flop?: { actions?: any[]; pot?: number }
-    turn?: { actions?: any[]; pot?: number }
-    river?: { actions?: any[]; pot?: number }
-  }
-  // 2-Phase Analysis fields
-  semantic_tags?: SemanticTag[]
-  ai_analysis?: AIAnalysis
-  analysis_phase?: 1 | 2
 }
 
 interface HandHistoryDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   hand: HandData
-  stream: FirestoreStream
+  stream: Stream
   tournament?: {
     name: string
     category?: string
@@ -126,23 +80,18 @@ export function HandHistoryDialog({
   currentHandIndex = 0,
   onHandChange
 }: HandHistoryDialogProps) {
-  // Local state
   const [isBookmarked, setIsBookmarked] = useState(false)
   const [isLiked, setIsLiked] = useState(false)
   const commentsRef = useRef<HTMLDivElement>(null)
 
-  // Video seek time (currently not implemented, but reserved for future use)
   const seekTime = null
 
-  // Transform FirestoreStream to VideoPlayer format
   const videoPlayerStream = useMemo(() => ({
     video_source: stream.videoSource,
     video_url: stream.videoUrl,
     video_file: stream.videoFile,
-    video_nas_path: undefined
   }), [stream])
 
-  // Transform hand data for PokerTable
   const tableData = useMemo(() => {
     const players = hand.hand_players?.map((hp, index) => ({
       id: hp.player?.id || `player-${index}`,
@@ -163,7 +112,6 @@ export function HandHistoryDialog({
     }
   }, [hand])
 
-  // Transform for HandNavigator
   const navigatorPlayers = useMemo(() => {
     return hand.hand_players?.slice(0, 2).map(hp => ({
       name: hp.player?.name || "Unknown",
@@ -171,19 +119,16 @@ export function HandHistoryDialog({
     })) || []
   }, [hand])
 
-  // Download hand as JSON
   const handleDownload = () => {
     const dataStr = JSON.stringify(hand, null, 2)
     const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr)
     const exportFileDefaultName = `hand-${hand.number}.json`
-
     const linkElement = document.createElement('a')
     linkElement.setAttribute('href', dataUri)
     linkElement.setAttribute('download', exportFileDefaultName)
     linkElement.click()
   }
 
-  // Share hand link
   const handleShare = async () => {
     const url = `${window.location.origin}/hands/${hand.id}`
     try {
@@ -194,41 +139,27 @@ export function HandHistoryDialog({
     }
   }
 
-  // Toggle bookmark
   const handleBookmark = () => {
     setIsBookmarked(!isBookmarked)
-    if (!isBookmarked) {
-      toast.success('Added to bookmarks')
-    } else {
-      toast.success('Removed from bookmarks')
-    }
-    // TODO: Implement actual bookmark persistence
+    toast.success(isBookmarked ? 'Removed from bookmarks' : 'Added to bookmarks')
   }
 
-  // Scroll to comments section
   const handleScrollToComments = () => {
     commentsRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
 
-  // Toggle like
   const handleLike = () => {
     setIsLiked(!isLiked)
-    if (!isLiked) {
-      toast.success('Added to liked hands')
-    }
-    // TODO: Implement actual like persistence
+    if (!isLiked) toast.success('Added to liked hands')
   }
 
-  // Report hand
   const handleReport = () => {
     toast.info('Report feature coming soon')
-    // TODO: Implement report dialog
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[95vw] h-[95vh] p-0 gap-0">
-        {/* Header */}
         <DialogHeader className="p-4 border-b bg-card flex-shrink-0">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -250,7 +181,6 @@ export function HandHistoryDialog({
               </div>
             </div>
 
-            {/* Action Buttons */}
             <div className="flex items-center gap-2">
               <Button variant="ghost" size="icon" onClick={handleDownload} title="Download JSON">
                 <Download className="h-5 w-5" />
@@ -306,18 +236,14 @@ export function HandHistoryDialog({
           </div>
         </DialogHeader>
 
-        {/* Main Content */}
         <div className="flex-1 flex overflow-hidden">
-          {/* Left Panel: Video + Details */}
           <div className="w-1/2 flex flex-col border-r">
             <ScrollArea className="flex-1">
               <div className="p-4 space-y-4">
-                {/* Video Player */}
                 <div className="aspect-video bg-black rounded-lg overflow-hidden">
                   <VideoPlayer stream={videoPlayerStream} seekTime={seekTime} />
                 </div>
 
-                {/* Hand Navigator */}
                 <HandNavigator
                   currentHand={currentHandIndex + 1}
                   totalHands={allHands.length}
@@ -327,7 +253,6 @@ export function HandHistoryDialog({
                   onNext={() => onHandChange?.(currentHandIndex + 1)}
                 />
 
-                {/* Hand Summary */}
                 <HandSummary
                   handId={hand.id}
                   title={`Hand #${hand.number}`}
@@ -335,7 +260,6 @@ export function HandHistoryDialog({
                   editable={false}
                 />
 
-                {/* Comments */}
                 <div ref={commentsRef}>
                   <HandComments handId={hand.id} />
                 </div>
@@ -343,11 +267,9 @@ export function HandHistoryDialog({
             </ScrollArea>
           </div>
 
-          {/* Right Panel: Poker Table + Timeline */}
           <div className="w-1/2 flex flex-col">
             <ScrollArea className="flex-1">
               <div className="p-4 space-y-4">
-                {/* Poker Table */}
                 <PokerTable
                   players={tableData.players}
                   flop={tableData.flop}
@@ -357,26 +279,6 @@ export function HandHistoryDialog({
                   showCards={true}
                 />
 
-                {/* Semantic Tags (if Phase 2 analysis available) */}
-                {hand.semantic_tags && hand.semantic_tags.length > 0 && (
-                  <div className="mt-4">
-                    <h3 className="text-lg font-semibold mb-3">Highlights</h3>
-                    <SemanticTags
-                      tags={hand.semantic_tags}
-                      size="md"
-                      showTooltip={true}
-                    />
-                  </div>
-                )}
-
-                {/* AI Analysis Panel (if Phase 2 analysis available) */}
-                {hand.ai_analysis && (
-                  <div className="mt-4">
-                    <AIAnalysisPanel analysis={hand.ai_analysis} />
-                  </div>
-                )}
-
-                {/* Hand History Timeline */}
                 <div className="mt-4">
                   <h3 className="text-lg font-semibold mb-3">Action History</h3>
                   <HandHistoryTimeline handId={hand.id} />

@@ -1,15 +1,11 @@
 /**
- * Hand Tags Types (Firestore)
+ * Hand Tags Types
  *
  * 핸드 태그 시스템을 위한 타입 정의
- * Firestore 타입은 lib/db/firestore-types.ts에 정의되어 있음
  */
 
-// Re-export from firestore-types for consistency
-export type { HandTagName, HandTagStats } from '@/lib/db/firestore-types'
-
 // Re-export from hand-tags library
-export type { HandTag, UserTagHistory } from '@/lib/poker/hand-tags'
+export type { HandTag, UserTagHistory, HandTagName, HandTagStats } from '@/lib/poker/hand-tags'
 
 /**
  * 태그 카테고리
@@ -20,9 +16,9 @@ export type HandTagCategory = 'Play Type' | 'Result' | 'Action'
  * 태그 카테고리별 그룹화
  */
 export const TAG_CATEGORIES: Record<HandTagCategory, string[]> = {
-  'Play Type': ['Bluff', 'Value Bet', 'Slow Play', 'Check Raise'],
-  Result: ['Bad Beat', 'Cooler', 'Suck Out'],
-  Action: ['Hero Call', 'Hero Fold', 'Big Pot'],
+  'Play Type': ['bluff', 'misplay', 'study'],
+  Result: ['bad-beat', 'cooler'],
+  Action: ['hero-call', 'big-pot'],
 }
 
 /**
@@ -58,14 +54,11 @@ export function getTagColor(tagName: string): string {
  * 모든 태그 이름 목록
  */
 export const ALL_TAG_NAMES: string[] = [
-  'Bluff',
-  'Value Bet',
-  'Slow Play',
-  'Check Raise',
-  'Bad Beat',
-  'Cooler',
-  'Suck Out',
-  'Hero Call',
-  'Hero Fold',
-  'Big Pot',
+  'bluff',
+  'hero-call',
+  'big-pot',
+  'bad-beat',
+  'cooler',
+  'misplay',
+  'study',
 ]

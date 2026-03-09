@@ -3,21 +3,20 @@
 /**
  * FlatView Component
  *
- * 스트림 카드 그리드 뷰 (Pipeline 스타일)
+ * 스트림 카드 그리드 뷰
  */
 
 import { StreamCard } from '@/components/admin/StreamCard'
 import { useAdminArchiveStore } from '@/stores/admin-archive-store'
-import type { PipelineStream } from '@/lib/queries/admin-archive-queries'
+import type { AdminStream } from '@/lib/queries/admin-archive-queries'
 import { Loader2 } from 'lucide-react'
 
 interface FlatViewProps {
-  streams: PipelineStream[]
+  streams: AdminStream[]
   isLoading?: boolean
-  onRetry?: (streamId: string) => void
 }
 
-export function FlatView({ streams, isLoading, onRetry }: FlatViewProps) {
+export function FlatView({ streams, isLoading }: FlatViewProps) {
   const { selectedItem, setSelectedItem } = useAdminArchiveStore()
 
   if (isLoading) {
@@ -31,7 +30,7 @@ export function FlatView({ streams, isLoading, onRetry }: FlatViewProps) {
   if (streams.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-64 text-muted-foreground">
-        <p>해당 상태의 스트림이 없습니다</p>
+        <p>스트림이 없습니다</p>
       </div>
     )
   }
@@ -51,7 +50,6 @@ export function FlatView({ streams, isLoading, onRetry }: FlatViewProps) {
               eventId: stream.eventId,
             })
           }
-          onRetry={onRetry}
         />
       ))}
     </div>

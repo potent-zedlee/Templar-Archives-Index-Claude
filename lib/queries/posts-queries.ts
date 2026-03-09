@@ -1,26 +1,11 @@
 /**
- * Community Post React Query Hooks
+ * Community Post React Query Hooks (Supabase Version)
  *
- * 커뮤니티 포스트 기능을 위한 React Query hooks (Firestore)
+ * PostgreSQL의 posts 테이블을 사용하여 커뮤니티 기능을 제공합니다.
  */
 
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query'
-import {
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  query,
-  where,
-  orderBy,
-  limit,
-  startAfter,
-  Timestamp,
-  QueryDocumentSnapshot,
-  DocumentData,
-} from 'firebase/firestore'
-import { firestore } from '@/lib/db/firebase'
-import type { FirestorePost, PostCategory, AuthorInfo, VoteType } from '@/lib/db/firestore-types'
+import { createClient } from '@/lib/supabase/client'
 import {
   createPost as createPostAction,
   updatePost as updatePostAction,
@@ -32,13 +17,18 @@ import {
 // ==================== Types ====================
 
 export type SortOption = 'recent' | 'popular' | 'trending'
+export type PostCategory = 'general' | 'strategy' | 'news' | 'tournament'
 
 export type Post = {
   id: string
   title: string
   content: string
   category: PostCategory
-  author: AuthorInfo
+  author: {
+    id: string
+    nickname: string
+    avatarUrl?: string
+  }
   handId?: string
   tags: string[]
   stats: {
@@ -50,305 +40,163 @@ export type Post = {
   status: 'draft' | 'published' | 'deleted'
   createdAt: string
   updatedAt: string
-  publishedAt?: string
-}
-
-export type CreatePostInput = {
-  title: string
-  content: string
-  category: PostCategory
-  handId?: string
-  tags: string[]
-  status: 'draft' | 'published'
-}
-
-export type UpdatePostInput = {
-  title?: string
-  content?: string
-  category?: PostCategory
-  handId?: string
-  tags?: string[]
-  status?: 'draft' | 'published'
 }
 
 // ==================== Converters ====================
 
-const postConverter = {
-  fromFirestore(snapshot: QueryDocumentSnapshot<DocumentData>): Post {
-    const data = snapshot.data() as FirestorePost
-    return {
-      id: snapshot.id,
-      title: data.title,
-      content: data.content,
-      category: data.category,
-      author: data.author,
-      handId: data.handId,
-      tags: data.tags || [],
-      stats: data.stats || {
-        likesCount: 0,
-        dislikesCount: 0,
-        commentsCount: 0,
-        viewsCount: 0,
-      },
-      status: data.status,
-      createdAt: (data.createdAt as Timestamp)?.toDate?.()?.toISOString() || new Date().toISOString(),
-      updatedAt: (data.updatedAt as Timestamp)?.toDate?.()?.toISOString() || new Date().toISOString(),
-      publishedAt: (data.publishedAt as Timestamp)?.toDate?.()?.toISOString(),
-    }
+function mapDbPost(data: any): Post {
+  return {
+    id: data.id,
+    title: data.title,
+    content: data.content,
+    category: data.category,
+    author: {
+      id: data.user_id,
+      nickname: data.users?.nickname || 'Unknown',
+      avatarUrl: data.users?.avatar_url,
+    },
+    handId: data.hand_id,
+    tags: data.tags || [],
+    stats: {
+      likesCount: data.likes_count || 0,
+      dislikesCount: data.dislikes_count || 0,
+      commentsCount: data.comments_count || 0,
+      viewsCount: data.views_count || 0,
+    },
+    status: data.status,
+    createdAt: data.created_at,
+    updatedAt: data.updated_at,
   }
-}
-
-// ==================== Query Keys ====================
-
-export const postKeys = {
-  all: ['posts'] as const,
-  lists: () => [...postKeys.all, 'list'] as const,
-  list: (filters: { sort?: SortOption; category?: PostCategory }) =>
-    [...postKeys.lists(), filters] as const,
-  details: () => [...postKeys.all, 'detail'] as const,
-  detail: (postId: string) => [...postKeys.details(), postId] as const,
-  userPosts: (userId: string) => [...postKeys.all, 'user', userId] as const,
-  userLike: (postId: string, userId: string) => [...postKeys.all, 'like', postId, userId] as const,
-}
-
-// ==================== Helper Functions ====================
-
-const PAGE_SIZE = 10
-
-/**
- * Fetch posts list (paginated)
- */
-export async function fetchPosts(
-  sort: SortOption = 'recent',
-  category?: PostCategory,
-  lastDoc?: QueryDocumentSnapshot<DocumentData>
-): Promise<{ posts: Post[]; lastDoc: QueryDocumentSnapshot<DocumentData> | null }> {
-  const postsRef = collection(firestore, 'posts')
-
-  // Build query constraints
-  const constraints: Parameters<typeof query>[1][] = [
-    where('status', '==', 'published'),
-  ]
-
-  if (category) {
-    constraints.push(where('category', '==', category))
-  }
-
-  // Sort order
-  switch (sort) {
-    case 'popular':
-      constraints.push(orderBy('stats.likesCount', 'desc'))
-      break
-    case 'trending':
-      // Trending: recent + popular (combination)
-      constraints.push(orderBy('stats.viewsCount', 'desc'))
-      break
-    case 'recent':
-    default:
-      constraints.push(orderBy('createdAt', 'desc'))
-  }
-
-  constraints.push(limit(PAGE_SIZE))
-
-  if (lastDoc) {
-    constraints.push(startAfter(lastDoc))
-  }
-
-  const q = query(postsRef, ...constraints)
-  const snapshot = await getDocs(q)
-
-  const posts = snapshot.docs.map(doc => postConverter.fromFirestore(doc))
-  const newLastDoc = snapshot.docs.length > 0 ? snapshot.docs[snapshot.docs.length - 1] : null
-
-  return { posts, lastDoc: newLastDoc }
-}
-
-/**
- * Fetch a single post by ID
- */
-export async function fetchPostById(postId: string): Promise<Post | null> {
-  const postRef = doc(firestore, 'posts', postId)
-  const snapshot = await getDoc(postRef)
-
-  if (!snapshot.exists()) {
-    return null
-  }
-
-  return postConverter.fromFirestore(snapshot as QueryDocumentSnapshot<DocumentData>)
-}
-
-/**
- * Check if user has liked a post
- */
-export async function checkUserLike(
-  postId: string,
-  userId: string
-): Promise<VoteType | null> {
-  const likeRef = doc(firestore, `posts/${postId}/likes`, userId)
-  const snapshot = await getDoc(likeRef)
-
-  if (!snapshot.exists()) {
-    return null
-  }
-
-  const data = snapshot.data()
-  return data?.voteType as VoteType || null
 }
 
 // ==================== Queries ====================
 
-/**
- * Get posts list (infinite scroll)
- */
+const PAGE_SIZE = 10
+
 export function usePostsQuery(sort: SortOption = 'recent', category?: PostCategory) {
   return useInfiniteQuery({
-    queryKey: postKeys.list({ sort, category }),
-    queryFn: async ({ pageParam }) => {
-      return await fetchPosts(sort, category, pageParam as QueryDocumentSnapshot<DocumentData> | undefined)
+    queryKey: ['posts', 'list', { sort, category }],
+    queryFn: async ({ pageParam = 0 }) => {
+      const supabase = createClient()
+      const from = (pageParam as number) * PAGE_SIZE
+      const to = from + PAGE_SIZE - 1
+
+      let query = supabase
+        .from('posts')
+        .select(`
+          *,
+          users (nickname, avatar_url)
+        `)
+        .eq('status', 'published')
+
+      if (category) query = query.eq('category', category)
+
+      if (sort === 'popular') query = query.order('likes_count', { ascending: false })
+      else if (sort === 'trending') query = query.order('views_count', { ascending: false })
+      else query = query.order('created_at', { ascending: false })
+
+      const { data, error } = await query.range(from, to)
+      if (error) throw error
+
+      const posts = (data || []).map(mapDbPost)
+      return {
+        posts,
+        nextPage: posts.length === PAGE_SIZE ? (pageParam as number) + 1 : undefined
+      }
     },
-    initialPageParam: undefined as QueryDocumentSnapshot<DocumentData> | undefined,
-    getNextPageParam: (lastPage) => lastPage.lastDoc || undefined,
-    staleTime: 2 * 60 * 1000, // 2 minutes
-    gcTime: 5 * 60 * 1000, // 5 minutes
+    getNextPageParam: (lastPage) => lastPage.nextPage,
+    initialPageParam: 0,
   })
 }
 
-/**
- * Get a single post by ID
- */
 export function usePostDetailQuery(postId: string) {
   return useQuery({
-    queryKey: postKeys.detail(postId),
+    queryKey: ['posts', 'detail', postId],
     queryFn: async () => {
-      const post = await fetchPostById(postId)
-      if (!post) {
-        throw new Error('Post not found')
-      }
-      return post
+      const supabase = createClient()
+      const { data, error } = await supabase
+        .from('posts')
+        .select('*, users(nickname, avatar_url)')
+        .eq('id', postId)
+        .single()
+
+      if (error) throw error
+      return mapDbPost(data)
     },
-    staleTime: 2 * 60 * 1000,
-    gcTime: 5 * 60 * 1000,
     enabled: !!postId,
   })
 }
 
 /**
- * Check if user has liked a post
+ * 사용자의 좋아요 상태 확인
  */
 export function useUserPostLikeQuery(postId: string, userId?: string) {
   return useQuery({
-    queryKey: postKeys.userLike(postId, userId || ''),
+    queryKey: ['posts', 'like', postId, userId],
     queryFn: async () => {
       if (!userId) return null
-      return await checkUserLike(postId, userId)
+      const supabase = createClient()
+      const { data } = await supabase
+        .from('post_likes')
+        .select('vote_type')
+        .eq('post_id', postId)
+        .eq('user_id', userId)
+        .maybeSingle()
+      return data?.vote_type || null
     },
-    staleTime: 60 * 1000, // 1 minute
-    gcTime: 5 * 60 * 1000,
     enabled: !!postId && !!userId,
   })
 }
 
 // ==================== Mutations ====================
 
-/**
- * Create post mutation
- */
 export function useCreatePostMutation() {
   const queryClient = useQueryClient()
-
   return useMutation({
-    mutationFn: async (input: CreatePostInput) => {
-      const result = await createPostAction(input)
-      if (!result.success) {
-        throw new Error(result.error || 'Failed to create post')
-      }
-      return result.data
-    },
+    mutationFn: (input: any) => createPostAction(input),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: postKeys.lists() })
-    },
+      queryClient.invalidateQueries({ queryKey: ['posts', 'list'] })
+    }
   })
 }
 
-/**
- * Update post mutation
- */
 export function useUpdatePostMutation() {
   const queryClient = useQueryClient()
-
   return useMutation({
-    mutationFn: async ({ postId, data }: { postId: string; data: UpdatePostInput }) => {
-      const result = await updatePostAction(postId, data)
-      if (!result.success) {
-        throw new Error(result.error || 'Failed to update post')
-      }
-      return result.data
-    },
-    onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: postKeys.detail(variables.postId) })
-      queryClient.invalidateQueries({ queryKey: postKeys.lists() })
-    },
+    mutationFn: ({ postId, data }: any) => updatePostAction(postId, data),
+    onSuccess: (_, { postId }) => {
+      queryClient.invalidateQueries({ queryKey: ['posts', 'detail', postId] })
+      queryClient.invalidateQueries({ queryKey: ['posts', 'list'] })
+    }
   })
 }
 
-/**
- * Delete post mutation
- */
 export function useDeletePostMutation() {
   const queryClient = useQueryClient()
-
   return useMutation({
-    mutationFn: async (postId: string) => {
-      const result = await deletePostAction(postId)
-      if (!result.success) {
-        throw new Error(result.error || 'Failed to delete post')
-      }
-      return result
-    },
-    onSuccess: (_data, postId) => {
-      queryClient.invalidateQueries({ queryKey: postKeys.detail(postId) })
-      queryClient.invalidateQueries({ queryKey: postKeys.lists() })
-    },
+    mutationFn: (postId: string) => deletePostAction(postId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['posts', 'list'] })
+    }
   })
 }
 
-/**
- * Toggle post like mutation
- */
 export function useTogglePostLikeMutation() {
   const queryClient = useQueryClient()
-
   return useMutation({
-    mutationFn: async ({ postId, voteType }: { postId: string; voteType: VoteType }) => {
-      const result = await togglePostLikeAction(postId, voteType)
-      if (!result.success) {
-        throw new Error(result.error || 'Failed to toggle like')
-      }
-      return result.data
-    },
-    onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: postKeys.detail(variables.postId) })
-      queryClient.invalidateQueries({ queryKey: postKeys.lists() })
-    },
+    mutationFn: ({ postId, voteType }: any) => togglePostLikeAction(postId, voteType),
+    onSuccess: (_, { postId }) => {
+      queryClient.invalidateQueries({ queryKey: ['posts', 'detail', postId] })
+    }
   })
 }
 
-/**
- * Increment post views mutation
- */
 export function useIncrementPostViewsMutation() {
   const queryClient = useQueryClient()
-
   return useMutation({
-    mutationFn: async (postId: string) => {
-      const result = await incrementPostViewsAction(postId)
-      if (!result.success) {
-        throw new Error(result.error || 'Failed to increment views')
-      }
-      return result
-    },
-    onSuccess: (_data, postId) => {
-      queryClient.invalidateQueries({ queryKey: postKeys.detail(postId) })
-    },
+    mutationFn: (postId: string) => incrementPostViewsAction(postId),
+    onSuccess: (_, postId) => {
+      queryClient.invalidateQueries({ queryKey: ['posts', 'detail', postId] })
+    }
   })
 }

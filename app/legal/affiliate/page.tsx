@@ -78,7 +78,7 @@ export default function AffiliateDisclosurePage() {
           <ul>
             <li>Hand history data is objective and not influenced by affiliate relationships</li>
             <li>Search results are based on actual hand data, not commission rates</li>
-            <li>Player statistics and analysis are unbiased</li>
+            <li>Player statistics are unbiased</li>
             <li>Community discussions are user-generated and uncensored (within our <a href="/legal/terms" className="text-primary hover:underline">Terms</a>)</li>
           </ul>
           <p>

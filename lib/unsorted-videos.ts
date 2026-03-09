@@ -1,104 +1,59 @@
 /**
- * Unsorted Videos Database Operations (Firestore)
+ * Unsorted Videos Database Operations (Supabase Version)
  *
- * 미분류 영상 관리
- *
- * @module lib/unsorted-videos
+ * 미분류 영상 관리 (streams 테이블 중 event_id가 NULL인 레코드)
  */
 
-import {
-  collection,
-  doc,
-  getDocs,
-  addDoc,
-  updateDoc,
-  deleteDoc,
-  query,
-  where,
-  orderBy,
-  writeBatch,
-  Timestamp,
-} from 'firebase/firestore'
-import { firestore } from '@/lib/db/firebase'
-import { COLLECTION_PATHS } from '@/lib/db/firestore-types'
-import type { FirestoreUnsortedStream } from '@/lib/db/firestore-types'
+import { createClient } from '@/lib/supabase/client'
 
 export interface UnsortedVideo {
   id: string
   name: string
   videoUrl: string | null
   videoFile: string | null
-  videoSource: 'youtube' | 'local' | 'nas' | null
+  videoSource: string | null
   createdAt: string
   publishedAt?: string | null
 }
 
 /**
- * Normalize YouTube URL to standard format
+ * YouTube URL 표준화
  */
 export function normalizeYoutubeUrl(url: string): string {
   try {
-    // Remove whitespace
     url = url.trim()
-
-    // If URL doesn't start with http:// or https://, add https://
-    if (!url.match(/^https?:\/\//i)) {
-      url = 'https://' + url
-    }
-
+    if (!url.match(/^https?:\/\//i)) url = 'https://' + url
     const urlObj = new URL(url)
-
-    // Handle youtu.be short URLs
     if (urlObj.hostname === 'youtu.be' || urlObj.hostname === 'www.youtu.be') {
-      const videoId = urlObj.pathname.slice(1)
-      return `https://www.youtube.com/watch?v=${videoId}`
+      return `https://www.youtube.com/watch?v=${urlObj.pathname.slice(1)}`
     }
-
-    // Handle youtube.com URLs
-    if (urlObj.hostname === 'youtube.com' || urlObj.hostname === 'www.youtube.com') {
-      // Ensure www prefix
-      return url.replace(/^(https?:\/\/)youtube\.com/, '$1www.youtube.com')
-    }
-
-    // Return original URL if not YouTube
     return url
-  } catch (error) {
-    console.error('Error normalizing YouTube URL:', error)
+  } catch {
     return url
   }
 }
 
 /**
- * Firestore 문서를 UnsortedVideo로 변환
- */
-function toUnsortedVideo(id: string, data: FirestoreUnsortedStream): UnsortedVideo {
-  return {
-    id,
-    name: data.name,
-    videoUrl: data.videoUrl || null,
-    videoFile: data.videoFile || null,
-    videoSource: data.videoSource || null,
-    createdAt: data.createdAt.toDate().toISOString(),
-    publishedAt: data.publishedAt?.toDate().toISOString() || null,
-  }
-}
-
-/**
- * Get all unsorted videos
+ * 모든 미분류 영상 조회
  */
 export async function getUnsortedVideos(): Promise<UnsortedVideo[]> {
+  const supabase = createClient()
   try {
-    const q = query(
-      collection(firestore, COLLECTION_PATHS.UNSORTED_STREAMS),
-      where('isOrganized', '==', false),
-      orderBy('createdAt', 'desc')
-    )
+    const { data, error } = await supabase
+      .from('streams')
+      .select('*')
+      .is('event_id', null)
+      .order('created_at', { ascending: false })
 
-    const snapshot = await getDocs(q)
+    if (error) throw error
 
-    return snapshot.docs.map((doc) =>
-      toUnsortedVideo(doc.id, doc.data() as FirestoreUnsortedStream)
-    )
+    return (data || []).map(s => ({
+      id: s.id,
+      name: s.name,
+      videoUrl: s.video_url,
+      videoSource: s.video_source,
+      createdAt: s.created_at,
+    }))
   } catch (error) {
     console.error('Error fetching unsorted videos:', error)
     return []
@@ -106,189 +61,65 @@ export async function getUnsortedVideos(): Promise<UnsortedVideo[]> {
 }
 
 /**
- * Create a new unsorted video
+ * 새 미분류 영상 생성
  */
 export async function createUnsortedVideo(params: {
   name: string
   videoUrl?: string
-  videoFile?: string
-  videoSource?: 'youtube' | 'local' | 'nas'
-  publishedAt?: string
-}): Promise<{ success: boolean; id?: string; error?: string }> {
+  videoSource?: string
+}) {
+  const supabase = createClient()
   try {
-    // Normalize YouTube URL if provided
-    let normalizedUrl = params.videoUrl || null
-    if (normalizedUrl && params.videoSource === 'youtube') {
-      normalizedUrl = normalizeYoutubeUrl(normalizedUrl)
-      console.log('Normalized YouTube URL:', normalizedUrl)
-    }
-
-    const now = Timestamp.now()
-    const streamData: FirestoreUnsortedStream = {
-      name: params.name,
-      videoUrl: normalizedUrl || undefined,
-      videoFile: params.videoFile,
-      videoSource: params.videoSource || 'youtube',
-      publishedAt: params.publishedAt ? Timestamp.fromDate(new Date(params.publishedAt)) : undefined,
-      isOrganized: false,
-      createdAt: now,
-      updatedAt: now,
-    }
-
-    const docRef = await addDoc(collection(firestore, COLLECTION_PATHS.UNSORTED_STREAMS), streamData)
-
-    return { success: true, id: docRef.id }
-  } catch (error) {
-    console.error('Error creating unsorted video:', error)
-    return { success: false, error: (error as Error).message }
-  }
-}
-
-/**
- * Organize a video by assigning it to an event
- */
-export async function organizeVideo(
-  streamId: string,
-  eventId: string
-): Promise<{ success: boolean; error?: string }> {
-  try {
-    const streamRef = doc(firestore, COLLECTION_PATHS.UNSORTED_STREAMS, streamId)
-
-    await updateDoc(streamRef, {
-      eventId,
-      isOrganized: true,
-      organizedAt: Timestamp.now(),
-      updatedAt: Timestamp.now(),
-    })
-
-    return { success: true }
-  } catch (error) {
-    console.error('Error organizing video:', error)
-    return { success: false, error: (error as Error).message }
-  }
-}
-
-/**
- * Delete an unsorted video
- */
-export async function deleteUnsortedVideo(
-  streamId: string
-): Promise<{ success: boolean; error?: string }> {
-  try {
-    await deleteDoc(doc(firestore, COLLECTION_PATHS.UNSORTED_STREAMS, streamId))
-
-    return { success: true }
-  } catch (error) {
-    console.error('Error deleting unsorted video:', error)
-    return { success: false, error: (error as Error).message }
-  }
-}
-
-/**
- * Organize multiple videos at once
- */
-export async function organizeVideos(
-  streamIds: string[],
-  eventId: string
-): Promise<{ success: boolean; error?: string }> {
-  try {
-    const batch = writeBatch(firestore)
-    const now = Timestamp.now()
-
-    for (const streamId of streamIds) {
-      const streamRef = doc(firestore, COLLECTION_PATHS.UNSORTED_STREAMS, streamId)
-      batch.update(streamRef, {
-        eventId,
-        isOrganized: true,
-        organizedAt: now,
-        updatedAt: now,
+    const { data, error } = await supabase
+      .from('streams')
+      .insert({
+        name: params.name,
+        video_url: params.videoUrl,
+        video_source: params.videoSource || 'youtube',
+        status: 'draft'
       })
-    }
+      .select()
+      .single()
 
-    await batch.commit()
-
-    return { success: true }
-  } catch (error) {
-    console.error('Error organizing videos:', error)
-    return { success: false, error: (error as Error).message }
+    if (error) throw error
+    return { success: true, id: data.id }
+  } catch (error: any) {
+    return { success: false, error: error.message }
   }
 }
 
 /**
- * Create multiple unsorted videos at once (batch import)
+ * 영상 분류 (이벤트에 할당)
  */
-export async function createUnsortedVideosBatch(
-  videos: Array<{
-    name: string
-    videoUrl: string
-    videoSource?: 'youtube' | 'local' | 'nas'
-    publishedAt?: string
-  }>,
-  onProgress?: (current: number, total: number) => void
-): Promise<{
-  success: boolean
-  imported: number
-  failed: number
-  errors?: Array<{ video: string; error: string }>
-}> {
-  let imported = 0
-  let failed = 0
-  const errors: Array<{ video: string; error: string }> = []
-
-  // Process in batches to avoid overwhelming Firestore
-  // Firestore batch write limit is 500 operations
-  const BATCH_SIZE = 10
-
-  for (let i = 0; i < videos.length; i += BATCH_SIZE) {
-    const batchVideos = videos.slice(i, Math.min(i + BATCH_SIZE, videos.length))
-
-    try {
-      const batch = writeBatch(firestore)
-      const now = Timestamp.now()
-
-      for (const video of batchVideos) {
-        const normalizedUrl =
-          video.videoSource === 'youtube'
-            ? normalizeYoutubeUrl(video.videoUrl)
-            : video.videoUrl
-
-        const streamData: FirestoreUnsortedStream = {
-          name: video.name,
-          videoUrl: normalizedUrl,
-          videoSource: video.videoSource || 'youtube',
-          publishedAt: video.publishedAt
-            ? Timestamp.fromDate(new Date(video.publishedAt))
-            : undefined,
-          isOrganized: false,
-          createdAt: now,
-          updatedAt: now,
-        }
-
-        const docRef = doc(collection(firestore, COLLECTION_PATHS.UNSORTED_STREAMS))
-        batch.set(docRef, streamData)
-      }
-
-      await batch.commit()
-      imported += batchVideos.length
-    } catch (error) {
-      console.error('Error in batch insert:', error)
-      // Mark all videos in this batch as failed
-      batchVideos.forEach((video) => {
-        errors.push({ video: video.name, error: (error as Error).message })
-        failed++
+export async function organizeVideo(streamId: string, eventId: string, tournamentId: string) {
+  const supabase = createClient()
+  try {
+    const { error } = await supabase
+      .from('streams')
+      .update({
+        event_id: eventId,
+        tournament_id: tournamentId,
+        updated_at: new Date().toISOString()
       })
-    }
+      .eq('id', streamId)
 
-    // Call progress callback
-    if (onProgress) {
-      onProgress(Math.min(i + BATCH_SIZE, videos.length), videos.length)
-    }
+    if (error) throw error
+    return { success: true }
+  } catch (error: any) {
+    return { success: false, error: error.message }
   }
+}
 
-  return {
-    success: imported > 0,
-    imported,
-    failed,
-    errors: errors.length > 0 ? errors : undefined,
+/**
+ * 미분류 영상 삭제
+ */
+export async function deleteUnsortedVideo(streamId: string) {
+  const supabase = createClient()
+  try {
+    const { error } = await supabase.from('streams').delete().eq('id', streamId)
+    if (error) throw error
+    return { success: true }
+  } catch (error: any) {
+    return { success: false, error: error.message }
   }
 }

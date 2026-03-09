@@ -1,123 +1,83 @@
-'use server'
-
 /**
- * Home Page Server Actions (Firestore)
- *
- * 메인 페이지 데이터를 위한 Server Actions
+ * Home Page Server Actions (Supabase Version)
  */
 
-import { adminFirestore } from '@/lib/db/firebase-admin'
-import { Timestamp } from 'firebase-admin/firestore'
-import { COLLECTION_PATHS } from '@/lib/db/firestore-types'
+'use server'
+
+import { createAdminClient } from '@/lib/supabase/admin/server'
 import type { PlatformStats, WeeklyHighlight, TopPlayer } from '@/lib/main-page'
 
 /**
  * 플랫폼 통계 조회
  */
 export async function getPlatformStats(): Promise<PlatformStats> {
+  const admin = createAdminClient()
+  
   try {
-    // 각 컬렉션의 문서 수를 조회
-    const [handsSnapshot, tournamentsSnapshot, playersSnapshot] = await Promise.all([
-      adminFirestore.collection(COLLECTION_PATHS.HANDS).count().get(),
-      adminFirestore.collection(COLLECTION_PATHS.TOURNAMENTS).count().get(),
-      adminFirestore.collection(COLLECTION_PATHS.PLAYERS).count().get(),
+    const [
+      { count: handsCount },
+      { count: tournamentsCount },
+      { count: playersCount }
+    ] = await Promise.all([
+      admin.from('hands').select('*', { count: 'exact', head: true }),
+      admin.from('tournaments').select('*', { count: 'exact', head: true }),
+      admin.from('players').select('*', { count: 'exact', head: true }),
     ])
 
     return {
-      totalHands: handsSnapshot.data().count,
-      totalTournaments: tournamentsSnapshot.data().count,
-      totalPlayers: playersSnapshot.data().count,
+      totalHands: handsCount || 0,
+      totalTournaments: tournamentsCount || 0,
+      totalPlayers: playersCount || 0,
     }
   } catch (error) {
     console.error('Error fetching platform stats:', error)
-    return {
-      totalHands: 0,
-      totalTournaments: 0,
-      totalPlayers: 0,
-    }
+    return { totalHands: 0, totalTournaments: 0, totalPlayers: 0 }
   }
 }
 
 /**
- * 주간 하이라이트 조회 (최근 7일간 가장 좋아요가 많은 핸드)
+ * 주간 하이라이트 조회
  */
 export async function getWeeklyHighlights(): Promise<WeeklyHighlight[]> {
+  const admin = createAdminClient()
+  const sevenDaysAgo = new Date()
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+
   try {
-    const sevenDaysAgo = new Date()
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+    const { data, error } = await admin
+      .from('hands')
+      .select(`
+        id,
+        hand_number,
+        description,
+        timestamp,
+        pot_size,
+        likes_count,
+        streams (
+          name,
+          video_url,
+          tournaments (
+            name
+          )
+        )
+      `)
+      .gte('created_at', sevenDaysAgo.toISOString())
+      .order('likes_count', { ascending: false })
+      .limit(3)
 
-    // Date를 Firestore Admin Timestamp로 변환
-    const sevenDaysAgoTimestamp = Timestamp.fromDate(sevenDaysAgo)
+    if (error) throw error
 
-    // 복합 orderBy 대신 단일 orderBy 사용 (인덱스 불필요)
-    // 클라이언트에서 likesCount로 정렬
-    const handsSnapshot = await adminFirestore
-      .collection(COLLECTION_PATHS.HANDS)
-      .where('createdAt', '>=', sevenDaysAgoTimestamp)
-      .orderBy('createdAt', 'desc')
-      .limit(20)  // 더 많이 가져와서 클라이언트에서 정렬
-      .get()
-
-    const highlights: WeeklyHighlight[] = []
-
-    for (const doc of handsSnapshot.docs) {
-      const data = doc.data()
-
-      // Tournament 정보 조회
-      let tournamentName = 'Unknown'
-      let streamName = 'Unknown'
-      let videoUrl = ''
-
-      if (data.tournamentId) {
-        const tournamentDoc = await adminFirestore
-          .collection(COLLECTION_PATHS.TOURNAMENTS)
-          .doc(data.tournamentId)
-          .get()
-
-        if (tournamentDoc.exists) {
-          tournamentName = tournamentDoc.data()?.name || 'Unknown'
-        }
-      }
-
-      // Stream 정보 조회
-      if (data.streamId && data.tournamentId && data.eventId) {
-        const streamDoc = await adminFirestore
-          .collection(COLLECTION_PATHS.TOURNAMENTS)
-          .doc(data.tournamentId)
-          .collection('events')
-          .doc(data.eventId)
-          .collection('streams')
-          .doc(data.streamId)
-          .get()
-
-        if (streamDoc.exists) {
-          const streamData = streamDoc.data()
-          streamName = streamData?.name || 'Unknown'
-          videoUrl = streamData?.videoUrl || ''
-        }
-      }
-
-      // 기존 문자열 데이터와 새로운 정수 데이터 모두 호환
-      const handNumber = typeof data.number === 'string'
-        ? parseInt(data.number, 10) || 0
-        : data.number ?? 0
-      highlights.push({
-        id: doc.id,
-        number: handNumber,
-        description: data.description || '',
-        timestamp: data.timestamp || '',
-        potSize: data.potSize || 0,
-        likesCount: data.engagement?.likesCount || 0,
-        videoUrl: videoUrl,
-        tournamentName: tournamentName,
-        streamName: streamName,
-      })
-    }
-
-    // 좋아요 수로 정렬하고 상위 3개 반환
-    return highlights
-      .sort((a, b) => b.likesCount - a.likesCount)
-      .slice(0, 3)
+    return (data || []).map((h: any) => ({
+      id: h.id,
+      number: h.hand_number,
+      description: h.description || '',
+      timestamp: h.timestamp || '',
+      potSize: Number(h.pot_size) || 0,
+      likesCount: h.likes_count || 0,
+      videoUrl: h.streams?.video_url || '',
+      tournamentName: h.streams?.tournaments?.name || 'Unknown',
+      streamName: h.streams?.name || 'Unknown',
+    }))
   } catch (error) {
     console.error('Error fetching weekly highlights:', error)
     return []
@@ -128,92 +88,69 @@ export async function getWeeklyHighlights(): Promise<WeeklyHighlight[]> {
  * 최신 게시글 조회
  */
 export async function getLatestPosts() {
+  const admin = createAdminClient()
   try {
-    const postsSnapshot = await adminFirestore
-      .collection(COLLECTION_PATHS.POSTS)
-      .orderBy('createdAt', 'desc')
+    const { data, error } = await admin
+      .from('posts')
+      .select(`
+        id,
+        title,
+        content,
+        category,
+        created_at,
+        likes_count,
+        comments_count,
+        users (
+          nickname,
+          avatar_url
+        )
+      `)
+      .order('created_at', { ascending: false })
       .limit(4)
-      .get()
 
-    return postsSnapshot.docs.map(doc => {
-      const data = doc.data()
-      return {
-        id: doc.id,
-        title: data.title,
-        content: data.content,
-        category: data.category,
-        createdAt: data.createdAt?.toDate().toISOString(),
-        likesCount: data.stats?.likesCount || 0,
-        commentsCount: data.stats?.commentsCount || 0,
-        author: {
-          nickname: data.author?.name || 'Anonymous',
-          avatarUrl: data.author?.avatarUrl || null,
-        },
+    if (error) throw error
+
+    return (data || []).map((p: any) => ({
+      id: p.id,
+      title: p.title,
+      content: p.content,
+      category: p.category,
+      createdAt: p.created_at,
+      likesCount: p.likes_count || 0,
+      commentsCount: p.comments_count || 0,
+      author: {
+        nickname: p.users?.nickname || 'Anonymous',
+        avatarUrl: p.users?.avatar_url || null,
       }
-    })
+    }))
   } catch (error) {
-    console.error('Error fetching latest posts:', error)
     return []
   }
 }
 
 /**
- * 상위 플레이어 조회 (총 상금 기준)
+ * 상위 플레이어 조회
  */
 export async function getTopPlayers(): Promise<TopPlayer[]> {
+  const admin = createAdminClient()
   try {
-    const playersSnapshot = await adminFirestore
-      .collection(COLLECTION_PATHS.PLAYERS)
-      .orderBy('totalWinnings', 'desc')
+    const { data, error } = await admin
+      .from('players')
+      .select('*')
+      .order('total_winnings', { ascending: false })
       .limit(5)
-      .get()
 
-    const topPlayers: TopPlayer[] = playersSnapshot.docs.map(doc => {
-      const data = doc.data()
-      return {
-        id: doc.id,
-        name: data.name,
-        photoUrl: data.photoUrl || null,
-        totalWinnings: data.totalWinnings || 0,
-        tournamentCount: data.stats?.tournamentsCount || 0,
-        handsCount: data.stats?.handsCount || 0,
-      }
-    })
+    if (error) throw error
 
-    return topPlayers
+    return (data || []).map((p: any) => ({
+      id: p.id,
+      name: p.name,
+      photoUrl: p.photo_url,
+      totalWinnings: Number(p.total_winnings) || 0,
+      tournamentCount: 0, // 별도 집계 필요 시 추가
+      handsCount: 0,
+    }))
   } catch (error) {
-    console.error('Error fetching top players:', error)
     return []
-  }
-}
-
-/**
- * 홈페이지 전체 데이터 조회 (한 번의 호출로 모든 데이터)
- */
-export async function getHomePageData() {
-  try {
-    const [stats, highlights, posts, topPlayers] = await Promise.all([
-      getPlatformStats(),
-      getWeeklyHighlights(),
-      getLatestPosts(),
-      getTopPlayers(),
-    ])
-
-    return {
-      success: true,
-      data: {
-        stats,
-        highlights,
-        posts,
-        topPlayers,
-      },
-    }
-  } catch (error) {
-    console.error('Error fetching home page data:', error)
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
-      data: null,
-    }
   }
 }

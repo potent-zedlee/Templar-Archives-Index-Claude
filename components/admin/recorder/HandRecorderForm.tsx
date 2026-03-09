@@ -103,7 +103,7 @@ export function HandRecorderForm({ streamId, currentTime }: HandRecorderFormProp
 
         // Construct Payload
         // Note: We are using a simplified direct creation or calling a specific Mutation that handles
-        // the complexity. Since we need to use `createHandMutation` which likely expects FirestoreHand structure,
+        // Since we need to use `createHandMutation`,
         // we need to map our local state to that.
 
         // Simplifying for prototype: We will generate the JSON for `handHistoryFormat` directly here

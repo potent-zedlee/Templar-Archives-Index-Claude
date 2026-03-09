@@ -4,10 +4,10 @@ import { ArrowRight } from 'lucide-react'
 
 // 상수 정의
 const HERO_CONTENT = {
-  subtitle: '프로 포커 토너먼트의 모든 핸드 히스토리를 분석하고 학습하세요',
+  subtitle: '프로 포커 토너먼트의 모든 핸드 히스토리를 아카이브하고 학습하세요',
   ctaPrimary: 'Archive 둘러보기',
   ctaSecondary: '핸드 검색하기',
-  features: ['AI 영상 분석', 'GTO 분석', '실시간 통계'],
+  features: ['토너먼트 아카이브', '플레이어 통계', '핸드 검색'],
 } as const
 
 export function HeroSection() {

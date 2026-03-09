@@ -1,21 +1,21 @@
 'use client'
 
-/**
- * CreatePostForm Component
- *
- * 포스트 작성/수정 폼 컴포넌트
- */
-
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Send, Save, X } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+  FormDescription,
+} from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { Label } from '@/components/ui/label'
 import {
   Select,
   SelectContent,
@@ -23,210 +23,165 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { useCreatePostMutation, type CreatePostInput } from '@/lib/queries/posts-queries'
-import type { PostCategory } from '@/lib/db/firestore-types'
+import { Card, CardContent } from '@/components/ui/card'
 import { toast } from 'sonner'
+import { createPost } from '@/app/actions/posts'
+import { Loader2, MessageSquare, Info, Trophy, Users } from 'lucide-react'
 
-const CATEGORIES: { value: PostCategory; label: string; description: string }[] = [
-  { value: 'general', label: 'General', description: 'General discussion' },
-  { value: 'strategy', label: 'Strategy', description: 'Strategic concepts and tips' },
-  { value: 'hand-analysis', label: 'Hand Analysis', description: 'In-depth hand or game analysis' },
-  { value: 'news', label: 'News', description: 'Poker news and updates' },
-  { value: 'tournament-recap', label: 'Tournament Recap', description: 'Tournament recaps and highlights' },
+const CATEGORIES = [
+  { value: 'general', label: 'General', description: 'General poker discussions', icon: MessageSquare },
+  { value: 'strategy', label: 'Strategy', description: 'Hand and game strategy', icon: Info },
+  { value: 'news', label: 'News', description: 'Latest poker news', icon: Users },
+  { value: 'tournament-recap', label: 'Tournament Recap', description: 'Tournament results and highlights', icon: Trophy },
 ]
 
-// Validation schema
-const postSchema = z.object({
-  title: z.string().min(5, 'Title must be at least 5 characters').max(200, 'Title is too long'),
-  content: z.string().min(20, 'Content must be at least 20 characters'),
-  category: z.enum(['general', 'strategy', 'hand-analysis', 'news', 'tournament-recap']),
-  tags: z.string().optional(),
-  handId: z.string().optional(),
+const formSchema = z.object({
+  title: z.string().min(5, 'Title must be at least 5 characters').max(100),
+  content: z.string().min(20, 'Content must be at least 20 characters').max(10000),
+  category: z.enum(['general', 'strategy', 'news', 'tournament-recap']),
 })
 
-type PostFormData = z.infer<typeof postSchema>
+type FormValues = z.infer<typeof formSchema>
 
 interface CreatePostFormProps {
-  initialData?: {
-    title: string
-    content: string
-    category: PostCategory
-    tags: string[]
-    handId?: string
-  }
+  handId?: string
 }
 
-export function CreatePostForm({ initialData }: CreatePostFormProps) {
+export function CreatePostForm({ handId }: CreatePostFormProps) {
   const router = useRouter()
-  const createPostMutation = useCreatePostMutation()
-  const [isSubmitting, setIsSubmitting] = useState(false)
-
-  const {
-    register,
-    handleSubmit,
-    setValue,
-    watch,
-    formState: { errors },
-  } = useForm<PostFormData>({
-    resolver: zodResolver(postSchema),
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
     defaultValues: {
-      title: initialData?.title || '',
-      content: initialData?.content || '',
-      category: initialData?.category || 'general',
-      tags: initialData?.tags?.join(', ') || '',
-      handId: initialData?.handId || '',
+      title: '',
+      content: '',
+      category: 'general',
     },
   })
 
-  const category = watch('category')
+  const isLoading = form.formState.isSubmitting
 
-  const onSubmit = async (data: PostFormData, status: 'draft' | 'published') => {
-    setIsSubmitting(true)
-
+  const onSubmit = async (values: FormValues) => {
     try {
-      // Parse tags
-      const tags = data.tags
-        ? data.tags.split(',').map(t => t.trim()).filter(t => t.length > 0)
-        : []
+      const result = await createPost({
+        ...values,
+        handId,
+      })
 
-      const postData: CreatePostInput = {
-        title: data.title,
-        content: data.content,
-        category: data.category,
-        tags,
-        handId: data.handId || undefined,
-        status,
+      if (result.success) {
+        toast.success('Post created successfully')
+        router.push(`/community/${result.postId}`)
+        router.refresh()
+      } else {
+        toast.error(result.error || 'Failed to create post')
       }
-
-      const result = await createPostMutation.mutateAsync(postData)
-
-      toast.success(status === 'published' ? 'Post published!' : 'Draft saved!')
-      router.push(`/community/${result?.id}`)
     } catch (error) {
-      toast.error((error as Error).message || 'Failed to create post')
-    } finally {
-      setIsSubmitting(false)
+      toast.error('An unexpected error occurred')
     }
   }
 
   return (
-    <form className="space-y-6">
-      {/* Title */}
-      <div className="space-y-2">
-        <Label htmlFor="title">Title *</Label>
-        <Input
-          id="title"
-          placeholder="Enter a descriptive title..."
-          {...register('title')}
-          className={errors.title ? 'border-destructive' : ''}
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <FormField
+          control={form.control}
+          name="title"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Title</FormLabel>
+              <FormControl>
+                <Input placeholder="Enter a descriptive title" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
         />
-        {errors.title && (
-          <p className="text-sm text-destructive">{errors.title.message}</p>
-        )}
-      </div>
 
-      {/* Category */}
-      <div className="space-y-2">
-        <Label>Category *</Label>
-        <Select
-          value={category}
-          onValueChange={(value) => setValue('category', value as PostCategory)}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Select a category" />
-          </SelectTrigger>
-          <SelectContent>
-            {CATEGORIES.map(cat => (
-              <SelectItem key={cat.value} value={cat.value}>
-                <div className="flex flex-col">
-                  <span>{cat.label}</span>
-                  <span className="text-xs text-muted-foreground">{cat.description}</span>
+        <FormField
+          control={form.control}
+          name="category"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Category</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a category" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {CATEGORIES.map((category) => (
+                    <SelectItem key={category.value} value={category.value}>
+                      <div className="flex items-center gap-2">
+                        <category.icon className="h-4 w-4" />
+                        <span>{category.label}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormDescription>
+                Choose the category that best fits your post.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {CATEGORIES.map((category) => (
+            <Card
+              key={category.value}
+              className={`cursor-pointer transition-colors ${
+                form.watch('category') === category.value
+                  ? 'border-primary bg-primary/5'
+                  : 'hover:border-primary/50'
+              }`}
+              onClick={() => form.setValue('category', category.value as any)}
+            >
+              <CardContent className="p-4 flex flex-col items-center text-center gap-2">
+                <category.icon className="h-6 w-6 text-muted-foreground" />
+                <div className="font-medium text-sm">{category.label}</div>
+                <div className="text-[10px] text-muted-foreground leading-tight">
+                  {category.description}
                 </div>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        {errors.category && (
-          <p className="text-sm text-destructive">{errors.category.message}</p>
-        )}
-      </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
 
-      {/* Content */}
-      <div className="space-y-2">
-        <Label htmlFor="content">Content *</Label>
-        <Textarea
-          id="content"
-          placeholder="Write your post content here..."
-          rows={12}
-          {...register('content')}
-          className={`resize-none ${errors.content ? 'border-destructive' : ''}`}
+        <FormField
+          control={form.control}
+          name="content"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Content</FormLabel>
+              <FormControl>
+                <Textarea
+                  placeholder="Share your thoughts or questions..."
+                  className="min-h-[300px] resize-none"
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
         />
-        {errors.content && (
-          <p className="text-sm text-destructive">{errors.content.message}</p>
-        )}
-        <p className="text-xs text-muted-foreground">
-          Supports plain text. Markdown support coming soon.
-        </p>
-      </div>
 
-      {/* Tags */}
-      <div className="space-y-2">
-        <Label htmlFor="tags">Tags</Label>
-        <Input
-          id="tags"
-          placeholder="poker, strategy, bluff (comma separated)"
-          {...register('tags')}
-        />
-        <p className="text-xs text-muted-foreground">
-          Add tags to help others find your post
-        </p>
-      </div>
-
-      {/* Hand ID (optional) */}
-      <div className="space-y-2">
-        <Label htmlFor="handId">Related Hand ID (optional)</Label>
-        <Input
-          id="handId"
-          placeholder="e.g., abc123xyz"
-          {...register('handId')}
-        />
-        <p className="text-xs text-muted-foreground">
-          Link this post to a specific hand from the archive
-        </p>
-      </div>
-
-      {/* Actions */}
-      <div className="flex items-center justify-between pt-6 border-t border-border">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => router.back()}
-          disabled={isSubmitting}
-        >
-          <X className="h-4 w-4 mr-2" />
-          Cancel
-        </Button>
-
-        <div className="flex items-center gap-3">
+        <div className="flex justify-end gap-4">
           <Button
             type="button"
-            variant="secondary"
-            onClick={handleSubmit((data) => onSubmit(data, 'draft'))}
-            disabled={isSubmitting}
+            variant="outline"
+            onClick={() => router.back()}
+            disabled={isLoading}
           >
-            <Save className="h-4 w-4 mr-2" />
-            Save Draft
+            Cancel
           </Button>
-          <Button
-            type="button"
-            onClick={handleSubmit((data) => onSubmit(data, 'published'))}
-            disabled={isSubmitting}
-          >
-            <Send className="h-4 w-4 mr-2" />
-            Publish
+          <Button type="submit" disabled={isLoading}>
+            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Create Post
           </Button>
         </div>
-      </div>
-    </form>
+      </form>
+    </Form>
   )
 }

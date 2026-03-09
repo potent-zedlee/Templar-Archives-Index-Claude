@@ -1,250 +1,94 @@
-# Templar Archives 배포 가이드
+# Templar Archives Deployment Guide
 
-**마지막 업데이트**: 2025-12-10
-
----
-
-## 프로덕션 URL
-
-| 환경 | URL | 배포 시간 |
-|------|-----|----------|
-| **Vercel (메인)** | https://templar-archives-index.vercel.app | ~1분 |
-| **Firebase (백업)** | https://templar-archives-index.web.app | ~5분 |
+**Last Updated**: 2026-03-04
 
 ---
 
-## 자동 배포
+## Production URL
 
-`main` 브랜치에 push하면 **둘 다 자동 배포**됩니다:
-
-```
-Git Push (main)
-    ├── Vercel: 자동 빌드 (~1분)
-    └── Firebase: GitHub Actions (~5분)
-```
+| Environment | URL |
+|------|-----|
+| **Vercel (Primary)** | https://templar-archives-index.vercel.app |
 
 ---
 
-## 배포 전 체크리스트
+## Deployment Checklist
 
-- [ ] GitHub 계정 (https://github.com)
-- [ ] Vercel 계정 (https://vercel.com)
-- [ ] Firebase 프로젝트 (https://console.firebase.google.com)
-- [ ] GCP 프로젝트 (https://console.cloud.google.com)
-- [ ] Google API Key (Gemini AI용)
+- [ ] GitHub account
+- [ ] Vercel account
+- [ ] Supabase project (Seoul Region recommended)
 
 ---
 
-## 1단계: 환경 변수 준비
+## Step 1: Environment Variables
 
-### 필수 환경 변수
+### Required Variables
 
-| 변수명 | 설명 | 발급처 |
+| Name | Description | Source |
 |--------|------|--------|
-| `NEXT_PUBLIC_FIREBASE_API_KEY` | Firebase API 키 | Firebase Console → Settings |
-| `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` | Firebase 인증 도메인 | Firebase Console → Settings |
-| `NEXT_PUBLIC_FIREBASE_PROJECT_ID` | Firebase 프로젝트 ID | Firebase Console → Settings |
-| `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` | Firebase Storage 버킷 | Firebase Console → Settings |
-| `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` | Firebase 메시징 ID | Firebase Console → Settings |
-| `NEXT_PUBLIC_FIREBASE_APP_ID` | Firebase 앱 ID | Firebase Console → Settings |
-| `GOOGLE_API_KEY` | Gemini AI API 키 | https://aistudio.google.com/app/apikey |
-| `CLOUD_RUN_ORCHESTRATOR_URL` | Cloud Run Orchestrator URL | GCP Console → Cloud Run |
-| `NEXT_SERVER_ACTIONS_ENCRYPTION_KEY` | Server Actions 암호화 키 | `openssl rand -base64 32` |
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase Project URL | Supabase Dashboard → Settings → API |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase Anon Key | Supabase Dashboard → Settings → API |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase Service Role Key | Supabase Dashboard → Settings → API |
+| `TWO_FACTOR_ENCRYPTION_KEY` | 2FA Encryption Key | `openssl rand -hex 32` |
 
 ---
 
-## 2단계: Vercel 설정 (메인 배포)
+## Step 2: Supabase Setup
 
-### 2.1 Vercel 프로젝트 연결
+### 2.1 Project Creation
+1. Go to [Supabase Console](https://supabase.com).
+2. Create a new project.
+3. Apply migrations using Supabase CLI:
+   ```bash
+   npx supabase link --project-ref your-project-ref
+   npx supabase db push
+   ```
 
+### 2.2 Authentication
+- Enable Google Provider in Authentication → Providers.
+- Add your production domain to the redirect allow list.
+
+---
+
+## Step 3: Vercel Setup
+
+### 3.1 Link Project
 ```bash
 npx vercel link
 ```
 
-### 2.2 환경 변수 추가
+### 3.2 Add Environment Variables
+Use the Vercel Dashboard or CLI to add all required variables.
 
-```bash
-# 예시
-printf "value" | npx vercel env add VARIABLE_NAME production
-```
-
-또는 Vercel 대시보드에서 직접 추가:
-https://vercel.com/[team]/templar-archives/settings/environment-variables
-
-### 2.3 GitHub 연동
-
-Vercel은 GitHub과 직접 연동되어 push 시 자동 배포됩니다.
+### 3.3 GitHub Integration
+Vercel automatically deploys when you push to the `main` branch.
 
 ---
 
-## 3단계: Firebase 설정 (백업 배포)
+## Step 4: Verification
 
-### 3.1 Firebase 프로젝트 생성
-
-1. https://console.firebase.google.com 접속
-2. 새 프로젝트 생성
-3. Firestore Database 활성화
-4. Authentication 활성화 (Google Provider)
-5. Storage 활성화
-
-### 3.2 Firebase Auth 도메인 추가
-
-Firebase Console → Authentication → Settings → Authorized domains:
-- `templar-archives-index.vercel.app`
-- `templar-archives-index.web.app`
-
-### 3.3 GitHub Secrets 설정
-
-Repository Settings → Secrets and variables → Actions에서 추가:
-
-```
-GOOGLE_APPLICATION_CREDENTIALS=<서비스 계정 JSON>
-FIREBASE_TOKEN=<Firebase CLI 토큰>
-NEXT_PUBLIC_FIREBASE_API_KEY=<API 키>
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=<인증 도메인>
-NEXT_PUBLIC_FIREBASE_PROJECT_ID=<프로젝트 ID>
-NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=<스토리지 버킷>
-NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=<메시징 ID>
-NEXT_PUBLIC_FIREBASE_APP_ID=<앱 ID>
-CLOUD_RUN_ORCHESTRATOR_URL=<Cloud Run URL>
-GOOGLE_API_KEY=<Gemini API 키>
-NEXT_SERVER_ACTIONS_ENCRYPTION_KEY=<암호화 키>
-```
+- [ ] Homepage loading
+- [ ] Supabase connection (Archive data visible)
+- [ ] User authentication (Google Login)
+- [ ] 2FA Setup and Login
 
 ---
 
-## 4단계: Cloud Run 설정 (영상 분석)
+## Troubleshooting
 
-### 4.1 배포 명령
-
+### Build Failures
 ```bash
-# 전체 배포 (권장)
-cd cloud-run && ./deploy.sh all
-
-# 개별 배포
-cd cloud-run && ./deploy.sh orchestrator      # Orchestrator만
-cd cloud-run && ./deploy.sh segment-analyzer  # Segment Analyzer만
-```
-
-### 4.2 배포 방식: `gcloud run deploy --source`
-
-deploy.sh는 `gcloud run deploy --source` 명령을 사용하여 **Cloud Build에서 서버 빌드**를 수행합니다.
-
-**장점:**
-- 로컬 Docker 설치 불필요
-- Apple Silicon Mac에서도 플랫폼 문제 없음
-
-### 4.3 하이브리드 빌드 전략
-
-| 서비스 | 빌드 방식 | 이유 |
-|--------|----------|------|
-| **orchestrator** | Buildpack | FFmpeg 불필요, 간단 |
-| **segment-analyzer** | Multi-stage Dockerfile | FFmpeg 필수 |
-
-### 4.4 Cloud Tasks 큐 생성
-
-```bash
-gcloud tasks queues create video-analysis-queue --location=asia-northeast3
-```
-
----
-
-## 5단계: 배포 확인
-
-### 확인 항목
-
-- [ ] 홈페이지 로딩
-- [ ] Firebase 연결 (Archive 페이지 데이터 표시)
-- [ ] 사용자 인증 (Google 로그인)
-- [ ] 영상 분석 (Cloud Run 작동)
-
-### 로그 확인
-
-```bash
-# Vercel 로그
-npx vercel logs [deployment-url]
-
-# GitHub Actions 로그
-gh run list
-gh run view <run-id> --log-failed
-
-# Cloud Run 로그
-gcloud run services logs read video-orchestrator --region=asia-northeast3
-gcloud run services logs read segment-analyzer --region=asia-northeast3
-```
-
----
-
-## 트러블슈팅
-
-### 빌드 실패
-
-```bash
-# 로컬에서 빌드 테스트
+# Test build locally
 npm run build
 npx tsc --noEmit
 ```
 
-### Vercel 런타임 에러 (firebase-admin)
- 
- **증상**: 배포 후 `TypeError: (void 0) is not a function` 에러 발생 (특히 API Routes에서).
- 
- **원인**: `firebase-admin` 패키지의 모듈 Resolution 문제.
- 
- **해결**: `lib/firebase-auth-loader.js`가 자동으로 처리합니다. 코드를 수정할 때는 반드시 `@/lib/db/firebase-admin`을 import하여 사용하세요.
- 
- ### Firebase 인증 에러 (auth/unauthorized-domain)
-
-Firebase Console → Authentication → Settings → Authorized domains에 배포 도메인 추가
-
-### Cloud Run 연결 실패
-
-1. `CLOUD_RUN_ORCHESTRATOR_URL` 환경 변수 확인
-2. Cloud Run 서비스 상태 확인
-3. IAM 권한 확인 (Cloud Run Invoker)
-
-### GCS 업로드 CORS 에러
-
-**증상**: 업로드 시 "CORS policy" 에러 또는 업로드 100% 후 실패
-
-**해결**:
-```bash
-# 1. CORS 설정 확인
-gsutil cors get gs://templar-archives-videos
-
-# 2. CORS 설정 적용
-gsutil cors set gcs-cors.json gs://templar-archives-videos
-```
-
-**필수 설정** (`gcs-cors.json`):
-- origin: 모든 배포 도메인 포함
-- responseHeader: `["*"]` (모든 응답 헤더 허용)
-- method: `OPTIONS` 포함 필수
-
-**브라우저 캐시 문제**: CORS preflight가 캐시될 수 있으므로 하드 리프레시(Cmd+Shift+R) 또는 시크릿 탭에서 테스트
-
-### Cloud Run 캐시 문제 (이전 코드 배포됨)
-
-**원인**: Cloud Build 레이어 캐시로 인해 변경된 코드가 반영되지 않음
-
-**해결**:
-```bash
-# 강제 새 빌드
-gcloud builds submit --no-cache --source=. ...
-```
-
-**예방**:
-- `package-lock.json` 포함 확인
-- `npm ci` 사용 (npm install 대신)
-- Multi-stage Dockerfile로 빌드 최적화
+### Database Issues
+Ensure RLS policies are correctly applied if data is not visible to non-admin users. Check `supabase/migrations` for the latest schema.
 
 ---
 
-## 참고 문서
-
-- [Vercel 문서](https://vercel.com/docs)
-- [Firebase Hosting 문서](https://firebase.google.com/docs/hosting)
-- [Cloud Run 문서](https://cloud.google.com/run/docs)
-- [Cloud Run 소스 배포](https://cloud.google.com/run/docs/deploying-source-code)
-- [CLAUDE.md](../CLAUDE.md) - 프로젝트 개발 가이드
-- [cloud-run/README.md](../cloud-run/README.md) - Cloud Run 상세 문서
+## References
+- [Vercel Docs](https://vercel.com/docs)
+- [Supabase Docs](https://supabase.com/docs)
+- [CLAUDE.md](../CLAUDE.md) - Project Guide

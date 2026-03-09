@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState, forwardRef, useImperativeHandle, useCallback } from "react"
-import { formatTime } from "@/types/segments"
+import { formatTime } from "@/lib/utils/time"
 
 interface YouTubePlayerProps {
   videoId: string

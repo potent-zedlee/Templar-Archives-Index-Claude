@@ -25,11 +25,11 @@ import {
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { FolderTree, Loader2 } from 'lucide-react'
-import type { PipelineStream } from '@/lib/queries/admin-archive-queries'
 import {
   useAdminTournamentsQuery,
   useAdminEventsQuery,
   useClassifyStream,
+  type AdminStream,
 } from '@/lib/queries/admin-archive-queries'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { AlertCircle } from 'lucide-react'
@@ -37,7 +37,7 @@ import { AlertCircle } from 'lucide-react'
 interface ClassifyDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  stream: PipelineStream | null
+  stream: AdminStream | null
   onSuccess?: () => void
 }
 
@@ -62,7 +62,7 @@ export function ClassifyDialog({
   // 분류 mutation
   const classifyMutation = useClassifyStream()
 
-  // 다이얼로그 열릴 때 초기화 (onOpenChange 핸들러에서 처리)
+  // 다이얼로그 열릴 때 초기화
   const handleOpenChange = useCallback((newOpen: boolean) => {
     if (newOpen) {
       setSelectedTournamentId('')
@@ -71,7 +71,7 @@ export function ClassifyDialog({
     onOpenChange(newOpen)
   }, [onOpenChange])
 
-  // 토너먼트 변경 핸들러 (이벤트 선택 초기화 포함)
+  // 토너먼트 변경 핸들러
   const handleTournamentChange = useCallback((value: string) => {
     setSelectedTournamentId(value)
     setSelectedEventId('')

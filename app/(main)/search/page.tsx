@@ -85,7 +85,6 @@ export default function SearchPage() {
           stackRange: filters.stackRange,
           playerGender: filters.playerGender,
           hasVideo: filters.hasVideo,
-          hasAISummary: filters.hasAISummary,
           summaryKeyword: filters.summaryKeyword,
         })
 

@@ -1,22 +1,30 @@
-# Repository Guidelines
+# Templar Archives Index - Engineering Standards
 
-## Project Structure & Module Organization
-Next.js App Router lives in `app/` for archive/search/community/player routes plus server actions and API handlers. UI code sits in `components/` (features/ui/layout/dialogs), shared logic in `lib/`, client state in `stores/`, and ops helpers in `scripts/`. Keep browser specs in `e2e/`, unit suites in `lib/__tests__` + `stores/__tests__`, and assets in `public/` and `styles/`.
+## 1. Core Principles
+- **Accuracy First**: Poker hand data must be 100% accurate. Curation over automation.
+- **Performance**: High-speed replayer and efficient data fetching.
+- **B2B Ready**: Multi-tenant data isolation and role-based access control.
 
-## Build, Test, and Development Commands
-- `npm run dev` – Next dev server on :3000.
-- `npm run build` / `npm run start` – production build + serve.
-- `npm run lint` and `npx tsc --noEmit` – ESLint + TypeScript checks; treat as pre-commit gates.
-- `npm test`, `npm run test:coverage`, `npm run test:e2e` – Vitest suite, coverage report, and Playwright specs inside `e2e/`.
+## 2. Technical Guidelines
+- **Framework**: Next.js 16 (App Router) + React 19.
+- **Language**: Strict TypeScript 5.9. No `any` types.
+- **Styling**: Tailwind CSS 4.1. Use standard naming conventions.
+- **State**: React Query 5 for server state, Zustand 5 for client state.
+- **Database**: Supabase (PostgreSQL). Use snake_case for DB fields.
+- **Auth**: Supabase Auth + TOTP 2FA.
 
-## Coding Style & Naming Conventions
-Code is strict TypeScript + React 19 with Tailwind. Use 2-space indentation, trailing commas, double quotes, and let `npm run lint` enforce formatting. Shared primitives use PascalCase filenames, while `lib` utilities stay kebab-case. Favor functional components, compose classes with `clsx`/`tailwind-merge`, and call Firebase through helpers in `lib/queries`.
+## 3. Implementation Patterns
+- **Server Actions**: All data mutations (writes) must use Next.js Server Actions.
+- **Type Safety**: Derive TypeScript types from Zod schemas using `z.infer`.
+- **Naming**:
+  - Components: `PascalCase.tsx`
+  - Functions/Variables: `camelCase`
+  - Constants: `UPPER_SNAKE_CASE`
 
-## Testing Guidelines
-Vitest config lives in `vitest.config.ts` with globals from `vitest.setup.ts`. Place unit specs beside the code inside `__tests__`, name them `*.test.ts`, reuse Firebase mocks, and aim for ≥80 % statement coverage via `npm run test:coverage`. Browser flows (archive upload, search, admin) belong in Playwright specs under `e2e/` named `{feature}.spec.ts`; attach trace links in the PR when retries occur.
+## 4. Testing & Validation
+- **Unit Testing**: Vitest for utility and logic testing.
+- **Build**: Ensure `npm run build` succeeds before finalizing tasks.
+- **Security**: Always verify RLS policies and admin permissions.
 
-## Commit & Pull Request Guidelines
-We follow Conventional Commits (`feat: …`, `fix: …`, `chore:`) with imperative subjects and optional scopes; squash WIP commits locally. Every PR must include a concise summary, a linked issue or `work-logs/` entry, and verification steps (`npm run lint`, `npm test`, `npm run test:e2e`). Attach screenshots for UI changes and mention new env vars.
-
-## Security & Configuration Tips
-Copy `.env.example` to `.env.local`, supply Firebase/Anthropic/Google keys, and keep them out of Git. Rotate shared tokens before posting logs and scrub PII from exports placed in `docs/`. Delete temporary uploads from `public/` or Firebase Storage buckets after testing, and rely on anonymized tournament samples for fixtures.
+---
+**Note**: This project uses Supabase for database, authentication, and storage.

@@ -1,7 +1,7 @@
 'use client'
 
 /**
- * StreamDetailPanel - 스트림 상세 정보 패널
+ * StreamDetailPanel Component
  *
  * 선택된 스트림의 상세 정보와 액션 버튼을 표시
  */
@@ -9,7 +9,6 @@
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Progress } from '@/components/ui/progress'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
 import {
@@ -21,90 +20,22 @@ import {
 } from '@/components/ui/card'
 import {
   Play,
-  Sparkles,
-  Globe,
-  RefreshCw,
   ExternalLink,
-  AlertCircle,
   Video,
-  Clock,
   Layers,
   X,
 } from 'lucide-react'
-import type { PipelineStream } from '@/lib/queries/admin-archive-queries'
-import type { PipelineStatus } from '@/lib/types/archive'
-import { format } from 'date-fns'
-import { ko } from 'date-fns/locale'
+import type { AdminStream } from '@/lib/queries/admin-archive-queries'
 
 interface StreamDetailPanelProps {
-  stream: PipelineStream | null
+  stream: AdminStream | null
   onClose?: () => void
-  onAnalyze?: (streamId: string) => void
-  onRetry?: (streamId: string) => void
   className?: string
-}
-
-/**
- * 파이프라인 상태 라벨 반환 (7단계 파이프라인)
- */
-export function getPipelineStatusLabel(status: PipelineStatus): string {
-  const labels: Record<PipelineStatus, string> = {
-    pending: '대기 중',
-    uploaded: '업로드 완료',
-    needs_classify: '분류 필요',
-    analyzing: '분석 중',
-    completed: '분석 완료',
-    published: '발행됨',
-    failed: '실패',
-  }
-  return labels[status]
-}
-
-/**
- * 파이프라인 상태별 색상 반환 (7단계 파이프라인)
- */
-export function getPipelineStatusColor(status: PipelineStatus): {
-  color: string
-  bgColor: string
-} {
-  const colors: Record<PipelineStatus, { color: string; bgColor: string }> = {
-    pending: {
-      color: 'text-gray-700 dark:text-gray-300',
-      bgColor: 'bg-gray-100 dark:bg-gray-800'
-    },
-    uploaded: {
-      color: 'text-slate-700 dark:text-slate-300',
-      bgColor: 'bg-slate-100 dark:bg-slate-800'
-    },
-    needs_classify: {
-      color: 'text-amber-700 dark:text-amber-300',
-      bgColor: 'bg-amber-100 dark:bg-amber-900/30'
-    },
-    analyzing: {
-      color: 'text-blue-700 dark:text-blue-300',
-      bgColor: 'bg-blue-100 dark:bg-blue-900/30'
-    },
-    completed: {
-      color: 'text-cyan-700 dark:text-cyan-300',
-      bgColor: 'bg-cyan-100 dark:bg-cyan-900/30'
-    },
-    published: {
-      color: 'text-emerald-700 dark:text-emerald-300',
-      bgColor: 'bg-emerald-100 dark:bg-emerald-900/30'
-    },
-    failed: {
-      color: 'text-red-700 dark:text-red-300',
-      bgColor: 'bg-red-100 dark:bg-red-900/30'
-    },
-  }
-  return colors[status]
 }
 
 export function StreamDetailPanel({
   stream,
   onClose,
-  onAnalyze,
-  onRetry,
   className,
 }: StreamDetailPanelProps) {
   if (!stream) {
@@ -117,10 +48,6 @@ export function StreamDetailPanel({
       </Card>
     )
   }
-
-  const { color, bgColor } = getPipelineStatusColor(stream.pipelineStatus)
-  const isAnalyzing = stream.pipelineStatus === 'analyzing'
-  const isFailed = stream.pipelineStatus === 'failed'
 
   return (
     <Card className={cn('h-full flex flex-col', className)}>
@@ -135,8 +62,8 @@ export function StreamDetailPanel({
             )}
           </div>
           <div className="flex items-center gap-2">
-            <Badge className={cn(bgColor, color)}>
-              {getPipelineStatusLabel(stream.pipelineStatus)}
+            <Badge variant="outline" className="uppercase">
+              {stream.status}
             </Badge>
             {onClose && (
               <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onClose}>
@@ -149,34 +76,6 @@ export function StreamDetailPanel({
 
       <ScrollArea className="flex-1">
         <CardContent className="space-y-6">
-          {/* 진행률 (분석 중일 때) */}
-          {isAnalyzing && (
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-sm">
-                <span className="font-medium">분석 진행률</span>
-                <span className="text-muted-foreground">{stream.pipelineProgress}%</span>
-              </div>
-              <Progress value={stream.pipelineProgress} className="h-2" />
-            </div>
-          )}
-
-          {/* 에러 메시지 (실패 시) */}
-          {isFailed && stream.pipelineError && (
-            <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
-              <div className="flex items-start gap-2">
-                <AlertCircle className="h-5 w-5 text-red-500 shrink-0" />
-                <div>
-                  <p className="font-medium text-red-700 dark:text-red-300">분석 실패</p>
-                  <p className="text-sm text-red-600 dark:text-red-400 mt-1">
-                    {stream.pipelineError}
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          <Separator />
-
           {/* 메타 정보 */}
           <div className="space-y-3">
             <h4 className="text-sm font-medium">정보</h4>
@@ -200,28 +99,8 @@ export function StreamDetailPanel({
                 <Layers className="h-4 w-4" />
                 핸드 수
               </span>
-              <span className="font-medium">{stream.handCount}개</span>
+              <span className="font-medium">{(stream.handCount || 0)}개</span>
             </div>
-
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground flex items-center gap-1">
-                <RefreshCw className="h-4 w-4" />
-                분석 시도
-              </span>
-              <span className="font-medium">{stream.analysisAttempts}회</span>
-            </div>
-
-            {stream.pipelineUpdatedAt && (
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground flex items-center gap-1">
-                  <Clock className="h-4 w-4" />
-                  최근 업데이트
-                </span>
-                <span className="font-medium">
-                  {format(stream.pipelineUpdatedAt, 'PPp', { locale: ko })}
-                </span>
-              </div>
-            )}
           </div>
 
           {/* 영상 링크 */}
@@ -247,33 +126,6 @@ export function StreamDetailPanel({
           )}
         </CardContent>
       </ScrollArea>
-
-      {/* 액션 버튼 (3단계 파이프라인: uploaded → analyzing → published) */}
-      <div className="p-4 border-t space-y-2">
-        {/* uploaded 상태: 분석 시작 버튼 */}
-        {stream.pipelineStatus === 'uploaded' && onAnalyze && (
-          <Button className="w-full" onClick={() => onAnalyze(stream.id)}>
-            <Sparkles className="h-4 w-4 mr-2" />
-            분석 시작
-          </Button>
-        )}
-
-        {/* published 상태: 완료 표시 */}
-        {stream.pipelineStatus === 'published' && (
-          <div className="text-center text-sm text-muted-foreground py-2">
-            <Globe className="h-4 w-4 inline mr-2" />
-            발행 완료
-          </div>
-        )}
-
-        {/* 실패 또는 분석 중(멈춘 경우)일 때 재시도 버튼 */}
-        {(isFailed || isAnalyzing) && onRetry && (
-          <Button variant="outline" className="w-full" onClick={() => onRetry(stream.id)}>
-            <RefreshCw className="h-4 w-4 mr-2" />
-            {isAnalyzing ? '분석 리셋 (재시도)' : '다시 시도'}
-          </Button>
-        )}
-      </div>
     </Card>
   )
 }

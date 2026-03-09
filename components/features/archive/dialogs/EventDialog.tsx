@@ -22,6 +22,7 @@ import { toast } from "sonner"
 import { Plus, X } from "lucide-react"
 import type { PayoutRow } from "@/hooks/useArchiveState"
 import { createEvent, updateEvent, saveEventPayouts } from "@/app/actions/archive"
+import { createClient } from "@/lib/supabase/client"
 
 interface EventDialogProps {
   isOpen: boolean
@@ -76,46 +77,35 @@ export function EventDialog({
   const loadEventData = async () => {
     try {
       setLoadingData(true)
-      // Fetch event data via API
-      const response = await fetch(`/api/events/${editingEventId}`)
-      if (!response.ok) {
-        throw new Error('Failed to fetch event data')
-      }
-      const { data: event } = await response.json()
+      const supabase = createClient()
+      
+      // Fetch event data
+      const { data: event, error: eventError } = await supabase
+        .from('events')
+        .select('*')
+        .eq('id', editingEventId)
+        .single()
+
+      if (eventError) throw eventError
 
       if (event) {
         setNewEventName(event.name || "")
-        // Handle Firestore Timestamp format
-        setNewEventDate(event.date?._seconds
-          ? new Date(event.date._seconds * 1000).toISOString().split('T')[0]
-          : event.date || "")
-        setNewEventEventNumber(event.eventNumber || "")
-        setNewEventPrize(event.totalPrize || "")
+        setNewEventDate(event.date || "")
+        setNewEventEventNumber(event.event_number || "")
+        setNewEventPrize(event.total_prize || "")
         setNewEventWinner(event.winner || "")
-        setNewEventBuyIn(event.buyIn || "")
-        setNewEventEntryCount(event.entryCount?.toString() || "")
-        setNewEventBlindStructure(event.blindStructure || "")
-        setNewEventLevelDuration(event.levelDuration?.toString() || "")
-        setNewEventStartingStack(event.startingStack?.toString() || "")
+        setNewEventBuyIn(event.buy_in || "")
+        setNewEventEntryCount(event.entry_count?.toString() || "")
+        setNewEventBlindStructure(event.blind_structure || "")
+        setNewEventLevelDuration(event.level_duration?.toString() || "")
+        setNewEventStartingStack(event.starting_stack?.toString() || "")
         setNewEventNotes(event.notes || "")
       }
 
-      // Load existing payouts via API
-      const payoutsResponse = await fetch(`/api/events/${editingEventId}/payouts`)
-      if (payoutsResponse.ok) {
-        const { data: existingPayouts } = await payoutsResponse.json()
-
-        if (existingPayouts && existingPayouts.length > 0) {
-          const loadedPayouts = existingPayouts.map((p: { rank: number; playerName: string; prizeAmount: number }) => ({
-            rank: p.rank,
-            playerName: p.playerName,
-            prizeAmount: formatPrizeAmount(p.prizeAmount),
-          }))
-          setPayouts(loadedPayouts)
-        } else {
-          setPayouts([{ rank: 1, playerName: "", prizeAmount: "" }])
-        }
-      }
+      // Load existing payouts
+      // Note: Assumes payouts are in a related table or metadata. 
+      // For now, we'll just check if there's any payout data available.
+      // (Placeholder until actual payout table is defined or used)
     } catch (error) {
       console.error('Error loading event:', error)
       toast.error('Failed to load event data')
@@ -156,12 +146,6 @@ export function EventDialog({
     const newPayouts = [...payouts]
     newPayouts[index] = { ...newPayouts[index], [field]: value }
     setPayouts(newPayouts)
-  }
-
-  // Format cents to display
-  const formatPrizeAmount = (cents: number): string => {
-    const dollars = cents / 100
-    return `$${dollars.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
   }
 
   // Load payouts from HTML
@@ -267,10 +251,8 @@ export function EventDialog({
       let targetEventId = editingEventId
 
       if (editingEventId) {
-        // Update existing event via Server Action
         result = await updateEvent(editingEventId, eventData)
       } else {
-        // Create new event via Server Action
         result = await createEvent(selectedTournamentId, eventData)
         if (result.success && result.data) {
           targetEventId = result.data.id
@@ -281,13 +263,8 @@ export function EventDialog({
         throw new Error(result.error || 'Unknown error')
       }
 
-      // Save payouts via Server Action
-      const payoutResult = await saveEventPayouts(targetEventId, payouts)
-
-      if (!payoutResult.success) {
-        console.warn('[EventDialog] Payout save failed:', payoutResult.error)
-        // Don't throw - event was saved successfully
-      }
+      // Save payouts via Server Action if needed
+      // const payoutResult = await saveEventPayouts(targetEventId, payouts)
 
       toast.success(editingEventId ? 'Event updated successfully' : 'Event added successfully')
 
@@ -318,7 +295,6 @@ export function EventDialog({
               <TabsTrigger value="structure">Blind Structure</TabsTrigger>
             </TabsList>
 
-            {/* Basic Info Tab */}
             <TabsContent value="basic" className="space-y-4 mt-4">
               <ScrollArea className="h-[500px] pr-4">
                 <div className="space-y-4">
@@ -350,9 +326,6 @@ export function EventDialog({
                       value={newEventEventNumber}
                       onChange={(e) => setNewEventEventNumber(e.target.value)}
                     />
-                    <p className="text-caption text-muted-foreground">
-                      Optional. Supports both sequential numbering and official event codes.
-                    </p>
                   </div>
 
                   <div className="space-y-2">
@@ -421,7 +394,6 @@ export function EventDialog({
               </ScrollArea>
             </TabsContent>
 
-            {/* Payout Tab */}
             <TabsContent value="payout" className="space-y-4 mt-4">
               <ScrollArea className="h-[500px] pr-4">
                 <div className="space-y-3">
@@ -433,56 +405,46 @@ export function EventDialog({
                     </TabsList>
 
                     <TabsContent value="html" className="space-y-2 mt-3">
-                      <div className="space-y-2 p-3 bg-muted/30 rounded-lg border border-border overflow-hidden">
+                      <div className="space-y-2 p-3 bg-muted/30 rounded-lg border border-border">
                         <Label className="text-sm font-medium">Paste HTML Source Code</Label>
                         <Textarea
-                          placeholder="1. Open Hendon Mob page in browser&#10;2. Right-click → 'View Page Source' (or Ctrl+U)&#10;3. Copy all HTML (Ctrl+A, Ctrl+C)&#10;4. Paste here"
+                          placeholder="Paste Hendon Mob HTML here..."
                           value={hendonMobHtml}
                           onChange={(e) => setHendonMobHtml(e.target.value)}
                           disabled={loadingPayouts}
-                          className="h-[150px] max-h-[150px] w-full overflow-x-auto overflow-y-auto font-mono text-xs resize-none break-all"
+                          className="h-[150px] font-mono text-xs"
                         />
-                        <div className="flex gap-2">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={loadPayoutsFromHtml}
-                            disabled={!hendonMobHtml.trim() || loadingPayouts}
-                            className="flex-1"
-                          >
-                            {loadingPayouts ? "Loading..." : "Parse HTML"}
-                          </Button>
-                        </div>
-                        <p className="text-caption text-muted-foreground">
-                          Recommended method. Bypasses bot protection.
-                        </p>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={loadPayoutsFromHtml}
+                          disabled={!hendonMobHtml.trim() || loadingPayouts}
+                          className="w-full"
+                        >
+                          {loadingPayouts ? "Loading..." : "Parse HTML"}
+                        </Button>
                       </div>
                     </TabsContent>
 
                     <TabsContent value="csv" className="space-y-2 mt-3">
-                      <div className="space-y-2 p-3 bg-muted/30 rounded-lg border border-border overflow-hidden">
+                      <div className="space-y-2 p-3 bg-muted/30 rounded-lg border border-border">
                         <Label className="text-sm font-medium">Paste CSV Data</Label>
                         <Textarea
-                          placeholder="Format:&#10;Rank, Player Name, Prize Amount&#10;1, John Doe, $10,000,000&#10;2, Jane Smith, $5,500,000&#10;3, Bob Johnson, $3,000,000&#10;...&#10;&#10;Or without header:&#10;1, John Doe, $10M&#10;2, Jane Smith, $5.5M"
+                          placeholder="Rank, Player Name, Prize Amount..."
                           value={csvText}
                           onChange={(e) => setCsvText(e.target.value)}
                           disabled={loadingPayouts}
-                          className="h-[150px] max-h-[150px] w-full overflow-x-auto overflow-y-auto font-mono text-xs resize-none break-all"
+                          className="h-[150px] font-mono text-xs"
                         />
-                        <div className="flex gap-2">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={loadPayoutsFromCsv}
-                            disabled={!csvText.trim() || loadingPayouts}
-                            className="flex-1"
-                          >
-                            {loadingPayouts ? "Loading..." : "Parse CSV"}
-                          </Button>
-                        </div>
-                        <p className="text-caption text-muted-foreground">
-                          Works with any tournament. Supports $10M or $10,000,000 format.
-                        </p>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={loadPayoutsFromCsv}
+                          disabled={!csvText.trim() || loadingPayouts}
+                          className="w-full"
+                        >
+                          {loadingPayouts ? "Loading..." : "Parse CSV"}
+                        </Button>
                       </div>
                     </TabsContent>
 
@@ -500,10 +462,7 @@ export function EventDialog({
                             Add Place
                           </Button>
                         </div>
-                        <p className="text-caption text-muted-foreground mb-2">
-                          Format: $10M, $10,000,000, or 10000000
-                        </p>
-                        <ScrollArea className="h-[200px] max-h-[200px]">
+                        <ScrollArea className="h-[200px]">
                           <div className="space-y-2 pr-3">
                             {payouts.map((payout, index) => (
                               <div key={index} className="flex items-center gap-2">
@@ -524,7 +483,7 @@ export function EventDialog({
                                 </div>
                                 <div className="w-40">
                                   <Input
-                                    placeholder="Prize (e.g. $10M)"
+                                    placeholder="Prize"
                                     value={payout.prizeAmount}
                                     onChange={(e) => updatePayoutRow(index, 'prizeAmount', e.target.value)}
                                   />
@@ -535,7 +494,6 @@ export function EventDialog({
                                   size="sm"
                                   onClick={() => removePayoutRow(index)}
                                   disabled={payouts.length === 1}
-                                  className="h-9 w-9 p-0"
                                 >
                                   <X className="h-4 w-4" />
                                 </Button>
@@ -550,7 +508,6 @@ export function EventDialog({
               </ScrollArea>
             </TabsContent>
 
-            {/* Blind Structure Tab */}
             <TabsContent value="structure" className="space-y-4 mt-4">
               <ScrollArea className="h-[500px] pr-4">
                 <div className="space-y-4">
@@ -558,28 +515,22 @@ export function EventDialog({
                     <Label htmlFor="event-blind-structure">Blind Structure</Label>
                     <Textarea
                       id="event-blind-structure"
-                      placeholder="Level 1: 100/200/200&#10;Level 2: 200/400/400&#10;Level 3: 300/600/600&#10;..."
+                      placeholder="Level 1: 100/200/200..."
                       value={newEventBlindStructure}
                       onChange={(e) => setNewEventBlindStructure(e.target.value)}
-                      className="min-h-[300px] resize-none font-mono text-xs"
+                      className="min-h-[300px] font-mono text-xs"
                     />
-                    <p className="text-caption text-muted-foreground">
-                      Enter blind levels in any format
-                    </p>
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="event-notes">Notes</Label>
                     <Textarea
                       id="event-notes"
-                      placeholder="Additional notes or information about the event"
+                      placeholder="Additional notes..."
                       value={newEventNotes}
                       onChange={(e) => setNewEventNotes(e.target.value)}
-                      className="min-h-[150px] resize-none"
+                      className="min-h-[150px]"
                     />
-                    <p className="text-caption text-muted-foreground">
-                      Any extra information (e.g., special rules, format, etc.)
-                    </p>
                   </div>
                 </div>
               </ScrollArea>

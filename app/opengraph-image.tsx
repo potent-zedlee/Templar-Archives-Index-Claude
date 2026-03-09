@@ -102,7 +102,7 @@ export default async function Image() {
             textAlign: 'center',
           }}
         >
-          프로 포커 토너먼트의 모든 핸드 히스토리를 분석하고 학습하세요
+          프로 포커 토너먼트의 모든 핸드 히스토리를 아카이브하고 학습하세요
         </p>
 
         {/* Feature Badges */}
@@ -114,7 +114,7 @@ export default async function Image() {
             marginTop: 48,
           }}
         >
-          {['AI 영상 분석', 'GTO 분석', '실시간 통계'].map((feature) => (
+          {['토너먼트 아카이브', '플레이어 통계', '핸드 검색'].map((feature) => (
             <div
               key={feature}
               style={{

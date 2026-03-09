@@ -4,113 +4,37 @@
  * Hand Comments Component
  *
  * 핸드에 대한 댓글 표시 및 작성
- * Firestore 버전으로 마이그레이션됨
- *
- * Note: 댓글 기능은 아직 Firestore에 완전히 구현되지 않았으므로
- * 임시로 빈 상태를 표시합니다.
  */
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { ThumbsUp, MessageCircle, Send } from "lucide-react"
+import { ThumbsUp, MessageCircle, Send, Loader2 } from "lucide-react"
 import { useAuth } from "@/components/layout/AuthProvider"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
-
-// Comment type for display
-type Comment = {
-  id: string
-  content: string
-  authorId: string
-  authorName: string
-  authorAvatar?: string
-  likesCount: number
-  createdAt: string
-  parentCommentId?: string
-}
+import {
+  useHandCommentsQuery,
+  useCreateHandCommentMutation,
+  useToggleHandCommentLikeMutation,
+  type Comment
+} from "@/lib/queries/community-queries"
 
 type HandCommentsProps = {
   handId: string
   onCommentsCountChange?: (count: number) => void
 }
 
-type CommentWithReplies = Comment & {
-  replies?: Comment[]
-  isLoadingReplies?: boolean
-  hasLiked?: boolean
-}
-
 export function HandComments({ handId, onCommentsCountChange }: HandCommentsProps) {
   const { user } = useAuth()
   const router = useRouter()
-  const [comments, setComments] = useState<CommentWithReplies[]>([])
-  const [loading, setLoading] = useState(true)
   const [newComment, setNewComment] = useState("")
-  const [replyingTo, setReplyingTo] = useState<string | null>(null)
-  const [replyContent, setReplyContent] = useState<{ [key: string]: string }>({})
-  const [submitting, setSubmitting] = useState(false)
 
-  useEffect(() => {
-    loadComments()
-  }, [handId])
-
-  useEffect(() => {
-    // 댓글 개수 변경 알림
-    if (onCommentsCountChange) {
-      const totalCount = comments.reduce(
-        (acc, comment) => acc + 1 + (comment.replies?.length || 0),
-        0
-      )
-      onCommentsCountChange(totalCount)
-    }
-  }, [comments, onCommentsCountChange])
-
-  // TODO: Firestore 댓글 컬렉션 구현 필요
-  // 현재는 스텁으로 빈 배열 반환
-  const loadComments = async () => {
-    setLoading(true)
-    try {
-      // Firestore 댓글 로드 (아직 미구현)
-      // const commentsRef = collection(firestore, `hands/${handId}/comments`)
-      // const snapshot = await getDocs(query(commentsRef, orderBy('createdAt', 'desc')))
-      setComments([])
-    } catch (error) {
-      console.error('댓글 로드 실패:', error)
-      toast.error('댓글을 불러오는데 실패했습니다.')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const loadReplies = async (commentId: string) => {
-    setComments((prev) =>
-      prev.map((c) =>
-        c.id === commentId ? { ...c, isLoadingReplies: true } : c
-      )
-    )
-
-    try {
-      // Firestore 답글 로드 (아직 미구현)
-      setComments((prev) =>
-        prev.map((c) =>
-          c.id === commentId
-            ? { ...c, replies: [], isLoadingReplies: false }
-            : c
-        )
-      )
-    } catch (error) {
-      console.error('답글 로드 실패:', error)
-      toast.error('답글을 불러오는데 실패했습니다.')
-      setComments((prev) =>
-        prev.map((c) =>
-          c.id === commentId ? { ...c, isLoadingReplies: false } : c
-        )
-      )
-    }
-  }
+  const { data: comments = [], isLoading } = useHandCommentsQuery(handId)
+  const createMutation = useCreateHandCommentMutation()
+  const likeMutation = useToggleHandCommentLikeMutation()
 
   const handleSubmitComment = async () => {
     if (!user) {
@@ -119,186 +43,45 @@ export function HandComments({ handId, onCommentsCountChange }: HandCommentsProp
       return
     }
 
-    if (!newComment.trim()) {
-      toast.error('댓글 내용을 입력해주세요.')
-      return
-    }
+    if (!newComment.trim()) return
 
-    setSubmitting(true)
     try {
-      // TODO: Firestore 댓글 생성 구현
-      // const commentsRef = collection(firestore, `hands/${handId}/comments`)
-      // await addDoc(commentsRef, { ... })
-      toast.info('댓글 기능은 준비 중입니다.')
+      await createMutation.mutateAsync({
+        handId,
+        content: newComment.trim(),
+      })
       setNewComment("")
+      toast.success('댓글이 작성되었습니다.')
     } catch (error) {
-      console.error('댓글 작성 실패:', error)
       toast.error('댓글 작성에 실패했습니다.')
-    } finally {
-      setSubmitting(false)
     }
   }
 
-  const handleSubmitReply = async (parentCommentId: string) => {
-    if (!user) {
-      toast.error('로그인이 필요합니다.')
-      router.push('/auth/login')
-      return
-    }
-
-    const content = replyContent[parentCommentId]
-    if (!content?.trim()) {
-      toast.error('답글 내용을 입력해주세요.')
-      return
-    }
-
-    setSubmitting(true)
-    try {
-      // TODO: Firestore 답글 생성 구현
-      toast.info('답글 기능은 준비 중입니다.')
-      setReplyContent((prev) => ({ ...prev, [parentCommentId]: "" }))
-      setReplyingTo(null)
-    } catch (error) {
-      console.error('답글 작성 실패:', error)
-      toast.error('답글 작성에 실패했습니다.')
-    } finally {
-      setSubmitting(false)
-    }
-  }
-
-  const handleLikeComment = async (_: string) => {
-    if (!user) {
-      toast.error('로그인이 필요합니다.')
-      router.push('/auth/login')
-      return
-    }
-
-    try {
-      // TODO: Firestore 좋아요 토글 구현
-      toast.info('좋아요 기능은 준비 중입니다.')
-    } catch (error) {
-      console.error('좋아요 처리 실패:', error)
-      toast.error('좋아요 처리에 실패했습니다.')
-    }
-  }
-
-  const renderComment = (comment: CommentWithReplies, isReply = false) => {
-    const showReplies = comment.replies && comment.replies.length > 0
-
+  const renderComment = (comment: Comment) => {
     return (
-      <div
-        key={comment.id}
-        className={`space-y-3 ${isReply ? "ml-8 border-l-2 border-muted pl-4" : ""}`}
-      >
-        <div className="flex gap-3">
-          <Avatar className="h-8 w-8">
-            <AvatarImage src={comment.authorAvatar} alt={comment.authorName} />
-            <AvatarFallback>
-              {comment.authorName.split(" ").map((n) => n[0]).join("")}
-            </AvatarFallback>
-          </Avatar>
+      <div key={comment.id} className="flex gap-3">
+        <Avatar className="h-8 w-8">
+          <AvatarImage src={comment.author.avatarUrl} alt={comment.author.name} />
+          <AvatarFallback>{comment.author.name[0]}</AvatarFallback>
+        </Avatar>
 
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-body font-medium">{comment.authorName}</span>
-              <span className="text-caption text-muted-foreground">
-                {new Date(comment.createdAt).toLocaleDateString("ko-KR", {
-                  year: "numeric",
-                  month: "short",
-                  day: "numeric",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-              </span>
-            </div>
-
-            <p className="text-body text-foreground whitespace-pre-wrap mb-2">
-              {comment.content}
-            </p>
-
-            <div className="flex items-center gap-3 text-caption">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-7 px-2 gap-1 hover:text-primary"
-                onClick={() => handleLikeComment(comment.id)}
-              >
-                <ThumbsUp className="h-3 w-3" />
-                <span>{comment.likesCount}</span>
-              </Button>
-
-              {!isReply && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 px-2 gap-1 hover:text-primary"
-                  onClick={() => {
-                    if (replyingTo === comment.id) {
-                      setReplyingTo(null)
-                    } else {
-                      setReplyingTo(comment.id)
-                      if (!comment.replies) {
-                        loadReplies(comment.id)
-                      }
-                    }
-                  }}
-                >
-                  <MessageCircle className="h-3 w-3" />
-                  <span>답글</span>
-                  {showReplies && <span>({comment.replies?.length || 0})</span>}
-                </Button>
-              )}
-            </div>
-
-            {/* 답글 작성 폼 */}
-            {replyingTo === comment.id && (
-              <div className="mt-3 space-y-2">
-                <Textarea
-                  placeholder="답글을 입력하세요..."
-                  value={replyContent[comment.id] || ""}
-                  onChange={(e) =>
-                    setReplyContent((prev) => ({
-                      ...prev,
-                      [comment.id]: e.target.value,
-                    }))
-                  }
-                  rows={2}
-                  className="text-body"
-                />
-                <div className="flex gap-2 justify-end">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setReplyingTo(null)}
-                  >
-                    취소
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={() => handleSubmitReply(comment.id)}
-                    disabled={submitting || !replyContent[comment.id]?.trim()}
-                  >
-                    <Send className="h-3 w-3 mr-1" />
-                    답글 작성
-                  </Button>
-                </div>
-              </div>
-            )}
-
-            {/* 답글 목록 */}
-            {showReplies && (
-              <div className="mt-3 space-y-3">
-                {comment.replies?.map((reply) => renderComment(reply, true))}
-              </div>
-            )}
-
-            {/* 답글 로딩 중 */}
-            {comment.isLoadingReplies && (
-              <div className="mt-3 text-caption text-muted-foreground">
-                답글 로딩 중...
-              </div>
-            )}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-sm font-semibold">{comment.author.name}</span>
+            <span className="text-xs text-muted-foreground">
+              {new Date(comment.createdAt).toLocaleDateString()}
+            </span>
           </div>
+
+          <p className="text-sm mb-2 whitespace-pre-wrap">{comment.content}</p>
+
+          <button
+            onClick={() => likeMutation.mutate({ commentId: comment.id, handId })}
+            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors"
+          >
+            <ThumbsUp className="h-3 w-3" />
+            {comment.likesCount}
+          </button>
         </div>
       </div>
     )
@@ -306,48 +89,37 @@ export function HandComments({ handId, onCommentsCountChange }: HandCommentsProp
 
   return (
     <Card className="p-6 space-y-6">
-      <h4 className="text-title font-semibold flex items-center gap-2">
+      <h4 className="text-lg font-bold flex items-center gap-2">
         <MessageCircle className="h-5 w-5" />
-        댓글 ({comments.reduce((acc, c) => acc + 1 + (c.replies?.length || 0), 0)})
+        댓글 ({comments.length})
       </h4>
 
-      {/* 댓글 작성 폼 */}
       <div className="space-y-3">
         <Textarea
-          placeholder={
-            user
-              ? "댓글을 입력하세요..."
-              : "로그인 후 댓글을 작성할 수 있습니다."
-          }
+          placeholder={user ? "댓글을 입력하세요..." : "로그인 후 댓글을 작성할 수 있습니다."}
           value={newComment}
           onChange={(e) => setNewComment(e.target.value)}
           rows={3}
-          disabled={!user}
-          className="text-body"
+          disabled={!user || createMutation.isPending}
         />
         <div className="flex justify-end">
           <Button
             onClick={handleSubmitComment}
-            disabled={!user || submitting || !newComment.trim()}
+            disabled={!user || createMutation.isPending || !newComment.trim()}
           >
-            <Send className="h-4 w-4 mr-2" />
+            {createMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             댓글 작성
           </Button>
         </div>
       </div>
 
-      {/* 댓글 목록 */}
       <div className="space-y-6">
-        {loading ? (
-          <div className="text-center text-caption text-muted-foreground py-8">
-            댓글 로딩 중...
-          </div>
+        {isLoading ? (
+          <div className="flex justify-center py-4"><Loader2 className="h-6 w-6 animate-spin" /></div>
         ) : comments.length === 0 ? (
-          <div className="text-center text-caption text-muted-foreground py-8">
-            첫 댓글을 작성해보세요!
-          </div>
+          <p className="text-center text-sm text-muted-foreground py-4">첫 댓글을 작성해보세요!</p>
         ) : (
-          comments.map((comment) => renderComment(comment))
+          comments.map(comment => renderComment(comment))
         )}
       </div>
     </Card>

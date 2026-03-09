@@ -1,12 +1,14 @@
 "use client"
 
+export const dynamic = 'force-dynamic'
+
 import { useEffect } from "react"
 import { PlayersPageLayout } from "./_components/PlayersPageLayout"
 import { usePlayersQuery, type PlayerWithHandCount } from "@/lib/queries/players-queries"
 import { toast } from "sonner"
 
 export default function PlayersClient() {
-  // React Query hook (Firestore)
+  // React Query hook
   const { data: playersData = [], isLoading: loading, error, isError, isFetched } = usePlayersQuery()
   const players = playersData as PlayerWithHandCount[]
 

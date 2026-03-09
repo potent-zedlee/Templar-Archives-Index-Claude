@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next'
 
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = 'https://templar-archives.vercel.app'
+  const baseUrl = 'https://templar-archives-index.vercel.app'
 
   return {
     rules: [

@@ -2,12 +2,6 @@
  * Stream Checklist Modal
  *
  * Stream 발행 전 체크리스트를 보여주는 모달
- * - YouTube 링크 확인
- * - 썸네일 존재 확인
- * - 핸드 개수 확인
- * - 모든 조건 만족 시 Publish 버튼 활성화
- *
- * Firestore 버전으로 마이그레이션됨
  */
 
 'use client'

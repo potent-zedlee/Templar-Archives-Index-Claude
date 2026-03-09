@@ -181,7 +181,7 @@ export default function ProfileClient() {
                     const { uploadAvatar } = await import('@/lib/user-profile')
                     const url = await uploadAvatar(user.id, file)
 
-                    // Firestore 업데이트
+                    // Supabase 업데이트
                     await updateProfileMutation.mutateAsync({
                       userId: user.id,
                       updates: { avatarUrl: url }

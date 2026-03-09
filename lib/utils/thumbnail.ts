@@ -78,7 +78,7 @@ export function getYouTubeThumbnailUrl(
  * Get thumbnail URL for hand
  *
  * - YouTube 영상: YouTube 썸네일 URL
- * - 로컬 영상 (upload/nas): null (향후 ffmpeg 통합 고려)
+ * - 로컬 영상 (upload/nas): null
  *
  * @param videoUrl - Video URL (YouTube)
  * @param videoSource - Video source type
@@ -94,7 +94,7 @@ export function getHandThumbnailUrl(
 
   // YouTube 영상만 처리
   if (videoSource !== 'youtube') {
-    return null // 로컬 영상은 향후 ffmpeg로 처리
+    return null
   }
 
   const videoId = getYouTubeVideoId(videoUrl)

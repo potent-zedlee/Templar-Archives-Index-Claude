@@ -1,34 +1,39 @@
+/**
+ * Player Search Server Action (Supabase Version)
+ */
+
 'use server'
 
-import { adminFirestore } from '@/lib/db/firebase-admin'
+import { createAdminClient } from '@/lib/supabase/admin/server'
 
 export interface PlayerSearchResult {
-    id: string
-    name: string
-    // Add other player fields if needed like avatar, country etc
+  id: string
+  name: string
+  photoUrl?: string
+  country?: string
 }
 
 export async function searchPlayers(query: string): Promise<PlayerSearchResult[]> {
-    if (!query || query.length < 1) return []
+  if (!query || query.length < 1) return []
 
-    try {
-        const db = adminFirestore
-        // Assuming players are in a root 'players' collection
-        // If they are not, we will need to adjust.
-        // Based on user request "DB에 있는 플레이어들을 검색", assumes global players.
+  try {
+    const admin = createAdminClient()
+    const { data, error } = await admin
+      .from('players')
+      .select('id, name, photo_url, country')
+      .ilike('name', `%${query}%`)
+      .limit(10)
 
-        const snapshot = await db.collection('players')
-            .where('name', '>=', query)
-            .where('name', '<=', query + '\uf8ff')
-            .limit(10)
-            .get()
+    if (error) throw error
 
-        return snapshot.docs.map(doc => ({
-            id: doc.id,
-            name: doc.data().name as string
-        }))
-    } catch (error) {
-        console.error('Error searching players:', error)
-        return []
-    }
+    return (data || []).map(p => ({
+      id: p.id,
+      name: p.name,
+      photoUrl: p.photo_url,
+      country: p.country
+    }))
+  } catch (error) {
+    console.error('Error searching players:', error)
+    return []
+  }
 }

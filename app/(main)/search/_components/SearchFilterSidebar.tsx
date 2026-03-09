@@ -87,7 +87,6 @@ export interface SearchFilters {
 
   // Misc
   hasVideo: boolean | null
-  hasAISummary: boolean | null
   summaryKeyword: string | null
 }
 
@@ -129,7 +128,6 @@ const DEFAULT_FILTERS: SearchFilters = {
   stream: null,
   dayNumber: null,
   hasVideo: null,
-  hasAISummary: null,
   summaryKeyword: null,
 }
 
@@ -154,7 +152,6 @@ export function SearchFilterSidebar({ onApplyFilters }: SearchFilterSidebarProps
         if (parsed.dateRange?.to) {
           parsed.dateRange.to = new Date(parsed.dateRange.to)
         }
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         setFilters(parsed)
       } catch (error) {
         console.error("Failed to parse saved filters:", error)
@@ -734,23 +731,9 @@ export function SearchFilterSidebar({ onApplyFilters }: SearchFilterSidebarProps
                 </label>
               </div>
 
-              {/* AI Summary */}
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="has-ai-summary"
-                  checked={filters.hasAISummary === true}
-                  onCheckedChange={(checked) =>
-                    saveFilters({ ...filters, hasAISummary: checked ? true : null })
-                  }
-                />
-                <label htmlFor="has-ai-summary" className="text-xs font-medium cursor-pointer">
-                  Has AI Summary
-                </label>
-              </div>
-
               {/* Summary Keyword */}
               <div className="space-y-2">
-                <Label className="text-xs">Summary Keyword</Label>
+                <Label className="text-xs">Search Keyword</Label>
                 <Input
                   type="text"
                   placeholder="검색 키워드"

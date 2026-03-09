@@ -247,7 +247,6 @@ export interface ExtendedSearchFilters {
 
   // Misc
   hasVideo?: boolean | null
-  hasAISummary?: boolean | null
   summaryKeyword?: string | null
 }
 
@@ -504,17 +503,12 @@ export function applyExtendedSearchFilters<T extends {
     filtered = filtered.filter(hand => !!hand.videoTimestampStart)
   }
 
-  // AI Summary filter
-  if (filters.hasAISummary) {
-    filtered = filtered.filter(hand => !!hand.aiSummary)
-  }
-
-  // Summary Keyword filter
+  // Search Keyword filter
   if (filters.summaryKeyword) {
     const keyword = filters.summaryKeyword.toLowerCase()
     filtered = filtered.filter(hand => {
-      const summary = (hand.aiSummary || '').toLowerCase()
-      return summary.includes(keyword)
+      const description = (hand.description || '').toLowerCase()
+      return description.includes(keyword)
     })
   }
 

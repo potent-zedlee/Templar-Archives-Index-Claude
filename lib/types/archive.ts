@@ -1,9 +1,6 @@
 /**
  * Archive 페이지 관련 타입 정의
  * 모든 any 타입을 제거하고 명확한 타입 시스템 구축
- *
- * Form 데이터 타입은 Zod 스키마에서 파생 (Single Source of Truth)
- * @see lib/validation/api-schemas.ts
  */
 
 import type {
@@ -14,39 +11,19 @@ import type {
   StreamFormDataInferred,
 } from '@/lib/validation/api-schemas'
 
-// ==================== Pipeline Status ====================
-
-/**
- * Stream 파이프라인 상태
- *
- * 워크플로우: pending → uploaded → (needs_classify) → analyzing → completed → published
- *                                                         ↓
- *                                                       failed
- */
-export type PipelineStatus =
-  | 'pending'        // 초기 상태
-  | 'uploaded'       // 업로드 완료, 분석 대기
-  | 'needs_classify' // 분류 필요 (토너먼트/이벤트 미지정)
-  | 'analyzing'      // AI 분석 중
-  | 'completed'      // 분석 완료, 리뷰 대기
-  | 'published'      // 발행 완료
-  | 'failed'         // 분석 실패
-
 // ==================== Enums & Constants (Zod에서 파생) ====================
 
 /**
  * 토너먼트 카테고리
- * @see tournamentCategorySchema in api-schemas.ts
  */
 export type TournamentCategory = TournamentCategoryInferred
 
 /**
  * 영상 소스
- * @see videoSourceSchema in api-schemas.ts
  */
 export type VideoSource = VideoSourceInferred
 
-export type ContentStatus = "draft" | "published" | "archived" | "analyzing" | "completed"
+export type ContentStatus = "draft" | "published" | "archived"
 
 export type ViewMode = "list" | "grid" | "timeline"
 
@@ -68,7 +45,6 @@ export interface Card {
   suit: CardSuit
 }
 
-// CardString: 예) 'A♠', 'K♥', '10♦'
 export type CardString = string
 
 // ==================== Database Types ====================
@@ -77,26 +53,22 @@ export interface Tournament {
   id: string
   name: string
   category: TournamentCategory
-  categoryId?: string // New category system (FK to tournament_categories.id)
+  categoryId?: string
   categoryLogo?: string
-  categoryLogoUrl?: string // Joined from tournament_categories table
+  categoryLogoUrl?: string
   location: string
   city?: string
   country?: string
-  /** 게임 타입 (Cash Game 기능 제거됨) */
   gameType?: 'tournament'
   startDate: string
   endDate: string
   totalPrize?: string
   createdAt?: string
-  // Logo fields
-  logoSimpleUrl?: string // 간단한 로고 (아이콘형)
-  logoFullUrl?: string // 전체 로고 (텍스트 포함)
-  // Publication status
+  logoSimpleUrl?: string
+  logoFullUrl?: string
   status?: ContentStatus
   publishedBy?: string
   publishedAt?: string
-  // UI state (클라이언트 전용)
   events?: Event[]
   expanded?: boolean
 }
@@ -116,11 +88,9 @@ export interface Event {
   startingStack?: number
   notes?: string
   createdAt?: string
-  // Publication status
   status?: ContentStatus
   publishedBy?: string
   publishedAt?: string
-  // UI state (클라이언트 전용)
   streams?: Stream[]
   expanded?: boolean
 }
@@ -135,105 +105,45 @@ export interface Stream {
   videoNasPath?: string
   videoSource?: VideoSource
   createdAt?: string
-  /**
-   * @deprecated Use `status` instead. Will be removed in future version.
-   */
-  isOrganized?: boolean
   organizedAt?: string
   playerCount?: number
-  handCount?: number // Computed: count of hands in this stream
-  // Publication status
+  handCount?: number
   status?: ContentStatus
   publishedBy?: string
   publishedAt?: string
-  // GCS Upload (Phase 55)
-  gcsPath?: string // GCS 객체 경로
-  gcsUri?: string // gs://bucket/path 형식
-  gcsFileSize?: number // 파일 크기 (bytes)
-  gcsUploadedAt?: string // 업로드 완료 시각
-  uploadStatus?: 'none' | 'uploading' | 'uploaded' | 'analyzing' | 'completed' | 'failed'
-  videoDuration?: number // 영상 길이 (초)
-
-  // 파이프라인 필드 (Admin Archive 워크플로우)
-  pipelineStatus?: PipelineStatus
-  pipelineProgress?: number
-  pipelineError?: string
-  pipelineUpdatedAt?: string
-  currentJobId?: string
-  lastAnalysisAt?: string
-  analysisAttempts?: number
-
-  // UI state (클라이언트 전용)
+  videoDuration?: number
   selected?: boolean
 }
 
 export interface Hand {
   id: string
   streamId: string
-  /** 핸드 번호 (정수: 정렬 일관성을 위해 number 타입 사용) */
   number: number
   description: string
-
-  // AI-generated summary (DB: ai_summary)
-  aiSummary?: string
-
-  // AI analysis confidence score (0-1)
-  confidence?: number
-
   timestamp: string
-
-  // Structured board cards (KAN integration)
-  boardFlop?: string[]      // 3 cards: ["As", "Kh", "Qd"]
-  boardTurn?: string         // 1 card: "7c"
-  boardRiver?: string        // 1 card: "3s"
-
-  /**
-   * @deprecated Use `boardFlop`, `boardTurn`, `boardRiver` instead. Will be removed in future version.
-   */
-  boardCards?: string[]
-
+  boardFlop?: string[]
+  boardTurn?: string
+  boardRiver?: string
   potSize?: number
-  /**
-   * @deprecated Use `smallBlind`, `bigBlind`, `ante` instead. Will be removed in future version.
-   * @example "50k/100k/100k"
-   */
-  stakes?: string
-
-  // NEW: Blind information (Phase 1)
-  smallBlind?: number        // Small blind amount (in chips)
-  bigBlind?: number          // Big blind amount (in chips)
-  ante?: number               // Ante amount (in chips, default 0)
-
-  // NEW: Street-specific pot sizes (Phase 1)
-  potPreflop?: number        // Pot size after preflop action
-  potFlop?: number           // Pot size after flop action
-  potTurn?: number           // Pot size after turn action
-  potRiver?: number          // Pot size after river action (final pot)
-
-  // Video timestamps (KAN integration)
-  videoTimestampStart?: number  // seconds
-  videoTimestampEnd?: number    // seconds
-  jobId?: string                 // FK to analysis_jobs
-
-  // Raw AI extraction data
-  rawData?: Record<string, unknown>
-
-  // PokerKit integration (Phase 44)
-  pokerkitFormat?: string                     // PokerKit-compatible text format
-  handHistoryFormat?: HandHistoryPokerKitFormat  // Structured hand history data
-
+  smallBlind?: number
+  bigBlind?: number
+  ante?: number
+  potPreflop?: number
+  potFlop?: number
+  potTurn?: number
+  potRiver?: number
+  videoTimestampStart?: number
+  videoTimestampEnd?: number
+  pokerkitFormat?: string
+  handHistoryFormat?: any
   favorite?: boolean
   thumbnailUrl?: string
   likesCount?: number
   dislikesCount?: number
   bookmarksCount?: number
   createdAt?: string
-
-  // Relations
   handPlayers?: HandPlayer[]
   actions?: HandAction[]
-
-  // UI state (클라이언트 전용)
   checked?: boolean
 }
 
@@ -241,7 +151,6 @@ export interface HandAction {
   id?: string
   playerId?: string
   playerName?: string
-  /** 스트리트 (소문자 사용) - @see PokerStreet in firestore-types.ts */
   street: 'preflop' | 'flop' | 'turn' | 'river'
   actionType: string
   amount: number
@@ -252,21 +161,13 @@ export interface HandAction {
 export interface Player {
   id: string
   name: string
-
-  // KAN integration: normalized name for AI matching (DB: normalized_name)
-  // Auto-generated from name (lowercase, alphanumeric only)
   normalizedName: string
-
-  // Alternative names/spellings for player matching
   aliases?: string[]
-
-  // Profile information
   bio?: string
   isPro?: boolean
   photoUrl?: string
   country?: string
   totalWinnings?: number
-
   createdAt?: string
 }
 
@@ -274,30 +175,15 @@ export interface HandPlayer {
   id: string
   handId: string
   playerId: string
-
-  // Position information (KAN integration)
-  pokerPosition?: string     // DB: poker_position (BTN, SB, BB, UTG, MP, CO, HJ)
-  seat?: number               // Seat number (1-9 for 9-max tables)
-
-  /** 홀 카드 (권장 형식) - 예: ["As", "Kd"] */
+  pokerPosition?: string
+  seat?: number
   holeCards?: string[]
-  /**
-   * @deprecated Use `holeCards` instead. Will be removed in future version.
-   */
-  cards?: string[] | string | null
-
-  // Stack information (KAN integration)
-  startingStack?: number     // DB: starting_stack
-  endingStack?: number       // DB: ending_stack
-  finalAmount?: number       // Amount won/lost in this hand
-
-  // Hand result
-  handDescription?: string   // e.g., "Full House, Aces over Kings"
+  startingStack?: number
+  endingStack?: number
+  finalAmount?: number
+  handDescription?: string
   isWinner?: boolean
-
   createdAt?: string
-
-  // Relations
   player?: Player
 }
 
@@ -310,11 +196,6 @@ export interface UnsortedVideo {
   videoSource: VideoSource
   publishedAt?: string
   createdAt: string
-  // GCS Upload 정보
-  gcsPath?: string
-  gcsUri?: string
-  gcsFileSize?: number
-  gcsUploadedAt?: string
 }
 
 export interface Payout {
@@ -323,27 +204,11 @@ export interface Payout {
   prizeAmount: string
 }
 
-// ==================== Form Data Types (Zod 기반 Single Source of Truth) ====================
+// ==================== Form Data Types ====================
 
-/**
- * Tournament Form 데이터
- * @see tournamentFormDataSchema in api-schemas.ts
- */
 export type TournamentFormData = TournamentFormDataInferred
-
-/**
- * Event Form 데이터
- * @see eventFormDataSchema in api-schemas.ts
- */
 export type EventFormData = EventFormDataInferred
-
-/**
- * Stream Form 데이터
- * Zod 스키마 기반 + uploadFile (File 객체는 Zod에서 직접 검증 불가)
- * @see streamFormDataSchema in api-schemas.ts
- */
 export interface StreamFormData extends StreamFormDataInferred {
-  /** 업로드 파일 (런타임에서만 사용) */
   uploadFile: File | null
 }
 
@@ -394,11 +259,10 @@ export interface AdvancedFilters {
     upload: boolean
   }
   hasHandsOnly: boolean
-  // 새로운 필터
   tournamentName?: string
   playerName?: string
-  holeCards?: CardString[]  // 홀 카드 (최대 2장)
-  handValue?: CardString[]  // 핸드 밸류 (최대 5장)
+  holeCards?: CardString[]
+  handValue?: CardString[]
 }
 
 // ==================== Folder Navigation Types ====================
@@ -412,9 +276,9 @@ export interface FolderItem {
   itemCount?: number
   date?: string
   data?: Tournament | Event | Stream | UnsortedVideo
-  level?: number  // Tree level: 0=tournament, 1=event, 2=stream
-  isExpanded?: boolean  // Expansion state
-  parentId?: string  // Parent folder ID
+  level?: number
+  isExpanded?: boolean
+  parentId?: string
 }
 
 export interface BreadcrumbItem {
@@ -437,21 +301,6 @@ export interface UploadState {
   uploading: boolean
   progress: number
   file: File | null
-}
-
-// ==================== Helper Types ====================
-
-export interface LoadingState {
-  tournaments: boolean
-  hands: boolean
-  unsortedVideos: boolean
-  payouts: boolean
-}
-
-export interface ErrorState {
-  tournaments: string | null
-  hands: string | null
-  unsortedVideos: string | null
 }
 
 // ==================== Action Types ====================
@@ -488,26 +337,6 @@ export interface VideoActions {
   delete: (videoId: string) => Promise<void>
 }
 
-// ==================== Video Upload Types (Phase 55) ====================
-
-export type UploadStatus = 'pending' | 'uploading' | 'paused' | 'completed' | 'failed' | 'cancelled'
-
-export interface VideoUpload {
-  id: string
-  streamId: string
-  userId: string
-  filename: string
-  fileSize: number
-  gcsPath?: string
-  uploadUrl?: string
-  status: UploadStatus
-  progress: number
-  errorMessage?: string
-  startedAt: string
-  completedAt?: string
-  createdAt: string
-}
-
 // ==================== Utility Types ====================
 
 export type AsyncStatus = "idle" | "loading" | "success" | "error"
@@ -520,30 +349,18 @@ export interface AsyncState<T> {
 
 // ==================== Export Helpers ====================
 
-/**
- * 타입 가드: Tournament 확인
- */
 export function isTournament(item: unknown): item is Tournament {
   return typeof item === "object" && item !== null && "category" in item
 }
 
-/**
- * 타입 가드: Event 확인
- */
 export function isEvent(item: unknown): item is Event {
   return typeof item === "object" && item !== null && "tournamentId" in item
 }
 
-/**
- * 타입 가드: Stream 확인
- */
 export function isStream(item: unknown): item is Stream {
   return typeof item === "object" && item !== null && "eventId" in item && "videoSource" in item
 }
 
-/**
- * 초기 Tournament Form 데이터
- */
 export const INITIAL_TOURNAMENT_FORM: TournamentFormData = {
   name: "",
   category: "WSOP",
@@ -556,9 +373,6 @@ export const INITIAL_TOURNAMENT_FORM: TournamentFormData = {
   endDate: "",
 }
 
-/**
- * 초기 Event Form 데이터
- */
 export const INITIAL_EVENT_FORM: EventFormData = {
   name: "",
   date: "",
@@ -573,159 +387,10 @@ export const INITIAL_EVENT_FORM: EventFormData = {
   notes: "",
 }
 
-/**
- * 초기 Stream Form 데이터
- */
 export const INITIAL_STREAM_FORM: StreamFormData = {
   name: "",
   videoSource: "youtube",
   videoUrl: "",
   uploadFile: null,
   publishedAt: "",
-}
-
-// ==================== PokerKit Integration (Phase 44) ====================
-
-/**
- * PokerKit-compatible hand history format
- *
- * PokerKit은 Python 기반 포커 시뮬레이션 라이브러리로,
- * 표준화된 핸드 히스토리 형식을 사용합니다.
- *
- * @example
- * {
- *   gameNumber: 1,
- *   stakes: "$50K/$100K",
- *   gameType: "No Limit Hold'em",
- *   seats: [
- *     { number: 1, playerName: "BRZEZINSKI", stackSize: 9600000 },
- *     { number: 2, playerName: "OSTASH", stackSize: 13580000 }
- *   ],
- *   buttonSeat: 1,
- *   sections: {
- *     holeCards: ["BRZEZINSKI: [Jh 9h]", "OSTASH: [9c 5c]"],
- *     preflop: ["OSTASH: posts small blind $50,000", "BRZEZINSKI: raises to $300,000"],
- *     flop: ["[9d 6s 3c]", "OSTASH: checks", "BRZEZINSKI: bets $125,000"],
- *     turn: ["[9d 6s 3c] [As]", "OSTASH: checks"],
- *     river: ["[9d 6s 3c As] [2h]", "OSTASH: bets $275,000"],
- *     showdown: ["OSTASH wins $950,000"]
- *   },
- *   rawText: "***** Hand #1 *****\n..."
- * }
- */
-export interface HandHistoryPokerKitFormat {
-  /** 핸드 번호 (게임 번호) */
-  gameNumber: number
-
-  /** 스테이크 표기 (예: "$50K/$100K", "50K/100K/100K ante") */
-  stakes: string
-
-  /** 게임 종류 */
-  gameType: 'No Limit Hold\'em' | 'Pot Limit Omaha' | 'Limit Hold\'em'
-
-  /** 플레이어 좌석 정보 */
-  seats: Array<{
-    /** 좌석 번호 (1-9) */
-    number: number
-    /** 플레이어 이름 */
-    playerName: string
-    /** 시작 스택 (cents) */
-    stackSize: number
-  }>
-
-  /** 버튼 위치 (좌석 번호) */
-  buttonSeat: number
-
-  /** 스트리트별 섹션 */
-  sections: {
-    /** 홀 카드 (예: "BRZEZINSKI: [Jh 9h]") */
-    holeCards: string[]
-    /** 프리플랍 액션 */
-    preflop: string[]
-    /** 플랍 액션 (보드 카드 포함) */
-    flop?: string[]
-    /** 턴 액션 (보드 카드 포함) */
-    turn?: string[]
-    /** 리버 액션 (보드 카드 포함) */
-    river?: string[]
-    /** 쇼다운 (승자 및 팟) */
-    showdown?: string[]
-  }
-
-  /** PokerKit 텍스트 형식 원본 */
-  rawText?: string
-
-  /** 영상 타임스탬프 정보 */
-  videoTimestamp?: {
-    /** 시작 타임스탬프 (초) */
-    start: number
-    /** 종료 타임스탬프 (초) */
-    end: number
-    /** 시작 타임스탬프 포맷 (HH:MM:SS) */
-    startFormatted: string
-    /** 종료 타임스탬프 포맷 (HH:MM:SS) */
-    endFormatted: string
-  }
-}
-
-/**
- * PokerKit 카드 표기법
- *
- * Rank: A, K, Q, J, T (10), 9-2
- * Suit: s (♠), h (♥), d (♦), c (♣)
- *
- * @example
- * "Ah" = Ace of hearts
- * "Ks" = King of spades
- * "Td" = Ten of diamonds
- *
- * PokerKit 형식: [Ah Kd]
- * JSON 배열: ["Ah", "Kd"]
- */
-export type PokerKitCard = string
-
-/**
- * PokerKit 액션 타입
- *
- * PokerKit 표준 액션 형식:
- * - "posts small blind $50,000"
- * - "raises to $300,000"
- * - "calls $250,000"
- * - "checks"
- * - "folds"
- * - "bets $125,000"
- * - "all-in $9,600,000"
- */
-export type PokerKitAction = string
-
-/**
- * PokerKit 보드 카드 표기
- *
- * @example
- * Flop: "[9d 6s 3c]"
- * Turn: "[9d 6s 3c] [As]"
- * River: "[9d 6s 3c As] [2h]"
- */
-export type PokerKitBoard = string
-
-// ==================== Player Detail Types ====================
-
-export interface PlayerDetail extends Player {
-  handCount?: number
-}
-
-// ==================== Player With Hand Count (query용) ====================
-
-export interface PlayerWithHandCount {
-  id: string
-  name: string
-  normalizedName?: string
-  aliases?: string[]
-  bio?: string
-  isPro?: boolean
-  photoUrl?: string
-  country?: string
-  totalWinnings?: number
-  handCount: number
-  createdAt?: string
 }

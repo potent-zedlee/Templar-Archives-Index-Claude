@@ -5,13 +5,11 @@
  * - View mode (tree/flat)
  * - Selection state
  * - Expansion state (tree view)
- *
- * @module stores/admin-archive-store
  */
 
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { PipelineStatus } from '@/lib/types/archive'
+import type { ContentStatus } from '@/lib/types/archive'
 
 /**
  * Selected item type
@@ -32,10 +30,9 @@ interface AdminArchiveState {
   viewMode: 'tree' | 'flat'
   setViewMode: (mode: 'tree' | 'flat') => void
 
-  // Pipeline status filter (from URL, synced separately)
-  // This is just for component reference, actual value comes from URL
-  currentStatusFilter: PipelineStatus | 'all'
-  setCurrentStatusFilter: (status: PipelineStatus | 'all') => void
+  // Content status filter
+  currentStatusFilter: ContentStatus | 'all'
+  setCurrentStatusFilter: (status: ContentStatus | 'all') => void
 
   // Selected item for detail panel
   selectedItem: SelectedItem | null
@@ -108,8 +105,7 @@ export const useAdminArchiveStore = create<AdminArchiveState>()(
       },
 
       expandAll: () => {
-        // This would need tournament/event IDs passed in
-        // For now, just a placeholder
+        // Placeholder
       },
 
       collapseAll: () => {
@@ -196,7 +192,7 @@ export const useAdminArchiveStore = create<AdminArchiveState>()(
       partialize: (state) => ({
         viewMode: state.viewMode,
       }),
-      // Custom storage to handle Set serialization
+      // Custom storage to handle Set/Map serialization (simplified here)
       storage: {
         getItem: (name) => {
           const str = localStorage.getItem(name)

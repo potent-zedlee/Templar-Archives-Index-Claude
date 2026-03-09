@@ -1,21 +1,9 @@
 /**
- * Dashboard Chart Data Hooks
- *
- * Custom hooks for loading dashboard chart data with React Query
- * Firestore 버전으로 마이그레이션됨
+ * Dashboard Chart Data Hooks (Supabase Version)
  */
 
 import { useState, useEffect } from 'react'
-import { firestore } from '@/lib/db/firebase'
-import {
-  collection,
-  query,
-  where,
-  getDocs,
-  orderBy,
-  Timestamp,
-} from 'firebase/firestore'
-import { COLLECTION_PATHS } from '@/lib/db/firestore-types'
+import { createClient } from '@/lib/supabase/client'
 
 type UserGrowthData = {
   date: string
@@ -34,7 +22,7 @@ type SecurityEventData = {
 }
 
 /**
- * Hook for loading user growth data (last 7 days)
+ * Hook for loading user growth data
  */
 export function useUserGrowthData() {
   const [data, setData] = useState<UserGrowthData[]>([])
@@ -47,38 +35,26 @@ export function useUserGrowthData() {
   async function loadUserGrowth() {
     try {
       setIsLoading(true)
-
+      const supabase = createClient()
       const sevenDaysAgo = new Date()
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
 
-      const usersRef = collection(firestore, COLLECTION_PATHS.USERS)
-      const q = query(
-        usersRef,
-        where('createdAt', '>=', Timestamp.fromDate(sevenDaysAgo)),
-        orderBy('createdAt')
-      )
-      const snapshot = await getDocs(q)
+      const { data: users, error } = await supabase
+        .from('users')
+        .select('created_at')
+        .gte('created_at', sevenDaysAgo.toISOString())
+        .order('created_at')
 
-      // Group by date
+      if (error) throw error
+
       const growthByDate: Record<string, number> = {}
-      snapshot.docs.forEach((doc) => {
-        const userData = doc.data()
-        const createdAt = userData.createdAt?.toDate?.() || new Date()
-        const date = createdAt.toLocaleDateString('ko-KR', {
-          month: 'short',
-          day: 'numeric',
-        })
+      users.forEach((u) => {
+        const date = new Date(u.created_at).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })
         growthByDate[date] = (growthByDate[date] || 0) + 1
       })
 
-      const growthData = Object.entries(growthByDate).map(([date, count]) => ({
-        date,
-        users: count,
-      }))
-
-      setData(growthData)
+      setData(Object.entries(growthByDate).map(([date, count]) => ({ date, users: count })))
     } catch (error) {
-      console.error('Error loading user growth data:', error)
       setData([])
     } finally {
       setIsLoading(false)
@@ -102,24 +78,22 @@ export function useContentDistribution() {
   async function loadContentDistribution() {
     try {
       setIsLoading(true)
+      const supabase = createClient()
 
-      // Firestore에서 각 컬렉션의 문서 수 카운트
-      const [postsSnap, handsSnap, tournamentsSnap] = await Promise.all([
-        getDocs(collection(firestore, COLLECTION_PATHS.POSTS)),
-        getDocs(collection(firestore, COLLECTION_PATHS.HANDS)),
-        getDocs(collection(firestore, COLLECTION_PATHS.TOURNAMENTS)),
+      const [posts, comments, hands, tournaments] = await Promise.all([
+        supabase.from('posts').select('*', { count: 'exact', head: true }),
+        supabase.from('post_comments').select('*', { count: 'exact', head: true }),
+        supabase.from('hands').select('*', { count: 'exact', head: true }),
+        supabase.from('tournaments').select('*', { count: 'exact', head: true }),
       ])
 
-      // 댓글은 posts 서브컬렉션이므로 별도 카운트 (간소화를 위해 0으로 표시)
-      // 실제로는 각 post의 comments 서브컬렉션을 순회해야 함
       setData([
-        { name: 'Posts', value: postsSnap.size },
-        { name: 'Comments', value: 0 }, // 서브컬렉션 카운트 생략
-        { name: 'Hands', value: handsSnap.size },
-        { name: 'Tournaments', value: tournamentsSnap.size },
+        { name: 'Posts', value: posts.count || 0 },
+        { name: 'Comments', value: comments.count || 0 },
+        { name: 'Hands', value: hands.count || 0 },
+        { name: 'Tournaments', value: tournaments.count || 0 },
       ])
     } catch (error) {
-      console.error('Error loading content distribution:', error)
       setData([])
     } finally {
       setIsLoading(false)
@@ -131,7 +105,6 @@ export function useContentDistribution() {
 
 /**
  * Hook for loading recent security events
- * Note: Security events collection may not exist in Firestore yet
  */
 export function useSecurityEvents(limit: number = 10) {
   const [data, setData] = useState<SecurityEventData[]>([])
@@ -144,13 +117,16 @@ export function useSecurityEvents(limit: number = 10) {
   async function loadSecurityEvents() {
     try {
       setIsLoading(true)
+      const supabase = createClient()
+      const { data: events, error } = await supabase
+        .from('security_events')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(limit)
 
-      // Security events 컬렉션이 Firestore에 없을 수 있음
-      // 일단 빈 배열 반환
-      // TODO: Firestore에 securityEvents 컬렉션 추가 시 구현
-      setData([])
+      if (error) throw error
+      setData(events as any)
     } catch (error) {
-      console.error('Error loading security events:', error)
       setData([])
     } finally {
       setIsLoading(false)

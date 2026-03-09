@@ -1,15 +1,14 @@
 # Templar Archives
 
-> 포커 영상을 자동으로 핸드 히스토리로 변환하고 분석하는 플랫폼
+> 포커 토너먼트 핸드 히스토리 아카이브 플랫폼
 
 [![Next.js](https://img.shields.io/badge/Next.js-16-black)](https://nextjs.org/)
 [![React](https://img.shields.io/badge/React-19-blue)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue)](https://www.typescriptlang.org/)
-[![Firebase](https://img.shields.io/badge/Firebase-Firestore-orange)](https://firebase.google.com/)
+[![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-green)](https://supabase.com/)
 [![Vercel](https://img.shields.io/badge/Deployed-Vercel-black)](https://templar-archives-index.vercel.app)
 
-**프로덕션 (메인)**: https://templar-archives-index.vercel.app
-**프로덕션 (백업)**: https://templar-archives-index.web.app
+**프로덕션**: https://templar-archives-index.vercel.app
 
 ---
 
@@ -27,14 +26,7 @@ cp .env.local.example .env.local
 npm run dev
 ```
 
-```
- 
- > [!IMPORTANT]
- > **Firebase Admin SDK Import Rule**:
- > `firebase-admin`을 직접 import하면 Vercel 배포 시 런타임 에러가 발생합니다.
- > 반드시 `@/lib/db/firebase-admin` 경로를 통해 import하세요.
- 
- ---
+---
 
 ## 기술 스택
 
@@ -43,13 +35,10 @@ npm run dev
 | Framework | Next.js 16, React 19, TypeScript 5.9 |
 | Styling | Tailwind CSS 4.1 |
 | State | React Query 5, Zustand 5 |
-| Database | Firebase Firestore |
-| Auth | Firebase Auth (Google OAuth) + TOTP 2FA |
-| AI | Vertex AI Gemini 3 Pro (Phase 2) / Gemini 2.5 Flash (Phase 1) |
-| Search | Algolia (선택적, Firestore fallback) |
-| Background Jobs | Cloud Run + Cloud Tasks |
-| Video | GCS Resumable Upload (16MB 청크) |
-| Hosting | Vercel (메인) + Firebase Hosting (백업) |
+| Database | Supabase (PostgreSQL) |
+| Auth | Supabase Auth (Google OAuth) + TOTP 2FA |
+| Storage | Supabase Storage |
+| Hosting | Vercel |
 | PWA | Serwist (Service Worker) |
 
 **Node.js**: >=22.0.0
@@ -75,101 +64,62 @@ templar-archives/
 │
 ├── components/                # React 컴포넌트
 │   ├── features/              # 비즈니스 로직 단위
-│   │   ├── archive/           # 아카이브 관련
-│   │   ├── hand/              # 핸드 관련
-│   │   ├── player/            # 플레이어 관련
-│   │   ├── community/         # 커뮤니티 관련
-│   │   └── video/             # 비디오 업로드/재생
 │   ├── common/                # 공용 컴포넌트
 │   ├── security/              # 보안 (2FA)
 │   ├── layout/                # 레이아웃
 │   └── ui/                    # shadcn/ui
 │
 ├── lib/                       # 유틸리티
+│   ├── supabase/              # Supabase 클라이언트
 │   ├── queries/               # React Query 훅
 │   ├── hooks/                 # Custom Hooks
-│   ├── ai/                    # AI 프롬프트
 │   └── validation/            # Zod 스키마
 │
 ├── stores/                    # Zustand 상태 관리
-└── cloud-run/                 # Cloud Run 서비스
-    ├── orchestrator/          # 작업 관리
-    └── segment-analyzer/      # 영상 분석
+└── supabase/                  # Supabase 설정 및 마이그레이션
 ```
 
 ---
 
 ## 핵심 기능
 
-### 1. Archive (영상 아카이브)
+### 1. Archive (아카이브)
 
-**4단계 계층 구조**:
+**계층 구조**:
 ```
 Tournament → Event → Stream → Hand
                               ├── HandPlayers
                               └── HandActions
 ```
 
-- VSCode 스타일 트리 네비게이션 (가상 스크롤)
-- YouTube 영상 직접 분석 지원
-- GCS Resumable Upload (대용량 파일)
-- 핸드 히스토리 상세 보기
+- 트리 네비게이션
+- 핸드 히스토리 상세 리플레이
 
-### 2. KAN (영상 분석 파이프라인)
+### 2. Search (검색)
 
-```
-사용자 → Server Action → Cloud Run Orchestrator
-                            ↓
-         영상 → 30분 세그먼트 분할 → Gemini 분석 → Firestore 저장
-```
+- 플레이어, 토너먼트 통합 검색
+- 다양한 고급 필터
 
-**핵심 특징**:
-- 2-Phase 분석: Phase 1 (타임스탬프) → Phase 2 (상세 분석 + 시맨틱 태그)
-- YouTube 직접 분석 (GCS 업로드 불필요)
-- GCS gs:// URI 직접 전달 (대용량 최적화)
-- 30분 세그먼트 자동 분할
-- Cloud Tasks 재시도 (3회, Exponential Backoff)
-- Firestore 실시간 진행률 (onSnapshot)
+### 3. Community (커뮤니티)
 
-### 3. Search (검색)
+- 포스트 작성 및 토론
+- 좋아요, 댓글 기능
 
-- **Algolia 검색**: 핸드, 플레이어, 토너먼트 통합 검색
-- **Firestore Fallback**: Algolia 미설정 시 자동 대체
-- 30+ 고급 필터
+### 4. Players (플레이어)
 
-### 4. Community (커뮤니티)
+- 플레이어별 통계 (VPIP, PFR, Win Rate 등)
+- 플레이어 클레임 시스템
 
-- 포스트 작성/수정/삭제
-- 카테고리: general, strategy, hand-analysis, news, tournament-recap
-- 좋아요, 댓글
-- 핸드 공유
+### 5. Security (보안)
 
-### 5. Players (플레이어)
-
-- 플레이어 통계 (VPIP, PFR, 3Bet, Win Rate)
-- 통계 캐싱 시스템
-- 플레이어 클레임
-
-### 6. Security (보안)
-
-- **2FA (TOTP)**: Google Authenticator 호환
-- 백업 코드 10개 (1회용)
-- Firebase Security Rules 역할 기반 접근 제어
-
-### 7. PWA / Offline
-
-- Service Worker 기반 캐싱
-- 오프라인 감지 및 폴백 페이지
-- PWA 설치 프롬프트
+- **2FA (TOTP)**: 2단계 인증 지원
+- Supabase RLS 기반의 데이터 보안
 
 ---
 
 ## 개발 명령어
 
 ```bash
-# 개발
-npm run dev                               # 개발 서버
-
 # 빌드 & 린트
 npm run build
 npm run lint
@@ -177,14 +127,6 @@ npx tsc --noEmit                          # TypeScript 체크
 
 # 테스트
 npm run test                              # Vitest 전체
-npm run test lib/filter-utils.test.ts     # 단일 파일
-
-# 번들 분석
-npm run analyze
-
-# Cloud Run 배포
-cd cloud-run && ./deploy.sh all           # 전체 배포
-cd cloud-run && ./deploy.sh orchestrator  # Orchestrator만
 ```
 
 ---
@@ -192,77 +134,16 @@ cd cloud-run && ./deploy.sh orchestrator  # Orchestrator만
 ## 환경 변수
 
 ```bash
-# 필수 - Firebase
-NEXT_PUBLIC_FIREBASE_API_KEY=your-api-key
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
-NEXT_PUBLIC_FIREBASE_PROJECT_ID=your-project-id
-NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your-project.appspot.com
-FIREBASE_ADMIN_PRIVATE_KEY=your-private-key
-FIREBASE_ADMIN_CLIENT_EMAIL=your-client-email
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=your-project-url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 
-# 필수 - AI / Cloud Run
-GCP_PROJECT_ID=your-project-id
-VERTEX_AI_LOCATION=global
-CLOUD_RUN_ORCHESTRATOR_URL=https://xxx.run.app
-
-# 선택 - Algolia 검색
-NEXT_PUBLIC_ALGOLIA_APP_ID=your-app-id
-NEXT_PUBLIC_ALGOLIA_SEARCH_KEY=your-search-key
-ALGOLIA_ADMIN_KEY=your-admin-key
-
-# 선택 - 2FA
+# 2FA
 TWO_FACTOR_ENCRYPTION_KEY=your-32-byte-hex-key
-
-# 선택
-UPSTASH_REDIS_REST_URL=your-url           # Rate Limiting
 ```
 
 ---
 
-## 문서
-
-| 문서 | 설명 |
-|------|------|
-| `CLAUDE.md` | Claude Code 가이드 (핵심) |
-| `docs/POKER_DOMAIN.md` | 포커 도메인 지식 |
-| `docs/DATABASE_SCHEMA.md` | Firestore 스키마 상세 |
-| `docs/FRONTEND_ARCHITECTURE.md` | 프론트엔드 아키텍처 |
-| `docs/REACT_QUERY_GUIDE.md` | 데이터 페칭 패턴 |
-| `docs/DESIGN_SYSTEM.md` | 디자인 시스템 |
-| `docs/PWA.md` | PWA 가이드 |
-
----
-
-## 배포
-
-### Vercel (메인)
-```
-Git Push (main) → Vercel 자동 빌드 (~1분)
-                    ↓
-    https://templar-archives-index.vercel.app
-```
-
-### Firebase Hosting (백업)
-```
-Git Push (main) → GitHub Actions (~5분)
-                    ↓
-    https://templar-archives-index.web.app
-```
-
-**배포 전 체크리스트**:
-- [ ] `npm run build` 성공
-- [ ] `npx tsc --noEmit` 에러 없음
-- [ ] GitHub Secrets / Vercel 환경변수 등록
-
----
-
-## 접근성 (WCAG 2.1 AA)
-
-- 주요 컴포넌트 ARIA 레이블 적용
-- 키보드 네비게이션 지원
-- 고대비 다크/라이트 테마
-
----
-
-**마지막 업데이트**: 2025-12-07
-**프로젝트**: Templar Archives
+**마지막 업데이트**: 2026-03-04
+**내용**: 마이그레이션 반영 및 불필요한 기능 제거

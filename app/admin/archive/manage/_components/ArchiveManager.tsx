@@ -31,12 +31,7 @@ import {
   moveEventToTournament,
   assignUnsortedToEvent,
 } from '@/app/actions/archive-manage'
-import type { Tournament, Event, Stream, UnsortedVideo } from '@/lib/types/archive'
-import { Button } from '@/components/ui/button'
-import { Plus } from 'lucide-react'
-import { UploadDialog } from '@/components/features/admin/upload/UploadDialog'
-import { TournamentDialog } from '@/components/features/archive/TournamentDialog'
-import type { TournamentCategory } from '@/lib/db/firestore-types'
+import type { Tournament, Event, Stream, UnsortedVideo, TournamentCategory } from '@/lib/types/archive'
 
 // 드래그 중인 아이템 타입
 interface DragItem {
